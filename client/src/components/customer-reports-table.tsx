@@ -57,9 +57,7 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
   const [selectedDate, setSelectedDate] = useState(initialDate || getTodayDate());
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importText, setImportText] = useState("");
-  const [isGoogleAuthenticated, setIsGoogleAuthenticated] = useState(false);
-  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
-  const [isLoadingCalendar, setIsLoadingCalendar] = useState(false);
+  const [quickAddCount, setQuickAddCount] = useState(5);
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["/api/customer-reports", tableId],
@@ -139,12 +137,13 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
       }
     }
     
-    // Clean up names - remove common suffixes
+    // Clean up names - remove common suffixes and time stamps
     names = names.map(name => {
       return name
         .replace(/\s+and\s+Tuong.*$/i, '')
         .replace(/\s*-.*$/, '') // Remove anything after dash
         .replace(/\s*\(.*\)/, '') // Remove anything in parentheses
+        .replace(/^\d{1,2}:\d{2}\s*(AM|PM)?\s*-?\s*/i, '') // Remove time stamps like "2:00 PM - "
         .trim();
     }).filter(name => name.length > 0);
 
@@ -166,61 +165,16 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
     setShowImportDialog(false);
   };
 
-  const handleGoogleAuth = () => {
-    // Open Google auth in a popup to avoid CORS issues
-    const width = 500;
-    const height = 600;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2.5;
-    
-    const popup = window.open(
-      '/auth/google',
-      'google-auth',
-      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
-    );
-    
-    // Listen for popup to close and check auth status
-    const pollTimer = setInterval(() => {
-      if (popup?.closed) {
-        clearInterval(pollTimer);
-        // Check if authentication was successful
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('auth') === 'success') {
-          setIsGoogleAuthenticated(true);
-        }
-      }
-    }, 1000);
-  };
-
-  const loadCalendarEvents = async () => {
-    setIsLoadingCalendar(true);
-    try {
-      const response = await fetch(`/api/calendar/events?date=${selectedDate}`);
-      if (response.ok) {
-        const data = await response.json();
-        setCalendarEvents(data.customers);
-        setIsGoogleAuthenticated(true);
-      } else if (response.status === 401) {
-        setIsGoogleAuthenticated(false);
-      }
-    } catch (error) {
-      console.error('Error loading calendar events:', error);
-      setIsGoogleAuthenticated(false);
-    } finally {
-      setIsLoadingCalendar(false);
-    }
-  };
-
-  const importFromGoogleCalendar = () => {
-    calendarEvents.forEach(event => {
+  const handleQuickAdd = () => {
+    for (let i = 1; i <= quickAddCount; i++) {
       createMutation.mutate({
-        customerName: event.name,
+        customerName: `Khách hàng ${i}`,
         reportSent: false,
         reportReceivedDate: null,
         customerDate: selectedDate,
         trackingRecordId: tableId,
       });
-    });
+    }
     setShowImportDialog(false);
   };
 
@@ -581,72 +535,57 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              {/* Google Calendar Auto Import */}
+              {/* Quick Add Section */}
               <div className="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-green-50">
                 <h4 className="font-medium mb-2 flex items-center gap-2">
-                  <Link className="h-4 w-4" />
-                  Tự động từ Google Calendar
+                  <Plus className="h-4 w-4" />
+                  Thêm nhanh nhiều khách hàng
                 </h4>
-                {!isGoogleAuthenticated ? (
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-600">Đăng nhập Google để tự động lấy lịch hẹn ngày {formatDate(selectedDate)}</p>
-                    <Button onClick={handleGoogleAuth} className="bg-blue-600 hover:bg-blue-700">
-                      <Link className="h-4 w-4 mr-2" />
-                      Kết nối Google Calendar
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-600">Nhập số lượng khách hàng cần tạo:</p>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      placeholder="Số lượng"
+                      min="1"
+                      max="20"
+                      className="w-24"
+                      value={quickAddCount}
+                      onChange={(e) => setQuickAddCount(parseInt(e.target.value) || 1)}
+                    />
                     <Button 
-                      onClick={loadCalendarEvents} 
-                      disabled={isLoadingCalendar}
-                      className="bg-green-600 hover:bg-green-700"
+                      onClick={handleQuickAdd}
+                      className="bg-blue-600 hover:bg-blue-700"
                     >
-                      {isLoadingCalendar ? 'Đang tải...' : `Tải lịch hẹn ngày ${formatDate(selectedDate)}`}
+                      Tạo {quickAddCount} khách hàng
                     </Button>
-                    {calendarEvents.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-sm text-green-700">Tìm thấy {calendarEvents.length} lịch hẹn:</p>
-                        <div className="max-h-32 overflow-y-auto text-xs bg-white rounded border p-2">
-                          {calendarEvents.map((event, idx) => (
-                            <div key={idx} className="py-1 border-b last:border-b-0">
-                              {event.name}
-                            </div>
-                          ))}
-                        </div>
-                        <Button 
-                          onClick={importFromGoogleCalendar}
-                          className="w-full bg-green-600 hover:bg-green-700"
-                        >
-                          Import {calendarEvents.length} khách hàng
-                        </Button>
-                      </div>
-                    )}
                   </div>
-                )}
+                  <p className="text-xs text-gray-500">Sẽ tạo khách hàng với tên "Khách hàng 1", "Khách hàng 2", v.v.</p>
+                </div>
               </div>
 
-              {/* Manual Import */}
+              {/* Import từ Text */}
               <div className="border rounded-lg p-4">
                 <h4 className="font-medium mb-2 flex items-center gap-2">
                   <Upload className="h-4 w-4" />
-                  Nhập thủ công
+                  Import từ danh sách
                 </h4>
-                <div className="text-sm text-gray-600 mb-3">
-                  Copy/paste tên khách hàng (mỗi tên một dòng hoặc cách nhau bằng dấu phẩy)
+                <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded mb-3">
+                  <strong>Mẹo:</strong> Copy tên từ Google Calendar, email, hoặc bất kỳ đâu và paste vào đây. 
+                  Hệ thống sẽ tự động tách từng tên.
                 </div>
                 <Textarea
-                  placeholder="Ví dụ:&#10;Heny phan and Tuong&#10;Simone Le, Van hul&#10;Jackie pham"
+                  placeholder="Ví dụ:&#10;Heny phan and Tuong&#10;Simone Le, Van hul&#10;Jackie pham&#10;&#10;Hoặc copy từ Google Calendar:&#10;2:00 PM - Nguyen Van A and Tuong&#10;3:00 PM - Tran Thi B and Tuong"
                   value={importText}
                   onChange={(e) => setImportText(e.target.value)}
-                  rows={6}
+                  rows={8}
                 />
                 <div className="text-sm text-gray-600 flex justify-between mt-2">
-                  <span>Số khách hàng sẽ import: <strong>{
+                  <span>Số khách hàng sẽ import: <strong className="text-green-600">{
                     importText.trim() ? 
                     Array.from(new Set(
                       importText.split(/[\n,]|and/)
-                        .map(name => name.replace(/\s+and\s+Tuong.*$/i, '').replace(/\s*-.*$/, '').replace(/\s*\(.*\)/, '').trim())
+                        .map(name => name.replace(/\s+and\s+Tuong.*$/i, '').replace(/\s*-.*$/, '').replace(/\s*\(.*\)/, '').replace(/^\d{1,2}:\d{2}\s*(AM|PM)?\s*-?\s*/i, '').trim())
                         .filter(name => name.length > 0)
                     )).length : 0
                   }</strong></span>
@@ -669,11 +608,11 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
                 className="bg-green-600 hover:bg-green-700"
                 disabled={!importText.trim()}
               >
-                Import thủ công ({
+                Import danh sách ({
                   importText.trim() ? 
                   Array.from(new Set(
                     importText.split(/[\n,]|and/)
-                      .map(name => name.replace(/\s+and\s+Tuong.*$/i, '').replace(/\s*-.*$/, '').replace(/\s*\(.*\)/, '').trim())
+                      .map(name => name.replace(/\s+and\s+Tuong.*$/i, '').replace(/\s*-.*$/, '').replace(/\s*\(.*\)/, '').replace(/^\d{1,2}:\d{2}\s*(AM|PM)?\s*-?\s*/i, '').trim())
                       .filter(name => name.length > 0)
                   )).length : 0
                 } khách hàng)
