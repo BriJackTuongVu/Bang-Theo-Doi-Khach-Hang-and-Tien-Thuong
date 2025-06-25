@@ -112,103 +112,49 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
     });
   };
 
-  const handleGoogleCalendarImport = async () => {
-    try {
-      // First check if we have authentication
-      const authResponse = await apiRequest('GET', '/api/google-auth-status');
-      const authData = await authResponse.json();
-      
-      if (!authData.authenticated) {
-        // Need to authenticate first
-        const authUrl = `/api/google-auth?returnTo=${encodeURIComponent(window.location.pathname)}`;
-        window.open(authUrl, 'google-auth', 'width=500,height=600');
-        
-        // Show message
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-        notification.textContent = 'Vui lòng đăng nhập Google Calendar trong cửa sổ mới';
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-          document.body.removeChild(notification);
-        }, 5000);
-        return;
-      }
-
-      // Get events from Google Calendar for the selected date
-      const response = await apiRequest('GET', `/api/google-calendar/events?date=${selectedDate}`);
-      const eventData = await response.json();
-      
-      if (eventData.events && eventData.events.length > 0) {
-        let addedCount = 0;
-        
-        for (const event of eventData.events) {
-          if (event.summary && event.summary.trim() !== '' && event.summary !== 'Không có tiêu đề') {
-            // Check if customer already exists
-            const existingReports = reports as CustomerReport[];
-            const exists = existingReports.some(report => 
-              report.customerName.toLowerCase().trim() === event.summary.toLowerCase().trim() &&
-              report.customerDate === selectedDate
-            );
-            
-            if (!exists) {
-              await createMutation.mutateAsync({
-                customerName: event.summary.trim(),
-                reportSent: false,
-                reportReceivedDate: null,
-                customerDate: selectedDate,
-                trackingRecordId: tableId,
-              });
-              addedCount++;
-            }
-          }
-        }
-        
-        if (addedCount > 0) {
-          // Show success message using notification system
-          const notification = document.createElement('div');
-          notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-          notification.textContent = `Đã thêm ${addedCount} khách hàng từ Google Calendar`;
-          document.body.appendChild(notification);
-          
-          setTimeout(() => {
-            document.body.removeChild(notification);
-          }, 3000);
-        } else {
-          // Show info message
-          const notification = document.createElement('div');
-          notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-          notification.textContent = 'Không có khách hàng mới để thêm (có thể đã tồn tại)';
-          document.body.appendChild(notification);
-          
-          setTimeout(() => {
-            document.body.removeChild(notification);
-          }, 3000);
-        }
-      } else {
-        // Show info message
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-        notification.textContent = 'Không tìm thấy sự kiện nào trong Google Calendar cho ngày này';
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-          document.body.removeChild(notification);
-        }, 3000);
-      }
-    } catch (error) {
-      console.error('Error importing from Google Calendar:', error);
-      
-      // Show error message
-      const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-      notification.textContent = 'Lỗi khi import từ Google Calendar. Vui lòng thử lại.';
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
+  const handleGoogleCalendarImport = () => {
+    // Show instruction dialog for manual copy-paste from Google Calendar
+    const notification = document.createElement('div');
+    notification.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    notification.innerHTML = `
+      <div class="bg-white rounded-lg p-6 max-w-md mx-4">
+        <div class="flex items-center gap-2 mb-4">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <h3 class="text-lg font-semibold text-gray-900">Import từ Google Calendar</h3>
+        </div>
+        <div class="space-y-3 text-sm text-gray-700">
+          <p><strong>Hướng dẫn:</strong></p>
+          <ol class="list-decimal list-inside space-y-1">
+            <li>Mở Google Calendar</li>
+            <li>Chọn ngày ${selectedDate}</li>
+            <li>Copy tên các sự kiện/khách hàng</li>
+            <li>Paste vào ô "Import danh sách" bên dưới</li>
+          </ol>
+          <p class="text-blue-600 font-medium">Hoặc gõ trực tiếp danh sách tên khách hàng (mỗi tên một dòng)</p>
+        </div>
+        <div class="flex gap-2 mt-4">
+          <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                  class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+            Đóng
+          </button>
+          <button onclick="this.parentElement.parentElement.parentElement.remove(); document.querySelector('[data-import-button]').click()" 
+                  class="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+            Mở Import Danh Sách
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto close after 10 seconds
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
         document.body.removeChild(notification);
-      }, 3000);
-    }
+      }
+    }, 10000);
   };
 
   const handleImportFromCalendar = () => {

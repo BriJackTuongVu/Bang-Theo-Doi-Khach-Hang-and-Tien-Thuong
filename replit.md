@@ -105,6 +105,8 @@ This is a Vietnamese customer tracking and bonus calculation application built w
 ```
 Changelog:
 - June 25, 2025. Initial setup
+- June 25, 2025. Attempted Google Calendar API integration but faced OAuth verification requirements
+- June 25, 2025. Implemented alternative Google Calendar import via manual copy-paste workflow
 ```
 
 ## User Preferences
