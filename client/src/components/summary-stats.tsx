@@ -34,10 +34,6 @@ function EditableCell({ value, recordId, field, onUpdate }: EditableCellProps) {
     const newValue = parseInt(editValue) || 0;
     if (newValue !== value) {
       onUpdate(recordId, field, newValue);
-      toast({
-        title: "Đã cập nhật",
-        description: "Dữ liệu đã được lưu thành công!",
-      });
     }
     setIsEditing(false);
   };
@@ -87,9 +83,7 @@ export function SummaryStats({ records }: SummaryStatsProps) {
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
   
-  // Get fresh data from query cache to ensure we have optimistic updates
-  const freshRecords = queryClient.getQueryData<TrackingRecord[]>(["/api/tracking-records"]) || records;
-  const monthlyData = groupRecordsByMonth(freshRecords);
+  const monthlyData = groupRecordsByMonth(records);
   
   const updateMutation = useMutation({
     mutationFn: async (data: { id: number; field: string; value: number }) => {
@@ -99,40 +93,19 @@ export function SummaryStats({ records }: SummaryStatsProps) {
         body: JSON.stringify(updateData),
       });
     },
-    onMutate: async (data) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["/api/tracking-records"] });
-
-      // Snapshot the previous value
-      const previousRecords = queryClient.getQueryData(["/api/tracking-records"]);
-
-      // Optimistically update to the new value
-      queryClient.setQueryData(["/api/tracking-records"], (oldRecords: any) => {
-        if (!oldRecords) return oldRecords;
-        return oldRecords.map((record: any) => 
-          record.id === data.id 
-            ? { ...record, [data.field]: data.value }
-            : record
-        );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tracking-records"] });
+      toast({
+        title: "Đã cập nhật",
+        description: "Dữ liệu đã được lưu thành công!",
       });
-
-      // Return a context object with the snapshotted value
-      return { previousRecords };
     },
-    onError: (err, data, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
-      if (context?.previousRecords) {
-        queryClient.setQueryData(["/api/tracking-records"], context.previousRecords);
-      }
+    onError: (error) => {
       toast({
         title: "Lỗi cập nhật",
         description: "Không thể lưu dữ liệu. Vui lòng thử lại.",
         variant: "destructive",
       });
-    },
-    onSettled: () => {
-      // Always refetch after error or success to ensure we have the latest data
-      queryClient.invalidateQueries({ queryKey: ["/api/tracking-records"] });
     },
   });
 
@@ -164,7 +137,7 @@ export function SummaryStats({ records }: SummaryStatsProps) {
     );
   };
 
-  const overallTotals = freshRecords.reduce(
+  const overallTotals = records.reduce(
     (acc, record) => {
       const { totalBonus } = calculateBonus(record.scheduledCustomers, record.reportedCustomers);
       return {
@@ -345,21 +318,19 @@ export function SummaryStats({ records }: SummaryStatsProps) {
                         <h4 className="text-sm font-medium text-gray-700 mb-2">Chi tiết theo ngày:</h4>
                         <div className="space-y-1 max-h-64 overflow-y-auto">
                           {month.records.map((record) => {
-                            // Use fresh record data for calculations
-                            const freshRecord = freshRecords.find(r => r.id === record.id) || record;
-                            const dailyBonus = calculateBonus(freshRecord.scheduledCustomers, freshRecord.reportedCustomers);
-                            const dayName = new Date(freshRecord.date).toLocaleDateString('vi-VN', { weekday: 'long' });
+                            const dailyBonus = calculateBonus(record.scheduledCustomers, record.reportedCustomers);
+                            const dayName = new Date(record.date).toLocaleDateString('vi-VN', { weekday: 'long' });
                             
                             return (
                               <div key={record.id} className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded text-sm">
                                 <span className="font-medium">
-                                  {dayName} ({new Date(freshRecord.date).toLocaleDateString('vi-VN')})
+                                  {dayName} ({new Date(record.date).toLocaleDateString('vi-VN')})
                                 </span>
                                 <div className="flex space-x-4 text-xs items-center">
                                   <div className="flex items-center space-x-1">
                                     <EditableCell 
-                                      value={freshRecord.scheduledCustomers} 
-                                      recordId={freshRecord.id} 
+                                      value={record.scheduledCustomers} 
+                                      recordId={record.id} 
                                       field="scheduledCustomers"
                                       onUpdate={handleCellUpdate}
                                     />
@@ -367,8 +338,8 @@ export function SummaryStats({ records }: SummaryStatsProps) {
                                   </div>
                                   <div className="flex items-center space-x-1">
                                     <EditableCell 
-                                      value={freshRecord.reportedCustomers} 
-                                      recordId={freshRecord.id} 
+                                      value={record.reportedCustomers} 
+                                      recordId={record.id} 
                                       field="reportedCustomers"
                                       onUpdate={handleCellUpdate}
                                     />
