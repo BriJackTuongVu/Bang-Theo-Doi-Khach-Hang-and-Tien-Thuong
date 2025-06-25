@@ -162,10 +162,11 @@ export function SummaryStats({ records }: SummaryStatsProps) {
         return {
           totalScheduled: acc.totalScheduled + record.scheduledCustomers,
           totalReported: acc.totalReported + record.reportedCustomers,
+          totalClosed: acc.totalClosed + (record.closedCustomers || 0),
           totalBonus: acc.totalBonus + totalBonus,
         };
       },
-      { totalScheduled: 0, totalReported: 0, totalBonus: 0 }
+      { totalScheduled: 0, totalReported: 0, totalClosed: 0, totalBonus: 0 }
     );
   };
 
@@ -175,14 +176,19 @@ export function SummaryStats({ records }: SummaryStatsProps) {
       return {
         totalScheduled: acc.totalScheduled + record.scheduledCustomers,
         totalReported: acc.totalReported + record.reportedCustomers,
+        totalClosed: acc.totalClosed + (record.closedCustomers || 0),
         totalBonus: acc.totalBonus + totalBonus,
       };
     },
-    { totalScheduled: 0, totalReported: 0, totalBonus: 0 }
+    { totalScheduled: 0, totalReported: 0, totalClosed: 0, totalBonus: 0 }
   );
 
   const overallAveragePercentage = overallTotals.totalScheduled > 0 
     ? (overallTotals.totalReported / overallTotals.totalScheduled) * 100 
+    : 0;
+
+  const overallClosureRate = overallTotals.totalReported > 0 
+    ? (overallTotals.totalClosed / overallTotals.totalReported) * 100 
     : 0;
 
   return (
@@ -379,14 +385,15 @@ export function SummaryStats({ records }: SummaryStatsProps) {
                                   </div>
                                   <div className="flex items-center space-x-1">
                                     <EditableCell 
-                                      value={record.closedCustomers} 
+                                      value={record.closedCustomers || 0} 
                                       recordId={record.id} 
                                       field="closedCustomers"
                                       onUpdate={handleCellUpdate}
                                     />
-                                    <span className="text-orange-600">closed</span>
+                                    <span className="text-orange-600">chốt</span>
                                   </div>
                                   <span className="text-yellow-600">{formatPercentage(dailyBonus.percentage)}</span>
+                                  <span className="text-pink-600">{formatPercentage(record.reportedCustomers > 0 ? ((record.closedCustomers || 0) / record.reportedCustomers) * 100 : 0)}</span>
                                   <span className="text-purple-600 font-medium">{formatCurrency(dailyBonus.totalBonus)}</span>
                                 </div>
                               </div>
