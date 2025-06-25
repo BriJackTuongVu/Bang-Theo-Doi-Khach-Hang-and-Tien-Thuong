@@ -178,40 +178,55 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
       // Resize and compress image before converting to base64
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const img = new Image();
+      if (!ctx) {
+        throw new Error('Canvas context not available');
+      }
       
-      const base64 = await new Promise<string>((resolve) => {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const img = document.createElement('img');
+        
         img.onload = () => {
-          // Calculate new dimensions (max 1200px width/height)
-          const maxSize = 1200;
-          let { width, height } = img;
-          
-          if (width > height) {
-            if (width > maxSize) {
-              height = (height * maxSize) / width;
-              width = maxSize;
+          try {
+            // Calculate new dimensions (max 800px width/height for smaller size)
+            const maxSize = 800;
+            let { width, height } = img;
+            
+            if (width > height) {
+              if (width > maxSize) {
+                height = (height * maxSize) / width;
+                width = maxSize;
+              }
+            } else {
+              if (height > maxSize) {
+                width = (width * maxSize) / height;
+                height = maxSize;
+              }
             }
-          } else {
-            if (height > maxSize) {
-              width = (width * maxSize) / height;
-              height = maxSize;
-            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Draw and compress with lower quality for smaller size
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
+            const base64Data = compressedDataUrl.split(',')[1];
+            resolve(base64Data);
+          } catch (error) {
+            reject(error);
           }
-          
-          canvas.width = width;
-          canvas.height = height;
-          
-          // Draw and compress
-          ctx?.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-          const base64Data = compressedDataUrl.split(',')[1];
-          resolve(base64Data);
         };
+        
+        img.onerror = () => reject(new Error('Failed to load image'));
         
         const reader = new FileReader();
         reader.onload = (e) => {
-          img.src = e.target?.result as string;
+          if (e.target?.result) {
+            img.src = e.target.result as string;
+          } else {
+            reject(new Error('Failed to read file'));
+          }
         };
+        reader.onerror = () => reject(new Error('Failed to read file'));
         reader.readAsDataURL(file);
       });
 
