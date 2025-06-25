@@ -18,7 +18,13 @@ import {
 import { CustomerReport, InsertCustomerReport } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDate, getTodayDate, getDayOfWeek, getNextWorkingDay } from "@/lib/utils";
-import { Plus, User, Send, Calendar, Trash2, Upload } from "lucide-react";
+import { Plus, User, Send, Calendar, Trash2, Upload, Link } from "lucide-react";
+
+interface CalendarEvent {
+  name: string;
+  startTime: string;
+  endTime: string;
+}
 
 interface CustomerReportsTableProps {
   tableId?: number;
