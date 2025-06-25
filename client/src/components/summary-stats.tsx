@@ -311,10 +311,16 @@ export function SummaryStats({ records }: SummaryStatsProps) {
                           <p className="text-sm font-medium text-green-600">
                             {formatNumber(monthStats.totalReported)} reports
                           </p>
+                          <p className="text-sm font-medium text-orange-600">
+                            {formatNumber(monthStats.totalClosed)} chốt
+                          </p>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium text-yellow-600">
-                            {formatPercentage(monthPercentage)}
+                            {formatPercentage(monthPercentage)} report
+                          </p>
+                          <p className="text-sm font-medium text-pink-600">
+                            {formatPercentage(monthStats.totalReported > 0 ? (monthStats.totalClosed / monthStats.totalReported) * 100 : 0)} chốt
                           </p>
                           <p className="text-sm font-medium text-purple-600">
                             {formatCurrency(monthStats.totalBonus)}
