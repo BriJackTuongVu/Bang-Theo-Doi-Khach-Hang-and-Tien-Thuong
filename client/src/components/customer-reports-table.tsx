@@ -167,7 +167,29 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
   };
 
   const handleGoogleAuth = () => {
-    window.location.href = '/auth/google';
+    // Open Google auth in a popup to avoid CORS issues
+    const width = 500;
+    const height = 600;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2.5;
+    
+    const popup = window.open(
+      '/auth/google',
+      'google-auth',
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+    );
+    
+    // Listen for popup to close and check auth status
+    const pollTimer = setInterval(() => {
+      if (popup?.closed) {
+        clearInterval(pollTimer);
+        // Check if authentication was successful
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('auth') === 'success') {
+          setIsGoogleAuthenticated(true);
+        }
+      }
+    }, 1000);
   };
 
   const loadCalendarEvents = async () => {

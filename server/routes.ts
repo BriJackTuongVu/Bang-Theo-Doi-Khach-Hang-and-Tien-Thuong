@@ -9,9 +9,7 @@ import { google } from 'googleapis';
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  process.env.NODE_ENV === 'production' 
-    ? 'https://your-domain.replit.app/auth/google/callback'
-    : 'http://localhost:5000/auth/google/callback'
+  'http://127.0.0.1:5000/auth/google/callback'
 );
 
 const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
@@ -182,8 +180,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/auth/google/callback", async (req, res) => {
     const { code } = req.query;
     try {
-      const { tokens } = await oauth2Client.getAccessToken(code as string);
-      oauth2Client.setCredentials(tokens);
+      const response = await oauth2Client.getAccessToken(code as string);
+      oauth2Client.setCredentials(response.tokens);
       
       // Store tokens in session or database for later use
       res.redirect('/?auth=success');
