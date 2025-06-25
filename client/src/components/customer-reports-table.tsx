@@ -209,11 +209,11 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
   const handleCalendlyImport = async () => {
     try {
       // Get events from Calendly for the selected date
-      const response = await apiRequest('GET', `/api/calendly/events?date=${selectedDate}`);
+      const response = await fetch(`/api/calendly/events?date=${selectedDate}`);
       const result = await response.json();
       
-      // Check if this is an error response (no API token)
-      if (result.error) {
+      // Check if this is an error response (no API token or other error)
+      if (!response.ok || result.error) {
         // Show setup instructions
         const modal = document.createElement('div');
         modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
