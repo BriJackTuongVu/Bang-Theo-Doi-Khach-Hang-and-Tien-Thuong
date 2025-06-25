@@ -1,19 +1,150 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, FileText, Percent, DollarSign, Calendar, ChevronDown, ChevronUp } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Users, FileText, Percent, DollarSign, Calendar, ChevronDown, ChevronUp, Check, X } from "lucide-react";
 import { formatCurrency, formatNumber, formatPercentage, groupRecordsByMonth } from "@/lib/utils";
 import { TrackingRecord, calculateBonus } from "@shared/schema";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { toast } from "@/hooks/use-toast";
 
 interface SummaryStatsProps {
   records: TrackingRecord[];
 }
 
+// Editable Cell Component
+interface EditableCellProps {
+  value: number;
+  recordId: number;
+  field: 'scheduledCustomers' | 'reportedCustomers';
+  onUpdate: (id: number, field: string, value: number) => void;
+}
+
+function EditableCell({ value, recordId, field, onUpdate }: EditableCellProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value.toString());
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingValue, setPendingValue] = useState<number | null>(null);
+
+  useEffect(() => {
+    setEditValue(value.toString());
+  }, [value]);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (showConfirm && pendingValue !== null) {
+      timeoutId = setTimeout(() => {
+        setShowConfirm(false);
+        setPendingValue(null);
+      }, 2000);
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [showConfirm, pendingValue]);
+
+  const handleSave = () => {
+    const newValue = parseInt(editValue) || 0;
+    if (newValue !== value) {
+      setPendingValue(newValue);
+      setShowConfirm(true);
+    }
+    setIsEditing(false);
+  };
+
+  const handleConfirm = () => {
+    if (pendingValue !== null) {
+      onUpdate(recordId, field, pendingValue);
+      setShowConfirm(false);
+      setPendingValue(null);
+      toast({
+        title: "Đã cập nhật",
+        description: "Dữ liệu đã được lưu thành công!",
+      });
+    }
+  };
+
+  const handleCancel = () => {
+    setShowConfirm(false);
+    setPendingValue(null);
+    setEditValue(value.toString());
+  };
+
+  if (showConfirm) {
+    return (
+      <div className="flex items-center space-x-2 bg-yellow-50 p-2 rounded border">
+        <span className="text-sm">{pendingValue}</span>
+        <Button size="sm" variant="outline" onClick={handleConfirm} className="h-6 w-6 p-0">
+          <Check className="h-3 w-3 text-green-600" />
+        </Button>
+        <Button size="sm" variant="outline" onClick={handleCancel} className="h-6 w-6 p-0">
+          <X className="h-3 w-3 text-red-600" />
+        </Button>
+      </div>
+    );
+  }
+
+  if (isEditing) {
+    return (
+      <Input
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') handleSave();
+          if (e.key === 'Escape') {
+            setEditValue(value.toString());
+            setIsEditing(false);
+          }
+        }}
+        className="w-20 h-8 text-center"
+        autoFocus
+      />
+    );
+  }
+
+  return (
+    <div 
+      className="cursor-pointer hover:bg-gray-100 p-1 rounded border border-dashed border-gray-300 min-w-[40px] text-center"
+      onClick={() => setIsEditing(true)}
+      title="Click để chỉnh sửa"
+    >
+      {value}
+    </div>
+  );
+}
+
 export function SummaryStats({ records }: SummaryStatsProps) {
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+  const queryClient = useQueryClient();
   
   const monthlyData = groupRecordsByMonth(records);
+  
+  const updateMutation = useMutation({
+    mutationFn: async (data: { id: number; field: string; value: number }) => {
+      const updateData = { [data.field]: data.value };
+      return await apiRequest(`/api/tracking-records/${data.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(updateData),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tracking-records"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Lỗi cập nhật",
+        description: "Không thể lưu dữ liệu. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCellUpdate = (id: number, field: string, value: number) => {
+    updateMutation.mutate({ id, field, value });
+  };
   
   const toggleMonth = (monthKey: string) => {
     const newExpanded = new Set(expandedMonths);
@@ -228,9 +359,25 @@ export function SummaryStats({ records }: SummaryStatsProps) {
                                 <span className="font-medium">
                                   {dayName} ({new Date(record.date).toLocaleDateString('vi-VN')})
                                 </span>
-                                <div className="flex space-x-4 text-xs">
-                                  <span className="text-blue-600">{record.scheduledCustomers} hẹn</span>
-                                  <span className="text-green-600">{record.reportedCustomers} reports</span>
+                                <div className="flex space-x-4 text-xs items-center">
+                                  <div className="flex items-center space-x-1">
+                                    <EditableCell 
+                                      value={record.scheduledCustomers} 
+                                      recordId={record.id} 
+                                      field="scheduledCustomers"
+                                      onUpdate={handleCellUpdate}
+                                    />
+                                    <span className="text-blue-600">hẹn</span>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    <EditableCell 
+                                      value={record.reportedCustomers} 
+                                      recordId={record.id} 
+                                      field="reportedCustomers"
+                                      onUpdate={handleCellUpdate}
+                                    />
+                                    <span className="text-green-600">reports</span>
+                                  </div>
                                   <span className="text-yellow-600">{formatPercentage(dailyBonus.percentage)}</span>
                                   <span className="text-purple-600 font-medium">{formatCurrency(dailyBonus.totalBonus)}</span>
                                 </div>
