@@ -7,17 +7,24 @@ import { useQuery } from "@tanstack/react-query";
 import { TrackingRecord } from "@shared/schema";
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { getNextWorkingDay, getTodayDate } from "@/lib/utils";
 
 export default function TrackingPage() {
   const { data: records = [] } = useQuery<TrackingRecord[]>({
     queryKey: ['/api/tracking-records'],
   });
 
-  const [customerTables, setCustomerTables] = useState([1]); // Start with one table
+  const [customerTables, setCustomerTables] = useState([{ id: 1, date: getTodayDate() }]); // Start with one table
 
   const addNewCustomerTable = () => {
-    const newTableId = Math.max(...customerTables) + 1;
-    setCustomerTables([...customerTables, newTableId]);
+    const newTableId = Math.max(...customerTables.map(t => t.id)) + 1;
+    // Get the latest date from existing tables and find next working day
+    const latestDate = customerTables.reduce((latest, table) => 
+      table.date > latest ? table.date : latest, customerTables[0]?.date || getTodayDate()
+    );
+    const nextWorkingDate = getNextWorkingDay(latestDate);
+    
+    setCustomerTables([...customerTables, { id: newTableId, date: nextWorkingDate }]);
   };
 
   return (
@@ -48,8 +55,8 @@ export default function TrackingPage() {
         <TrackingTable />
         
         {/* Customer Reports Tables */}
-        {customerTables.map((tableId) => (
-          <CustomerReportsTable key={tableId} tableId={tableId} />
+        {customerTables.map((table) => (
+          <CustomerReportsTable key={table.id} tableId={table.id} initialDate={table.date} />
         ))}
         
         {/* Add New Customer Table Button */}

@@ -141,3 +141,22 @@ export function formatDateWithDay(date: string): string {
   const formattedDate = formatDate(date);
   return `${formattedDate} (${dayOfWeek})`;
 }
+
+export function getNextWorkingDay(date: string): string {
+  const currentDate = new Date(date + 'T12:00:00+07:00');
+  let nextDate = new Date(currentDate);
+  
+  // Add one day
+  nextDate.setDate(nextDate.getDate() + 1);
+  
+  // If it's Saturday (6), skip to Monday
+  if (nextDate.getDay() === 6) {
+    nextDate.setDate(nextDate.getDate() + 2);
+  }
+  // If it's Sunday (0), skip to Monday
+  else if (nextDate.getDay() === 0) {
+    nextDate.setDate(nextDate.getDate() + 1);
+  }
+  
+  return nextDate.toISOString().split('T')[0];
+}

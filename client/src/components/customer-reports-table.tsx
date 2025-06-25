@@ -17,14 +17,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { CustomerReport, InsertCustomerReport } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
-import { formatDate, getTodayDate, getDayOfWeek } from "@/lib/utils";
+import { formatDate, getTodayDate, getDayOfWeek, getNextWorkingDay } from "@/lib/utils";
 import { Plus, User, Send, Calendar, Trash2 } from "lucide-react";
 
 interface CustomerReportsTableProps {
   tableId?: number;
+  initialDate?: string;
 }
 
-export function CustomerReportsTable({ tableId = 1 }: CustomerReportsTableProps) {
+export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerReportsTableProps) {
   const queryClient = useQueryClient();
 
   const [editingCell, setEditingCell] = useState<{
@@ -38,7 +39,7 @@ export function CustomerReportsTable({ tableId = 1 }: CustomerReportsTableProps)
   const [showPinDialog, setShowPinDialog] = useState(false);
   const [pin, setPin] = useState("");
   const [pendingEdit, setPendingEdit] = useState<{id: number, field: string, value: any} | null>(null);
-  const [selectedDate, setSelectedDate] = useState(getTodayDate());
+  const [selectedDate, setSelectedDate] = useState(initialDate || getTodayDate());
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["/api/customer-reports", tableId],
@@ -202,6 +203,11 @@ export function CustomerReportsTable({ tableId = 1 }: CustomerReportsTableProps)
           <div className="flex items-center gap-2">
             <User className="h-5 w-5" />
             Chi Tiết Khách Hàng #{tableId}
+            {initialDate && (
+              <span className="text-sm font-normal text-gray-500">
+                ({getDayOfWeek(selectedDate)})
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
