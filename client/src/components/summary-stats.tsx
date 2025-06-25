@@ -111,9 +111,8 @@ function EditableCell({ value, recordId, field, onUpdate }: EditableCellProps) {
   );
 }
 
-// Sync Button Component
-function SyncButton() {
-  const [isUpdating, setIsUpdating] = useState(false);
+// Auto-sync hook
+function useAutoSync() {
   const queryClient = useQueryClient();
   
   const { data: customerReports = [] } = useQuery<CustomerReport[]>({
@@ -134,9 +133,10 @@ function SyncButton() {
     },
   });
 
-  const handleSync = async () => {
-    setIsUpdating(true);
-    try {
+  useEffect(() => {
+    const syncData = async () => {
+      if (trackingRecords.length === 0) return;
+
       // Group customer reports by date
       const reportsByDate: { [date: string]: { scheduled: number; reported: number } } = {};
       
@@ -151,14 +151,14 @@ function SyncButton() {
         }
       });
 
-      // Update tracking records
-      let updatedCount = 0;
+      // Update tracking records automatically
       for (const record of trackingRecords) {
-        const dateData = reportsByDate[record.date];
-        if (dateData) {
-          const { scheduled, reported } = dateData;
-          
-          if (record.scheduledCustomers !== scheduled || record.reportedCustomers !== reported) {
+        const dateData = reportsByDate[record.date] || { scheduled: 0, reported: 0 };
+        const { scheduled, reported } = dateData;
+        
+        // Always update to match customer reports data (including 0 if no customers)
+        if (record.scheduledCustomers !== scheduled || record.reportedCustomers !== reported) {
+          try {
             await updateMutation.mutateAsync({
               id: record.id,
               data: {
@@ -166,42 +166,24 @@ function SyncButton() {
                 reportedCustomers: reported,
               },
             });
-            updatedCount++;
+          } catch (error) {
+            console.error('Auto-sync error:', error);
           }
         }
       }
+    };
 
-      toast({
-        title: "Đồng bộ hoàn tất",
-        description: `Đã cập nhật ${updatedCount} bản ghi từ bảng chi tiết khách hàng`,
-      });
-    } catch (error) {
-      toast({
-        title: "Lỗi đồng bộ",
-        description: "Không thể đồng bộ dữ liệu",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  return (
-    <Button
-      onClick={handleSync}
-      disabled={isUpdating}
-      className="bg-blue-600 hover:bg-blue-700 text-white"
-      size="sm"
-    >
-      <RefreshCw className={`h-4 w-4 mr-2 ${isUpdating ? 'animate-spin' : ''}`} />
-      {isUpdating ? 'Đang đồng bộ...' : 'Đồng bộ từ bảng chi tiết'}
-    </Button>
-  );
+    // Sync whenever customer reports or tracking records change
+    syncData();
+  }, [customerReports, trackingRecords, updateMutation]);
 }
 
 export function SummaryStats({ records }: SummaryStatsProps) {
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
+  
+  // Enable auto-sync
+  useAutoSync();
   
   const monthlyData = groupRecordsByMonth(records);
   

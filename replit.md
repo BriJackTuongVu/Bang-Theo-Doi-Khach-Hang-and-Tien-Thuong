@@ -121,4 +121,5 @@ Preferred communication style: Simple, everyday language.
 Development approach: Must ask user permission before creating new solutions or features. Only implement after user approval.
 Image processing: User requested OCR functionality to extract customer names from uploaded images.
 Interface simplification: User requested removal of import and upload buttons, addition of table deletion functionality.
+Auto-sync preference: User wants automatic synchronization between customer detail tables and main tracking table without manual buttons.
 ```
