@@ -351,8 +351,14 @@ export function TrackingTable() {
                 </th>
 
 
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Hành Động
+                </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tình trạng thanh toán
+                  Tưởng Only
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Trạng Thái
                 </th>
               </tr>
             </thead>

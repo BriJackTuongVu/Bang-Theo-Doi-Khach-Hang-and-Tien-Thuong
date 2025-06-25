@@ -115,7 +115,6 @@ Changelog:
 - June 25, 2025. Enhanced auto-sync to update closed customers when reportReceivedDate is set
 - June 25, 2025. Migrated from MemStorage to DatabaseStorage for persistent data storage
 - June 25, 2025. Implemented working auto-sync: when report received date is entered, REPORT column updates automatically
-- June 25, 2025. Removed "HÀNH ĐỘNG" (delete) column from tracking table per user request
 ```
 
 ## User Preferences
