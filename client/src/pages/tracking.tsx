@@ -153,6 +153,103 @@ export default function TrackingPage() {
           <CustomerReportsTable key={table.id} tableId={table.id} initialDate={table.date} />
         ))}
       </div>
+      
+      {/* Calendly Connection Modal */}
+      {showCalendlyModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-lg mx-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Clock className="w-6 h-6 text-orange-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Kết nối Calendly API</h3>
+            </div>
+            <div className="space-y-4 text-sm text-gray-700">
+              <div>
+                <p className="font-medium mb-2">Để kết nối với Calendly, làm theo các bước sau:</p>
+                <ol className="list-decimal list-inside space-y-2">
+                  <li>Truy cập <a href="https://calendly.com/integrations/api_webhooks" target="_blank" className="text-blue-600 underline">Calendly API Settings</a></li>
+                  <li>Đăng nhập vào tài khoản Calendly của bạn</li>
+                  <li>Tại mục "Personal Access Tokens", nhấn "Create Token"</li>
+                  <li>Copy token vừa tạo</li>
+                  <li>Paste token vào ô bên dưới</li>
+                </ol>
+              </div>
+              <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                <p className="text-yellow-800 font-medium">Lưu ý:</p>
+                <p className="text-yellow-700 text-sm">Token sẽ được lưu an toàn và tự động sử dụng cho các lần import khách hàng</p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Calendly API Token:
+              </label>
+              <Input
+                type="text" 
+                id="calendly-token-input"
+                placeholder="Paste token từ Calendly (bắt đầu bằng eyJ...)"
+                className="w-full text-sm"
+                style={{ fontFamily: 'monospace' }}
+              />
+              <p className="text-xs text-gray-500 mt-1">Token sẽ được lưu và tự động sử dụng</p>
+            </div>
+            <div className="flex gap-2 mt-6">
+              <Button
+                onClick={() => setShowCalendlyModal(false)}
+                variant="outline"
+                className="flex-1"
+              >
+                Hủy
+              </Button>
+              <a href="https://calendly.com/integrations/api_webhooks" target="_blank">
+                <Button variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">
+                  Lấy Token
+                </Button>
+              </a>
+              <Button
+                onClick={async () => {
+                  const tokenInput = document.getElementById('calendly-token-input') as HTMLInputElement;
+                  const token = tokenInput?.value?.trim();
+                  
+                  if (!token) {
+                    alert('Vui lòng nhập Calendly API token');
+                    return;
+                  }
+                  
+                  if (!token.startsWith('eyJ')) {
+                    alert('Token không hợp lệ. Token phải bắt đầu bằng "eyJ"');
+                    return;
+                  }
+                  
+                  try {
+                    const response = await fetch('/api/calendly/save-token', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ token })
+                    });
+                    
+                    if (response.ok) {
+                      setShowCalendlyModal(false);
+                      setCalendlyConnected(true);
+                      
+                      const notification = document.createElement('div');
+                      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                      notification.textContent = 'Kết nối Calendly thành công!';
+                      document.body.appendChild(notification);
+                      setTimeout(() => notification.remove(), 3000);
+                    } else {
+                      alert('Lỗi khi lưu token. Vui lòng kiểm tra token và thử lại.');
+                    }
+                  } catch (error) {
+                    alert('Lỗi khi kết nối. Vui lòng thử lại.');
+                  }
+                }}
+                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                Lưu & Kết nối
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
