@@ -156,8 +156,8 @@ function useAutoSync() {
           if (report.reportSent) {
             reportsByDate[date].reported++;
           }
-          // If has reportReceivedDate, count as closed
-          if (report.reportReceivedDate) {
+          // If has reportReceivedDate (not null/empty), count as closed
+          if (report.reportReceivedDate && report.reportReceivedDate.trim() !== '') {
             reportsByDate[date].closed++;
           }
         });
