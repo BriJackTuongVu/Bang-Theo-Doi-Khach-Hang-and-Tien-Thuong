@@ -76,7 +76,9 @@ export class MemStorage implements IStorage {
       ...insertRecord, 
       id,
       scheduledCustomers: insertRecord.scheduledCustomers ?? 0,
-      reportedCustomers: insertRecord.reportedCustomers ?? 0
+      reportedCustomers: insertRecord.reportedCustomers ?? 0,
+      closedCustomers: insertRecord.closedCustomers ?? 0,
+      paymentStatus: insertRecord.paymentStatus ?? "chưa pay"
     };
     this.records.set(id, record);
     return record;

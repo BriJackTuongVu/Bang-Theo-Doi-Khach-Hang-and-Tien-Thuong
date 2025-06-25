@@ -421,6 +421,74 @@ export function TrackingTable() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="flex justify-center">
+                        {editingCell?.id === record.id && editingCell?.field === 'closedCustomers' ? (
+                          <>
+                            <Input
+                              type="number"
+                              value={editingCell.value as number}
+                              onChange={(e) => {
+                                const value = Math.max(0, parseInt(e.target.value) || 0);
+                                handleInputChange(value);
+                              }}
+                              min="0"
+                              className="w-16 border border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={handleConfirmEdit}
+                              className="text-green-600 hover:text-green-900 hover:bg-green-50 ml-1"
+                            >
+                              <Save className="h-3 w-3" />
+                            </Button>
+                          </>
+                        ) : (
+                          <div
+                            onClick={() => handleStartEdit(record.id, 'closedCustomers', record.closedCustomers || 0)}
+                            className="cursor-pointer hover:bg-blue-50 p-2 rounded border-2 border-transparent hover:border-blue-200 text-center w-16 font-medium"
+                          >
+                            {record.closedCustomers || 0}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="flex justify-center">
+                        {editingCell?.id === record.id && editingCell?.field === 'paymentStatus' ? (
+                          <>
+                            <select
+                              value={editingCell.value as string}
+                              onChange={(e) => handleInputChange(e.target.value)}
+                              className="px-2 py-1 border border-blue-300 rounded text-xs"
+                            >
+                              <option value="chưa pay">chưa pay</option>
+                              <option value="đã pay">đã pay</option>
+                            </select>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={handleConfirmEdit}
+                              className="text-green-600 hover:text-green-900 hover:bg-green-50 ml-1"
+                            >
+                              <Save className="h-3 w-3" />
+                            </Button>
+                          </>
+                        ) : (
+                          <span 
+                            onClick={() => handleStartEdit(record.id, 'paymentStatus', record.paymentStatus || "chưa pay")}
+                            className={`cursor-pointer px-2 py-1 rounded-full text-xs font-medium hover:opacity-80 ${
+                              (record.paymentStatus || "chưa pay") === "đã pay" 
+                                ? "bg-green-100 text-green-800" 
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {record.paymentStatus || "chưa pay"}
+                          </span>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
