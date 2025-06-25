@@ -145,16 +145,20 @@ function useAutoSync() {
       
       try {
         // Group customer reports by date
-        const reportsByDate: { [date: string]: { scheduled: number; reported: number } } = {};
+        const reportsByDate: { [date: string]: { scheduled: number; reported: number; closed: number } } = {};
         
         customerReports.forEach(report => {
           const date = report.customerDate;
           if (!reportsByDate[date]) {
-            reportsByDate[date] = { scheduled: 0, reported: 0 };
+            reportsByDate[date] = { scheduled: 0, reported: 0, closed: 0 };
           }
           reportsByDate[date].scheduled++;
           if (report.reportSent) {
             reportsByDate[date].reported++;
+          }
+          // If has reportReceivedDate, count as closed
+          if (report.reportReceivedDate) {
+            reportsByDate[date].closed++;
           }
         });
 
@@ -162,17 +166,20 @@ function useAutoSync() {
         const updates: Promise<any>[] = [];
         
         for (const record of trackingRecords) {
-          const dateData = reportsByDate[record.date] || { scheduled: 0, reported: 0 };
-          const { scheduled, reported } = dateData;
+          const dateData = reportsByDate[record.date] || { scheduled: 0, reported: 0, closed: 0 };
+          const { scheduled, reported, closed } = dateData;
           
           // Only update if values are different
-          if (record.scheduledCustomers !== scheduled || record.reportedCustomers !== reported) {
+          if (record.scheduledCustomers !== scheduled || 
+              record.reportedCustomers !== reported || 
+              (record.closedCustomers || 0) !== closed) {
             updates.push(
               updateMutation.mutateAsync({
                 id: record.id,
                 data: {
                   scheduledCustomers: scheduled,
                   reportedCustomers: reported,
+                  closedCustomers: closed,
                 },
               })
             );

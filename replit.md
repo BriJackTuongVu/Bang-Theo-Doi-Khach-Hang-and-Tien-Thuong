@@ -112,6 +112,7 @@ Changelog:
 - June 25, 2025. Successfully implemented Calendly API integration with token management
 - June 25, 2025. Simplified interface by removing import/upload buttons and adding table deletion feature
 - June 25, 2025. Added automatic data synchronization from customer reports to main tracking table
+- June 25, 2025. Enhanced auto-sync to update closed customers when reportReceivedDate is set
 ```
 
 ## User Preferences
