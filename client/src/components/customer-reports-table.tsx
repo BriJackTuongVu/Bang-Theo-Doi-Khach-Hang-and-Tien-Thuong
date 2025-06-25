@@ -212,6 +212,51 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
       const response = await apiRequest('GET', `/api/calendly/events?date=${selectedDate}`);
       const result = await response.json();
       
+      // Check if this is an error response (no API token)
+      if (result.error) {
+        // Show setup instructions
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modal.innerHTML = `
+          <div class="bg-white rounded-lg p-6 max-w-lg mx-4">
+            <div class="flex items-center gap-2 mb-4">
+              <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <h3 class="text-lg font-semibold text-gray-900">Kết nối Calendly API</h3>
+            </div>
+            <div class="space-y-4 text-sm text-gray-700">
+              <div>
+                <p class="font-medium mb-2">Để kết nối với Calendly, làm theo các bước sau:</p>
+                <ol class="list-decimal list-inside space-y-2">
+                  <li>Truy cập <a href="https://calendly.com/integrations/api_webhooks" target="_blank" class="text-blue-600 underline">Calendly API Settings</a></li>
+                  <li>Đăng nhập vào tài khoản Calendly của bạn</li>
+                  <li>Tại mục "Personal Access Tokens", nhấn "Create Token"</li>
+                  <li>Copy token vừa tạo</li>
+                  <li>Quay lại đây và cung cấp token trong Secrets</li>
+                </ol>
+              </div>
+              <div class="bg-yellow-50 border border-yellow-200 rounded p-3">
+                <p class="text-yellow-800 font-medium">Lưu ý:</p>
+                <p class="text-yellow-700 text-sm">Token này cho phép truy cập vào lịch hẹn của bạn để tự động import tên khách hàng</p>
+              </div>
+            </div>
+            <div class="flex gap-2 mt-6">
+              <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                      class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+                Đóng
+              </button>
+              <a href="https://calendly.com/integrations/api_webhooks" target="_blank"
+                 class="flex-1 px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 text-center">
+                Mở Calendly Settings
+              </a>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        return;
+      }
+      
       if (result.events && result.events.length > 0) {
         let addedCount = 0;
         
@@ -238,20 +283,10 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
         }
         
         const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 max-w-md';
-        
-        if (result.demo_mode) {
-          notification.innerHTML = `
-            <div class="font-semibold">Demo Mode</div>
-            <div class="text-sm">Đã thêm ${addedCount} khách hàng mẫu</div>
-            <div class="text-sm mt-1">Cung cấp CALENDLY_API_TOKEN để sử dụng dữ liệu thật</div>
-          `;
-        } else {
-          notification.textContent = `Đã thêm ${addedCount} khách hàng từ Calendly`;
-        }
-        
+        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        notification.textContent = `Đã thêm ${addedCount} khách hàng từ Calendly`;
         document.body.appendChild(notification);
-        setTimeout(() => document.body.removeChild(notification), 5000);
+        setTimeout(() => document.body.removeChild(notification), 3000);
       } else {
         const notification = document.createElement('div');
         notification.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
@@ -263,7 +298,7 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
       console.error('Error importing from Calendly:', error);
       const notification = document.createElement('div');
       notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-      notification.textContent = 'Lỗi khi import từ Calendly. Vui lòng kiểm tra API token.';
+      notification.textContent = 'Lỗi khi kết nối Calendly. Vui lòng kiểm tra API token.';
       document.body.appendChild(notification);
       setTimeout(() => document.body.removeChild(notification), 3000);
     }
