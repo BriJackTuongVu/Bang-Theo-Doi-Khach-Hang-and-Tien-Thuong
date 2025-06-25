@@ -15,6 +15,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { CustomerReport, InsertCustomerReport } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDate, getTodayDate, getDayOfWeek, getNextWorkingDay } from "@/lib/utils";
