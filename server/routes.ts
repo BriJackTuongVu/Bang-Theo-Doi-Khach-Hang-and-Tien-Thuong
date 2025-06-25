@@ -3,6 +3,18 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertTrackingRecordSchema, insertCustomerReportSchema } from "@shared/schema";
 import { z } from "zod";
+import { google } from 'googleapis';
+
+// Google OAuth2 setup
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.NODE_ENV === 'production' 
+    ? 'https://your-domain.replit.app/auth/google/callback'
+    : 'http://localhost:5000/auth/google/callback'
+);
+
+const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all tracking records
