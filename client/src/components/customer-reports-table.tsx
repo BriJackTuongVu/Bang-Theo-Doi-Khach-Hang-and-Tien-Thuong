@@ -390,7 +390,7 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
           </table>
         </div>
 
-        <div className="mt-4">
+        <div className="flex gap-2 mt-4">
           <Button
             onClick={handleAddCustomer}
             disabled={createMutation.isPending}
@@ -398,6 +398,13 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
           >
             <Plus className="h-4 w-4 mr-2" />
             Thêm Khách Hàng
+          </Button>
+          <Button
+            onClick={() => setShowImportDialog(true)}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Import từ Calendar
           </Button>
         </div>
 
