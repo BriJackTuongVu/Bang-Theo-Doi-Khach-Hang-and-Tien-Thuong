@@ -87,7 +87,9 @@ export function SummaryStats({ records }: SummaryStatsProps) {
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
   
-  const monthlyData = groupRecordsByMonth(records);
+  // Get fresh data from query cache to ensure we have optimistic updates
+  const freshRecords = queryClient.getQueryData<TrackingRecord[]>(["/api/tracking-records"]) || records;
+  const monthlyData = groupRecordsByMonth(freshRecords);
   
   const updateMutation = useMutation({
     mutationFn: async (data: { id: number; field: string; value: number }) => {
@@ -98,20 +100,24 @@ export function SummaryStats({ records }: SummaryStatsProps) {
       });
     },
     onMutate: async (data) => {
+      console.log('onMutate called with:', data);
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["/api/tracking-records"] });
 
       // Snapshot the previous value
       const previousRecords = queryClient.getQueryData(["/api/tracking-records"]);
+      console.log('Previous records:', previousRecords);
 
       // Optimistically update to the new value
       queryClient.setQueryData(["/api/tracking-records"], (oldRecords: any) => {
         if (!oldRecords) return oldRecords;
-        return oldRecords.map((record: any) => 
+        const updatedRecords = oldRecords.map((record: any) => 
           record.id === data.id 
             ? { ...record, [data.field]: data.value }
             : record
         );
+        console.log('Updated records:', updatedRecords);
+        return updatedRecords;
       });
 
       // Return a context object with the snapshotted value
@@ -135,6 +141,7 @@ export function SummaryStats({ records }: SummaryStatsProps) {
   });
 
   const handleCellUpdate = (id: number, field: string, value: number) => {
+    console.log('Updating cell:', { id, field, value });
     updateMutation.mutate({ id, field, value });
   };
   
