@@ -617,6 +617,22 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
             <Calendar className="h-4 w-4 mr-2" />
             Import từ Google Calendar
           </Button>
+          <div className="relative">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              disabled={isProcessingImage}
+            />
+            <Button 
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+              disabled={isProcessingImage}
+            >
+              <Image className="h-4 w-4 mr-2" />
+              {isProcessingImage ? 'Đang xử lý...' : 'Upload Hình Ảnh'}
+            </Button>
+          </div>
 
         </div>
 
