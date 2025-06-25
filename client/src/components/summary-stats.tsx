@@ -18,7 +18,7 @@ interface SummaryStatsProps {
 interface EditableCellProps {
   value: number;
   recordId: number;
-  field: 'scheduledCustomers' | 'reportedCustomers';
+  field: 'scheduledCustomers' | 'reportedCustomers' | 'closedCustomers';
   onUpdate: (id: number, field: string, value: number) => void;
 }
 
@@ -376,6 +376,15 @@ export function SummaryStats({ records }: SummaryStatsProps) {
                                       onUpdate={handleCellUpdate}
                                     />
                                     <span className="text-green-600">reports</span>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    <EditableCell 
+                                      value={record.closedCustomers} 
+                                      recordId={record.id} 
+                                      field="closedCustomers"
+                                      onUpdate={handleCellUpdate}
+                                    />
+                                    <span className="text-orange-600">closed</span>
                                   </div>
                                   <span className="text-yellow-600">{formatPercentage(dailyBonus.percentage)}</span>
                                   <span className="text-purple-600 font-medium">{formatCurrency(dailyBonus.totalBonus)}</span>

@@ -7,6 +7,8 @@ export const trackingRecords = pgTable("tracking_records", {
   date: date("date").notNull(),
   scheduledCustomers: integer("scheduled_customers").notNull().default(0),
   reportedCustomers: integer("reported_customers").notNull().default(0),
+  closedCustomers: integer("closed_customers").notNull().default(0),
+  paymentStatus: text("payment_status", { enum: ["chưa pay", "đã pay"] }).notNull().default("chưa pay"),
 });
 
 export const insertTrackingRecordSchema = createInsertSchema(trackingRecords).omit({
