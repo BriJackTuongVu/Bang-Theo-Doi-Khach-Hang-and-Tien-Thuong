@@ -549,45 +549,116 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Import from Calendar Dialog */}
-        <AlertDialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-          <AlertDialogContent className="max-w-2xl">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Import Khách Hàng từ Google Calendar</AlertDialogTitle>
-              <AlertDialogDescription>
-                Copy danh sách tên khách hàng từ Google Calendar và paste vào đây. Mỗi tên một dòng.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <div className="my-4">
-              <textarea
-                value={importText}
-                onChange={(e) => setImportText(e.target.value)}
-                placeholder="Ví dụ:
-Heny phan
-Simone Le
-Van hul
-Jackie pham
-Huan Nguyen
-..."
-                className="w-full h-64 p-3 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+        {/* Import Dialog */}
+        <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Import Khách Hàng</DialogTitle>
+              <DialogDescription>
+                Chọn cách thêm khách hàng:
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Google Calendar Auto Import */}
+              <div className="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-green-50">
+                <h4 className="font-medium mb-2 flex items-center gap-2">
+                  <Link className="h-4 w-4" />
+                  Tự động từ Google Calendar
+                </h4>
+                {!isGoogleAuthenticated ? (
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">Đăng nhập Google để tự động lấy lịch hẹn ngày {formatDate(selectedDate)}</p>
+                    <Button onClick={handleGoogleAuth} className="bg-blue-600 hover:bg-blue-700">
+                      <Link className="h-4 w-4 mr-2" />
+                      Kết nối Google Calendar
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Button 
+                      onClick={loadCalendarEvents} 
+                      disabled={isLoadingCalendar}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {isLoadingCalendar ? 'Đang tải...' : `Tải lịch hẹn ngày ${formatDate(selectedDate)}`}
+                    </Button>
+                    {calendarEvents.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm text-green-700">Tìm thấy {calendarEvents.length} lịch hẹn:</p>
+                        <div className="max-h-32 overflow-y-auto text-xs bg-white rounded border p-2">
+                          {calendarEvents.map((event, idx) => (
+                            <div key={idx} className="py-1 border-b last:border-b-0">
+                              {event.name}
+                            </div>
+                          ))}
+                        </div>
+                        <Button 
+                          onClick={importFromGoogleCalendar}
+                          className="w-full bg-green-600 hover:bg-green-700"
+                        >
+                          Import {calendarEvents.length} khách hàng
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Manual Import */}
+              <div className="border rounded-lg p-4">
+                <h4 className="font-medium mb-2 flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  Nhập thủ công
+                </h4>
+                <div className="text-sm text-gray-600 mb-3">
+                  Copy/paste tên khách hàng (mỗi tên một dòng hoặc cách nhau bằng dấu phẩy)
+                </div>
+                <Textarea
+                  placeholder="Ví dụ:&#10;Heny phan and Tuong&#10;Simone Le, Van hul&#10;Jackie pham"
+                  value={importText}
+                  onChange={(e) => setImportText(e.target.value)}
+                  rows={6}
+                />
+                <div className="text-sm text-gray-600 flex justify-between mt-2">
+                  <span>Số khách hàng sẽ import: <strong>{
+                    importText.trim() ? 
+                    Array.from(new Set(
+                      importText.split(/[\n,]|and/)
+                        .map(name => name.replace(/\s+and\s+Tuong.*$/i, '').replace(/\s*-.*$/, '').replace(/\s*\(.*\)/, '').trim())
+                        .filter(name => name.length > 0)
+                    )).length : 0
+                  }</strong></span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setImportText("")}
+                  >
+                    Xóa hết
+                  </Button>
+                </div>
+              </div>
             </div>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => {
-                setImportText("");
-                setShowImportDialog(false);
-              }}>
-                Hủy bỏ
-              </AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={handleImportFromCalendar}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowImportDialog(false)}>
+                Hủy
+              </Button>
+              <Button 
+                onClick={handleImportFromCalendar} 
                 className="bg-green-600 hover:bg-green-700"
+                disabled={!importText.trim()}
               >
-                Import ({importText.split('\n').filter(line => line.trim().length > 0).length} khách hàng)
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+                Import thủ công ({
+                  importText.trim() ? 
+                  Array.from(new Set(
+                    importText.split(/[\n,]|and/)
+                      .map(name => name.replace(/\s+and\s+Tuong.*$/i, '').replace(/\s*-.*$/, '').replace(/\s*\(.*\)/, '').trim())
+                      .filter(name => name.length > 0)
+                  )).length : 0
+                } khách hàng)
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
