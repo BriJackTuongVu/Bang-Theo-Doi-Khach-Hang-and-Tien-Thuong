@@ -731,27 +731,7 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
             <Plus className="h-4 w-4 mr-2" />
             Thêm Khách Hàng
           </Button>
-          <Button
-            onClick={handleGoogleCalendarImport}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            Import từ Google Calendar
-          </Button>
-          <Button
-            onClick={handleCalendlyImport}
-            className="bg-orange-600 hover:bg-orange-700 text-white"
-          >
-            <Clock className="h-4 w-4 mr-2" />
-            Import từ Calendly
-          </Button>
-          <Button 
-            onClick={handleImageUpload}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
-          >
-            <Image className="h-4 w-4 mr-2" />
-            Upload Hình Ảnh
-          </Button>
+
 
         </div>
 

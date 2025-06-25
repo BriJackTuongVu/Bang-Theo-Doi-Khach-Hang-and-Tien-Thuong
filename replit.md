@@ -109,6 +109,8 @@ Changelog:
 - June 25, 2025. Implemented alternative Google Calendar import via manual copy-paste workflow
 - June 25, 2025. Attempted OCR image processing but faced OpenAI API quota limits
 - June 25, 2025. Created manual image-to-text workflow as alternative solution
+- June 25, 2025. Successfully implemented Calendly API integration with token management
+- June 25, 2025. Simplified interface by removing import/upload buttons and adding table deletion feature
 ```
 
 ## User Preferences
@@ -117,4 +119,5 @@ Changelog:
 Preferred communication style: Simple, everyday language.
 Development approach: Must ask user permission before creating new solutions or features. Only implement after user approval.
 Image processing: User requested OCR functionality to extract customer names from uploaded images.
+Interface simplification: User requested removal of import and upload buttons, addition of table deletion functionality.
 ```
