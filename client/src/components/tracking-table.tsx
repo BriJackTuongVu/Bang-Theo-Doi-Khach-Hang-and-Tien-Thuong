@@ -501,17 +501,7 @@ export function TrackingTable() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDelete(record.id)}
-                        disabled={deleteMutation.isPending}
-                        className="hover:bg-red-600"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </td>
+
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <div className="flex justify-center">
                         {editingCell?.id === record.id && editingCell?.field === 'closedCustomers' ? (
