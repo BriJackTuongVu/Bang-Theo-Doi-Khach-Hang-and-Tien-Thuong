@@ -277,8 +277,44 @@ export function TrackingTable() {
   }
 
   return (
-    <Card className="shadow-lg">
-      <CardContent className="p-0">
+    <div className="space-y-4">
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {isEditingName ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={tableName}
+                  onChange={(e) => setTableName(e.target.value)}
+                  onBlur={() => setIsEditingName(false)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      setIsEditingName(false);
+                    }
+                  }}
+                  className="text-lg font-semibold border-0 p-0 h-auto focus:ring-0"
+                  autoFocus
+                />
+                <Button
+                  size="sm"
+                  onClick={() => setIsEditingName(false)}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  ✓
+                </Button>
+              </div>
+            ) : (
+              <div 
+                className="cursor-pointer hover:bg-gray-50 px-2 py-1 rounded flex items-center gap-2"
+                onClick={() => setIsEditingName(true)}
+              >
+                <span className="text-lg font-semibold">{tableName}</span>
+                <span className="text-sm text-gray-500">✎</span>
+              </div>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -617,7 +653,8 @@ export function TrackingTable() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
