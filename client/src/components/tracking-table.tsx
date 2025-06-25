@@ -161,12 +161,19 @@ export function TrackingTable() {
 
   const handlePinConfirm = () => {
     if (pin === "1995" && pendingEdit) {
-      setEditingCell({
-        id: pendingEdit.id,
-        field: pendingEdit.field as keyof InsertTrackingRecord,
-        value: pendingEdit.value,
-        originalValue: pendingEdit.value,
-      });
+      if (pendingEdit.field === 'delete') {
+        // Xử lý xóa
+        setPendingDelete(pendingEdit.id);
+        setShowConfirmDialog(true);
+      } else {
+        // Xử lý chỉnh sửa
+        setEditingCell({
+          id: pendingEdit.id,
+          field: pendingEdit.field as keyof InsertTrackingRecord,
+          value: pendingEdit.value,
+          originalValue: pendingEdit.value,
+        });
+      }
       setShowPinDialog(false);
       setPendingEdit(null);
       setPin("");
@@ -206,8 +213,10 @@ export function TrackingTable() {
   };
 
   const handleDelete = (id: number) => {
-    setPendingDelete(id);
-    setShowConfirmDialog(true);
+    // Yêu cầu PIN trước khi xóa
+    setPendingEdit({ id, field: 'delete', value: id });
+    setShowPinDialog(true);
+    setPin("");
   };
 
   const confirmDelete = () => {
@@ -574,7 +583,10 @@ export function TrackingTable() {
             <AlertDialogHeader>
               <AlertDialogTitle>Xác nhận quyền chỉnh sửa</AlertDialogTitle>
               <AlertDialogDescription>
-                Nhập mã PIN để chỉnh sửa thông tin này:
+                {pendingEdit?.field === 'delete' 
+                  ? "Nhập mã PIN để xóa bản ghi:" 
+                  : "Nhập mã PIN để chỉnh sửa thông tin này:"
+                }
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="py-4">
