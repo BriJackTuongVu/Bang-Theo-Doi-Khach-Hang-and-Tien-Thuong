@@ -44,7 +44,6 @@ export function CustomerReportsTable() {
     mutationFn: async (data: InsertCustomerReport) => {
       const response = await apiRequest("/api/customer-reports", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       return response.json();
@@ -53,13 +52,19 @@ export function CustomerReportsTable() {
       queryClient.invalidateQueries({ queryKey: ["/api/customer-reports"] });
       toast({ description: "Đã thêm khách hàng mới" });
     },
+    onError: (error) => {
+      console.error("Error creating customer:", error);
+      toast({ 
+        description: "Lỗi khi thêm khách hàng",
+        variant: "destructive"
+      });
+    },
   });
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<InsertCustomerReport> }) => {
       const response = await apiRequest(`/api/customer-reports/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       return response.json();
@@ -67,6 +72,13 @@ export function CustomerReportsTable() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/customer-reports"] });
       toast({ description: "Đã cập nhật thông tin" });
+    },
+    onError: (error) => {
+      console.error("Error updating customer:", error);
+      toast({ 
+        description: "Lỗi khi cập nhật thông tin",
+        variant: "destructive"
+      });
     },
   });
 
