@@ -338,9 +338,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { date } = req.query;
       
       if (!process.env.CALENDLY_API_TOKEN) {
-        return res.status(500).json({ 
-          error: 'Calendly API token not configured',
-          setup_instructions: 'Please add CALENDLY_API_TOKEN to environment variables'
+        // Return demo data for testing purposes
+        const demoEvents = [
+          {
+            event_name: 'Consultation Call',
+            start_time: `${date}T09:00:00.000Z`,
+            end_time: `${date}T10:00:00.000Z`,
+            status: 'active',
+            invitee_name: 'Nguyễn Văn An',
+            invitee_email: 'an@example.com'
+          },
+          {
+            event_name: 'Business Meeting',
+            start_time: `${date}T14:00:00.000Z`,
+            end_time: `${date}T15:00:00.000Z`,
+            status: 'active',
+            invitee_name: 'Trần Thị Bình',
+            invitee_email: 'binh@example.com'
+          },
+          {
+            event_name: 'Follow-up Call',
+            start_time: `${date}T16:30:00.000Z`,
+            end_time: `${date}T17:00:00.000Z`,
+            status: 'active',
+            invitee_name: 'Phạm Minh Chánh',
+            invitee_email: 'chanh@example.com'
+          }
+        ];
+        
+        return res.json({ 
+          events: demoEvents,
+          total: demoEvents.length,
+          date: date,
+          demo_mode: true,
+          message: 'Demo data - Cung cấp CALENDLY_API_TOKEN để sử dụng dữ liệu thật'
         });
       }
 

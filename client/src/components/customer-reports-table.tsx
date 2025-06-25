@@ -238,10 +238,20 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
         }
         
         const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-        notification.textContent = `Đã thêm ${addedCount} khách hàng từ Calendly`;
+        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 max-w-md';
+        
+        if (result.demo_mode) {
+          notification.innerHTML = `
+            <div class="font-semibold">Demo Mode</div>
+            <div class="text-sm">Đã thêm ${addedCount} khách hàng mẫu</div>
+            <div class="text-sm mt-1">Cung cấp CALENDLY_API_TOKEN để sử dụng dữ liệu thật</div>
+          `;
+        } else {
+          notification.textContent = `Đã thêm ${addedCount} khách hàng từ Calendly`;
+        }
+        
         document.body.appendChild(notification);
-        setTimeout(() => document.body.removeChild(notification), 3000);
+        setTimeout(() => document.body.removeChild(notification), 5000);
       } else {
         const notification = document.createElement('div');
         notification.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
