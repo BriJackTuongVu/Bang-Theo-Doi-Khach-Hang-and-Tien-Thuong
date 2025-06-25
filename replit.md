@@ -113,6 +113,7 @@ Changelog:
 - June 25, 2025. Simplified interface by removing import/upload buttons and adding table deletion feature
 - June 25, 2025. Added automatic data synchronization from customer reports to main tracking table
 - June 25, 2025. Enhanced auto-sync to update closed customers when reportReceivedDate is set
+- June 25, 2025. Migrated from MemStorage to DatabaseStorage for persistent data storage
 ```
 
 ## User Preferences

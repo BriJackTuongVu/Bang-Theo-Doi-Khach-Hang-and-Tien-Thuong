@@ -143,4 +143,73 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database Storage Implementation
+import { users, trackingRecords, customerReports, type TrackingRecord, type InsertTrackingRecord, type CustomerReport, type InsertCustomerReport } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+
+export class DatabaseStorage implements IStorage {
+  async getTrackingRecords(): Promise<TrackingRecord[]> {
+    return await db.select().from(trackingRecords);
+  }
+
+  async getTrackingRecord(id: number): Promise<TrackingRecord | undefined> {
+    const [record] = await db.select().from(trackingRecords).where(eq(trackingRecords.id, id));
+    return record || undefined;
+  }
+
+  async createTrackingRecord(insertRecord: InsertTrackingRecord): Promise<TrackingRecord> {
+    const [record] = await db
+      .insert(trackingRecords)
+      .values(insertRecord)
+      .returning();
+    return record;
+  }
+
+  async updateTrackingRecord(id: number, updateRecord: Partial<InsertTrackingRecord>): Promise<TrackingRecord | undefined> {
+    const [updated] = await db
+      .update(trackingRecords)
+      .set(updateRecord)
+      .where(eq(trackingRecords.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteTrackingRecord(id: number): Promise<boolean> {
+    const result = await db.delete(trackingRecords).where(eq(trackingRecords.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getCustomerReports(): Promise<CustomerReport[]> {
+    return await db.select().from(customerReports);
+  }
+
+  async getCustomerReport(id: number): Promise<CustomerReport | undefined> {
+    const [report] = await db.select().from(customerReports).where(eq(customerReports.id, id));
+    return report || undefined;
+  }
+
+  async createCustomerReport(insertReport: InsertCustomerReport): Promise<CustomerReport> {
+    const [report] = await db
+      .insert(customerReports)
+      .values(insertReport)
+      .returning();
+    return report;
+  }
+
+  async updateCustomerReport(id: number, updateReport: Partial<InsertCustomerReport>): Promise<CustomerReport | undefined> {
+    const [updated] = await db
+      .update(customerReports)
+      .set(updateReport)
+      .where(eq(customerReports.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteCustomerReport(id: number): Promise<boolean> {
+    const result = await db.delete(customerReports).where(eq(customerReports.id, id));
+    return result.rowCount > 0;
+  }
+}
+
+export const storage = new DatabaseStorage();
