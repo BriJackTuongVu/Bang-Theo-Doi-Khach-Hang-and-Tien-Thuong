@@ -169,6 +169,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Google Calendar OAuth routes
+  app.get("/auth/google", (req, res) => {
+    const scopes = ['https://www.googleapis.com/auth/calendar.readonly'];
+    const url = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: scopes,
+    });
+    res.redirect(url);
+  });
+
+  app.get("/auth/google/callback", async (req, res) => {
+    const { code } = req.query;
+    try {
+      const { tokens } = await oauth2Client.getAccessToken(code as string);
+      oauth2Client.setCredentials(tokens);
+      
+      // Store tokens in session or database for later use
+      res.redirect('/?auth=success');
+    } catch (error) {
+      console.error('Error getting access token:', error);
+      res.redirect('/?auth=error');
+    }
+  });
+
+  // Calendar events API
+  app.get("/api/calendar/events", async (req, res) => {
+    const { date } = req.query;
+    
+    if (!oauth2Client.credentials.access_token) {
+      return res.status(401).json({ error: 'Not authenticated with Google Calendar' });
+    }
+
+    try {
+      // Set time range for the specified date (Vietnam timezone)
+      const startOfDay = new Date(date as string);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date as string);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const response = await calendar.events.list({
+        calendarId: 'primary',
+        timeMin: startOfDay.toISOString(),
+        timeMax: endOfDay.toISOString(),
+        singleEvents: true,
+        orderBy: 'startTime',
+      });
+
+      const events = response.data.items || [];
+      
+      // Extract customer names from event summaries
+      const customers = events.map(event => {
+        let customerName = event.summary || 'Unnamed Event';
+        
+        // Clean up common patterns
+        customerName = customerName
+          .replace(/\s+and\s+Tuong.*$/i, '')
+          .replace(/\s*-.*$/, '')
+          .replace(/\s*\(.*\)/, '')
+          .trim();
+          
+        return {
+          name: customerName,
+          startTime: event.start?.dateTime || event.start?.date,
+          endTime: event.end?.dateTime || event.end?.date,
+        };
+      }).filter(customer => customer.name.length > 0);
+
+      res.json({ customers, totalEvents: events.length });
+    } catch (error: any) {
+      console.error('Error fetching calendar events:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
