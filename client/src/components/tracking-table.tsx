@@ -55,6 +55,9 @@ export function TrackingTable() {
   } | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<number | null>(null);
+  const [showPinDialog, setShowPinDialog] = useState(false);
+  const [pin, setPin] = useState("");
+  const [pendingEdit, setPendingEdit] = useState<{id: number, field: string, value: any} | null>(null);
   const [highlightedRow, setHighlightedRow] = useState<number | null>(null);
   
   const { data: records = [], isLoading } = useQuery<TrackingRecord[]>({
@@ -141,12 +144,42 @@ export function TrackingTable() {
     field: keyof InsertTrackingRecord,
     currentValue: string | number
   ) => {
-    setEditingCell({
-      id,
-      field,
-      value: currentValue,
-      originalValue: currentValue,
-    });
+    // Các trường cần xác nhận PIN
+    if (field === 'closedCustomers' || field === 'paymentStatus') {
+      setPendingEdit({ id, field: field as string, value: currentValue });
+      setShowPinDialog(true);
+      setPin("");
+    } else {
+      setEditingCell({
+        id,
+        field,
+        value: currentValue,
+        originalValue: currentValue,
+      });
+    }
+  };
+
+  const handlePinConfirm = () => {
+    if (pin === "1995" && pendingEdit) {
+      setEditingCell({
+        id: pendingEdit.id,
+        field: pendingEdit.field as keyof InsertTrackingRecord,
+        value: pendingEdit.value,
+        originalValue: pendingEdit.value,
+      });
+      setShowPinDialog(false);
+      setPendingEdit(null);
+      setPin("");
+    } else {
+      alert("Mã PIN không chính xác!");
+      setPin("");
+    }
+  };
+
+  const handlePinCancel = () => {
+    setShowPinDialog(false);
+    setPendingEdit(null);
+    setPin("");
   };
 
   const handleCancelEdit = () => {
@@ -413,10 +446,14 @@ export function TrackingTable() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Button
-                        variant="ghost"
+                        variant="destructive"
                         size="sm"
-                        onClick={() => handleDelete(record.id)}
-                        className="text-red-600 hover:text-red-900 hover:bg-red-50"
+                        onClick={() => {
+                          setPendingDelete(record.id);
+                          setShowConfirmDialog(true);
+                        }}
+                        disabled={deleteMutation.isPending}
+                        className="hover:bg-red-600"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -526,6 +563,45 @@ export function TrackingTable() {
                 className="bg-red-600 hover:bg-red-700"
               >
                 Xóa
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* PIN Confirmation Dialog */}
+        <AlertDialog open={showPinDialog} onOpenChange={setShowPinDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xác nhận quyền chỉnh sửa</AlertDialogTitle>
+              <AlertDialogDescription>
+                Nhập mã PIN để chỉnh sửa thông tin này:
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="py-4">
+              <Input
+                type="password"
+                placeholder="Nhập mã PIN"
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handlePinConfirm();
+                  }
+                }}
+                className="text-center text-lg tracking-widest"
+                maxLength={4}
+                autoFocus
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handlePinCancel}>
+                Hủy bỏ
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handlePinConfirm}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Xác nhận
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
