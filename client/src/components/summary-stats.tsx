@@ -25,66 +25,29 @@ interface EditableCellProps {
 function EditableCell({ value, recordId, field, onUpdate }: EditableCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value.toString());
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [pendingValue, setPendingValue] = useState<number | null>(null);
 
   useEffect(() => {
     setEditValue(value.toString());
   }, [value]);
 
-  const handleConfirm = useCallback(() => {
-    if (pendingValue !== null) {
-      onUpdate(recordId, field, pendingValue);
-      setShowConfirm(false);
-      setPendingValue(null);
+  const handleSave = () => {
+    const newValue = parseInt(editValue) || 0;
+    if (newValue !== value) {
+      onUpdate(recordId, field, newValue);
       toast({
         title: "Đã cập nhật",
         description: "Dữ liệu đã được lưu thành công!",
       });
     }
-  }, [pendingValue, recordId, field, onUpdate]);
-
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    if (showConfirm && pendingValue !== null) {
-      timeoutId = setTimeout(() => {
-        handleConfirm();
-      }, 2000);
-    }
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [showConfirm, pendingValue, handleConfirm]);
-
-  const handleSave = () => {
-    const newValue = parseInt(editValue) || 0;
-    if (newValue !== value) {
-      setPendingValue(newValue);
-      setShowConfirm(true);
-    } else {
-      setIsEditing(false);
-    }
+    setIsEditing(false);
   };
 
   const handleCancel = () => {
-    setShowConfirm(false);
-    setPendingValue(null);
     setEditValue(value.toString());
+    setIsEditing(false);
   };
 
-  if (showConfirm && pendingValue !== null) {
-    return (
-      <div className="flex items-center space-x-1 bg-yellow-100 p-1 rounded border border-yellow-300">
-        <span className="text-sm font-medium min-w-[20px] text-center">{pendingValue}</span>
-        <Button size="sm" variant="outline" onClick={handleConfirm} className="h-5 w-5 p-0">
-          <Check className="h-3 w-3 text-green-600" />
-        </Button>
-        <Button size="sm" variant="outline" onClick={handleCancel} className="h-5 w-5 p-0">
-          <X className="h-3 w-3 text-red-600" />
-        </Button>
-      </div>
-    );
-  }
+
 
   if (isEditing) {
     return (
@@ -99,8 +62,7 @@ function EditableCell({ value, recordId, field, onUpdate }: EditableCellProps) {
             handleSave();
           }
           if (e.key === 'Escape') {
-            setEditValue(value.toString());
-            setIsEditing(false);
+            handleCancel();
           }
         }}
         className="w-16 h-6 text-center text-xs"
