@@ -241,18 +241,79 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
                 <p class="text-yellow-700 text-sm">Token này cho phép truy cập vào lịch hẹn của bạn để tự động import tên khách hàng</p>
               </div>
             </div>
+            <div class="mt-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Calendly API Token:
+              </label>
+              <input type="text" id="calendly-token-input" 
+                     placeholder="Paste token từ Calendly (bắt đầu bằng eyJ...)"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                     style="font-family: monospace;">
+              <p class="text-xs text-gray-500 mt-1">Token sẽ được lưu an toàn và chỉ dùng để import khách hàng</p>
+            </div>
             <div class="flex gap-2 mt-6">
               <button onclick="this.parentElement.parentElement.parentElement.remove()" 
                       class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
-                Đóng
+                Hủy
               </button>
               <a href="https://calendly.com/integrations/api_webhooks" target="_blank"
-                 class="flex-1 px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 text-center">
-                Mở Calendly Settings
+                 class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-center text-sm">
+                Lấy Token
               </a>
+              <button onclick="window.saveCalendlyToken()" 
+                      class="flex-1 px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">
+                Lưu & Kết nối
+              </button>
             </div>
           </div>
         `;
+        
+        // Add global function to save token
+        (window as any).saveCalendlyToken = async () => {
+          const tokenInput = document.getElementById('calendly-token-input') as HTMLInputElement;
+          const token = tokenInput?.value?.trim();
+          
+          if (!token) {
+            alert('Vui lòng nhập Calendly API token');
+            return;
+          }
+          
+          if (!token.startsWith('eyJ')) {
+            alert('Token không hợp lệ. Token phải bắt đầu bằng "eyJ"');
+            return;
+          }
+          
+          try {
+            // Save token to server
+            const response = await fetch('/api/calendly/save-token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token })
+            });
+            
+            if (response.ok) {
+              // Close modal
+              modal.remove();
+              
+              // Show success and retry import
+              const successNotification = document.createElement('div');
+              successNotification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+              successNotification.textContent = 'Token đã được lưu! Đang thử kết nối...';
+              document.body.appendChild(successNotification);
+              setTimeout(() => successNotification.remove(), 2000);
+              
+              // Retry import after short delay
+              setTimeout(() => {
+                handleCalendlyImport();
+              }, 1000);
+            } else {
+              alert('Lỗi khi lưu token. Vui lòng thử lại.');
+            }
+          } catch (error) {
+            alert('Lỗi khi lưu token. Vui lòng thử lại.');
+          }
+        };
+        
         document.body.appendChild(modal);
         return;
       }

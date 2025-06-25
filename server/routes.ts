@@ -426,6 +426,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Save Calendly token endpoint
+  app.post("/api/calendly/save-token", async (req, res) => {
+    try {
+      const { token } = req.body;
+      
+      if (!token) {
+        return res.status(400).json({ error: 'Token is required' });
+      }
+      
+      // Validate token format
+      if (!token.startsWith('eyJ')) {
+        return res.status(400).json({ error: 'Invalid token format' });
+      }
+      
+      // Test token by making a simple API call
+      const testResponse = await fetch('https://api.calendly.com/users/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!testResponse.ok) {
+        return res.status(400).json({ error: 'Invalid token or API access denied' });
+      }
+      
+      // Store token in environment (in production, this would be stored securely)
+      process.env.CALENDLY_API_TOKEN = token;
+      
+      res.json({ success: true, message: 'Token saved successfully' });
+    } catch (error) {
+      console.error('Error saving Calendly token:', error);
+      res.status(500).json({ error: 'Failed to save token' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
