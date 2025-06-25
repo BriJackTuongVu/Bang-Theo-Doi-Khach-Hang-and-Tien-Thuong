@@ -243,13 +243,13 @@ export function TrackingTable() {
                   <Calendar className="inline mr-2 h-4 w-4" />
                   Ngày Tháng
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <Users className="inline mr-2 h-4 w-4" />
-                  Số Lượng Khách Hẹn
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                  <Users className="inline mr-1 h-3 w-3" />
+                  Khách Hẹn
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <FileText className="inline mr-2 h-4 w-4" />
-                  Số Lượng Khách Đưa Report
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                  <FileText className="inline mr-1 h-3 w-3" />
+                  Report
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <Percent className="inline mr-2 h-4 w-4" />
@@ -261,6 +261,12 @@ export function TrackingTable() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Hành Động
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Tưởng Only
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Trạng Thái
                 </th>
               </tr>
             </thead>
@@ -317,8 +323,8 @@ export function TrackingTable() {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
+                    <td className="px-4 py-4 whitespace-nowrap w-20">
+                      <div className="flex justify-center">
                         {editingCell?.id === record.id && editingCell?.field === 'scheduledCustomers' ? (
                           <>
                             <Input
@@ -329,37 +335,29 @@ export function TrackingTable() {
                                 handleInputChange(value);
                               }}
                               min="0"
-                              className="w-20 border border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                              className="w-16 border border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
                             />
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={handleConfirmEdit}
-                              className="text-green-600 hover:text-green-900 hover:bg-green-50"
+                              className="text-green-600 hover:text-green-900 hover:bg-green-50 ml-1"
                             >
-                              <Save className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={handleCancelEdit}
-                              className="text-red-600 hover:text-red-900 hover:bg-red-50"
-                            >
-                              <X className="h-4 w-4" />
+                              <Save className="h-3 w-3" />
                             </Button>
                           </>
                         ) : (
                           <div
                             onClick={() => handleStartEdit(record.id, 'scheduledCustomers', record.scheduledCustomers)}
-                            className="cursor-pointer hover:bg-blue-50 p-2 rounded border-2 border-transparent hover:border-blue-200 text-center w-20"
+                            className="cursor-pointer hover:bg-blue-50 p-2 rounded border-2 border-transparent hover:border-blue-200 text-center w-16"
                           >
                             {record.scheduledCustomers}
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
+                    <td className="px-4 py-4 whitespace-nowrap w-20">
+                      <div className="flex justify-center">
                         {editingCell?.id === record.id && editingCell?.field === 'reportedCustomers' ? (
                           <>
                             <Input
@@ -371,29 +369,21 @@ export function TrackingTable() {
                               }}
                               min="0"
                               max={record.scheduledCustomers}
-                              className="w-20 border border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                              className="w-16 border border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
                             />
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={handleConfirmEdit}
-                              className="text-green-600 hover:text-green-900 hover:bg-green-50"
+                              className="text-green-600 hover:text-green-900 hover:bg-green-50 ml-1"
                             >
-                              <Save className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={handleCancelEdit}
-                              className="text-red-600 hover:text-red-900 hover:bg-red-50"
-                            >
-                              <X className="h-4 w-4" />
+                              <Save className="h-3 w-3" />
                             </Button>
                           </>
                         ) : (
                           <div
                             onClick={() => handleStartEdit(record.id, 'reportedCustomers', record.reportedCustomers)}
-                            className="cursor-pointer hover:bg-blue-50 p-2 rounded border-2 border-transparent hover:border-blue-200 text-center w-20"
+                            className="cursor-pointer hover:bg-blue-50 p-2 rounded border-2 border-transparent hover:border-blue-200 text-center w-16"
                           >
                             {record.reportedCustomers}
                           </div>
