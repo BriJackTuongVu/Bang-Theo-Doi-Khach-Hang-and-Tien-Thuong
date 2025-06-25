@@ -525,8 +525,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const record of records) {
         const dateReports = reportsByDate.get(record.date) || [];
         const scheduledCount = dateReports.length;
-        const reportedCount = dateReports.filter(r => r.reportSent).length;
-        const closedCount = dateReports.filter(r => r.reportReceivedDate !== null && r.reportReceivedDate !== undefined).length;
+        const reportedCount = dateReports.filter(r => r.reportReceivedDate !== null && r.reportReceivedDate !== undefined).length;
+        const closedCount = 0; // Keep closed customers as 0 for now
         
         console.log(`=== Processing record for date ${record.date} ===`);
         console.log(`Date reports:`, dateReports.map(r => ({ name: r.customerName, received: r.reportReceivedDate })));
