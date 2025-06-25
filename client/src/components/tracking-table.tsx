@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -59,6 +59,8 @@ export function TrackingTable() {
   const [pin, setPin] = useState("");
   const [pendingEdit, setPendingEdit] = useState<{id: number, field: string, value: any} | null>(null);
   const [highlightedRow, setHighlightedRow] = useState<number | null>(null);
+  const [tableName, setTableName] = useState("Bảng Theo Dõi Chính");
+  const [isEditingName, setIsEditingName] = useState(false);
   
   const { data: records = [], isLoading } = useQuery<TrackingRecord[]>({
     queryKey: ['/api/tracking-records'],
