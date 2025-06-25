@@ -178,16 +178,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/auth/google/callback", async (req, res) => {
-    const { code } = req.query;
+    const { code, state } = req.query;
     try {
-      const response = await oauth2Client.getAccessToken(code as string);
-      oauth2Client.setCredentials(response.tokens);
+      const { tokens } = await oauth2Client.getToken(code as string);
+      oauth2Client.setCredentials(tokens);
       
-      // Store tokens in session or database for later use
-      res.redirect('/?auth=success');
+      const returnTo = state as string || '/';
+      res.redirect(`${returnTo}?google-auth=success`);
     } catch (error) {
       console.error('Error getting access token:', error);
-      res.redirect('/?auth=error');
+      res.redirect('/?google-auth=error');
     }
   });
 

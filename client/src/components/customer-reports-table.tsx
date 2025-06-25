@@ -112,6 +112,93 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
     });
   };
 
+  const handleGoogleCalendarImport = async () => {
+    try {
+      // First check if we have authentication
+      const authResponse = await apiRequest('/api/google-auth-status');
+      
+      if (!authResponse.authenticated) {
+        // Need to authenticate first
+        const authUrl = `/api/google-auth?returnTo=${encodeURIComponent(window.location.pathname)}`;
+        window.open(authUrl, 'google-auth', 'width=500,height=600');
+        return;
+      }
+
+      // Get events from Google Calendar for the selected date
+      const response = await apiRequest(`/api/google-calendar/events?date=${selectedDate}`);
+      
+      if (response.events && response.events.length > 0) {
+        let addedCount = 0;
+        
+        for (const event of response.events) {
+          if (event.summary && event.summary.trim() !== '') {
+            // Check if customer already exists
+            const existingReports = reports as CustomerReport[];
+            const exists = existingReports.some(report => 
+              report.customerName.toLowerCase().trim() === event.summary.toLowerCase().trim() &&
+              report.customerDate === selectedDate
+            );
+            
+            if (!exists) {
+              await createMutation.mutateAsync({
+                customerName: event.summary.trim(),
+                reportSent: false,
+                reportReceivedDate: null,
+                customerDate: selectedDate,
+                trackingRecordId: tableId,
+              });
+              addedCount++;
+            }
+          }
+        }
+        
+        if (addedCount > 0) {
+          // Show success message using notification system
+          const notification = document.createElement('div');
+          notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+          notification.textContent = `Đã thêm ${addedCount} khách hàng từ Google Calendar`;
+          document.body.appendChild(notification);
+          
+          setTimeout(() => {
+            document.body.removeChild(notification);
+          }, 3000);
+        } else {
+          // Show info message
+          const notification = document.createElement('div');
+          notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+          notification.textContent = 'Không có khách hàng mới để thêm (có thể đã tồn tại)';
+          document.body.appendChild(notification);
+          
+          setTimeout(() => {
+            document.body.removeChild(notification);
+          }, 3000);
+        }
+      } else {
+        // Show info message
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        notification.textContent = 'Không tìm thấy sự kiện nào trong Google Calendar cho ngày này';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('Error importing from Google Calendar:', error);
+      
+      // Show error message
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      notification.textContent = 'Lỗi khi import từ Google Calendar. Vui lòng thử lại.';
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 3000);
+    }
+  };
+
   const handleImportFromCalendar = () => {
     if (!importText.trim()) return;
     
