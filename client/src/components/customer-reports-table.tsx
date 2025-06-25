@@ -535,8 +535,69 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              {/* Auto Import Section */}
+              <div className="border rounded-lg p-4 bg-gradient-to-r from-green-50 to-blue-50">
+                <h4 className="font-medium mb-2 flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Tự động từ Google Calendar
+                </h4>
+                <div className="space-y-3">
+                  <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                    <strong>Hướng dẫn:</strong>
+                    <ol className="list-decimal list-inside mt-1 space-y-1">
+                      <li>Mở Google Calendar của ngày {formatDate(selectedDate)}</li>
+                      <li>Bôi chọn tất cả appointments (Ctrl+A hoặc drag chuột)</li>
+                      <li>Copy (Ctrl+C)</li>
+                      <li>Paste vào ô bên dưới (Ctrl+V)</li>
+                      <li>Click "Tự động import" để thêm tất cả khách hàng</li>
+                    </ol>
+                  </div>
+                  
+                  <Textarea
+                    placeholder="Paste nội dung từ Google Calendar vào đây...&#10;&#10;Ví dụ:&#10;2:00 PM - Nguyen Van A and Tuong&#10;3:00 PM - Tran Thi B and Tuong&#10;4:00 PM - Le Van C and Tuong"
+                    value={importText}
+                    onChange={(e) => setImportText(e.target.value)}
+                    rows={4}
+                    className="font-mono text-sm"
+                  />
+                  
+                  {importText.trim() && (
+                    <div className="bg-green-50 p-3 rounded border border-green-200">
+                      <p className="text-sm text-green-700 font-medium">
+                        Phát hiện {Array.from(new Set(
+                          importText.split(/[\n,]|and/)
+                            .map(name => name.replace(/\s+and\s+Tuong.*$/i, '').replace(/\s*-.*$/, '').replace(/\s*\(.*\)/, '').replace(/^\d{1,2}:\d{2}\s*(AM|PM)?\s*-?\s*/i, '').trim())
+                            .filter(name => name.length > 0)
+                        )).length} khách hàng:
+                      </p>
+                      <div className="mt-2 text-xs text-green-600 max-h-20 overflow-y-auto">
+                        {Array.from(new Set(
+                          importText.split(/[\n,]|and/)
+                            .map(name => name.replace(/\s+and\s+Tuong.*$/i, '').replace(/\s*-.*$/, '').replace(/\s*\(.*\)/, '').replace(/^\d{1,2}:\d{2}\s*(AM|PM)?\s*-?\s*/i, '').trim())
+                            .filter(name => name.length > 0)
+                        )).map((name, idx) => (
+                          <span key={idx} className="inline-block bg-white px-2 py-1 rounded mr-1 mb-1">
+                            {name}
+                          </span>
+                        ))}
+                      </div>
+                      <Button 
+                        onClick={handleImportFromCalendar}
+                        className="w-full mt-2 bg-green-600 hover:bg-green-700"
+                      >
+                        Tự động import {Array.from(new Set(
+                          importText.split(/[\n,]|and/)
+                            .map(name => name.replace(/\s+and\s+Tuong.*$/i, '').replace(/\s*-.*$/, '').replace(/\s*\(.*\)/, '').replace(/^\d{1,2}:\d{2}\s*(AM|PM)?\s*-?\s*/i, '').trim())
+                            .filter(name => name.length > 0)
+                        )).length} khách hàng
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Quick Add Section */}
-              <div className="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-green-50">
+              <div className="border rounded-lg p-4">
                 <h4 className="font-medium mb-2 flex items-center gap-2">
                   <Plus className="h-4 w-4" />
                   Thêm nhanh nhiều khách hàng
@@ -564,58 +625,14 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
                 </div>
               </div>
 
-              {/* Import từ Text */}
-              <div className="border rounded-lg p-4">
-                <h4 className="font-medium mb-2 flex items-center gap-2">
-                  <Upload className="h-4 w-4" />
-                  Import từ danh sách
-                </h4>
-                <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded mb-3">
-                  <strong>Mẹo:</strong> Copy tên từ Google Calendar, email, hoặc bất kỳ đâu và paste vào đây. 
-                  Hệ thống sẽ tự động tách từng tên.
-                </div>
-                <Textarea
-                  placeholder="Ví dụ:&#10;Heny phan and Tuong&#10;Simone Le, Van hul&#10;Jackie pham&#10;&#10;Hoặc copy từ Google Calendar:&#10;2:00 PM - Nguyen Van A and Tuong&#10;3:00 PM - Tran Thi B and Tuong"
-                  value={importText}
-                  onChange={(e) => setImportText(e.target.value)}
-                  rows={8}
-                />
-                <div className="text-sm text-gray-600 flex justify-between mt-2">
-                  <span>Số khách hàng sẽ import: <strong className="text-green-600">{
-                    importText.trim() ? 
-                    Array.from(new Set(
-                      importText.split(/[\n,]|and/)
-                        .map(name => name.replace(/\s+and\s+Tuong.*$/i, '').replace(/\s*-.*$/, '').replace(/\s*\(.*\)/, '').replace(/^\d{1,2}:\d{2}\s*(AM|PM)?\s*-?\s*/i, '').trim())
-                        .filter(name => name.length > 0)
-                    )).length : 0
-                  }</strong></span>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => setImportText("")}
-                  >
-                    Xóa hết
-                  </Button>
-                </div>
-              </div>
+
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowImportDialog(false)}>
-                Hủy
-              </Button>
-              <Button 
-                onClick={handleImportFromCalendar} 
-                className="bg-green-600 hover:bg-green-700"
-                disabled={!importText.trim()}
-              >
-                Import danh sách ({
-                  importText.trim() ? 
-                  Array.from(new Set(
-                    importText.split(/[\n,]|and/)
-                      .map(name => name.replace(/\s+and\s+Tuong.*$/i, '').replace(/\s*-.*$/, '').replace(/\s*\(.*\)/, '').replace(/^\d{1,2}:\d{2}\s*(AM|PM)?\s*-?\s*/i, '').trim())
-                      .filter(name => name.length > 0)
-                  )).length : 0
-                } khách hàng)
+              <Button variant="outline" onClick={() => {
+                setImportText("");
+                setShowImportDialog(false);
+              }}>
+                Đóng
               </Button>
             </DialogFooter>
           </DialogContent>
