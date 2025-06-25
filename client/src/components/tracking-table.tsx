@@ -457,10 +457,7 @@ export function TrackingTable() {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => {
-                          setPendingDelete(record.id);
-                          setShowConfirmDialog(true);
-                        }}
+                        onClick={() => handleDelete(record.id)}
                         disabled={deleteMutation.isPending}
                         className="hover:bg-red-600"
                       >
