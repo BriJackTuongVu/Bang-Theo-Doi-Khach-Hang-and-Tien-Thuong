@@ -349,9 +349,7 @@ export function TrackingTable() {
                   <DollarSign className="inline mr-2 h-4 w-4" />
                   Tiền Thưởng
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Hành Động
-                </th>
+
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Tưởng Only
                 </th>
