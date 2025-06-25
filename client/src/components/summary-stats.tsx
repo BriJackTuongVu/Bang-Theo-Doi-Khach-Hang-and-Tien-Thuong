@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,29 +32,7 @@ function EditableCell({ value, recordId, field, onUpdate }: EditableCellProps) {
     setEditValue(value.toString());
   }, [value]);
 
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    if (showConfirm && pendingValue !== null) {
-      timeoutId = setTimeout(() => {
-        setShowConfirm(false);
-        setPendingValue(null);
-      }, 2000);
-    }
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [showConfirm, pendingValue]);
-
-  const handleSave = () => {
-    const newValue = parseInt(editValue) || 0;
-    if (newValue !== value) {
-      setPendingValue(newValue);
-      setShowConfirm(true);
-    }
-    setIsEditing(false);
-  };
-
-  const handleConfirm = () => {
+  const handleConfirm = useCallback(() => {
     if (pendingValue !== null) {
       onUpdate(recordId, field, pendingValue);
       setShowConfirm(false);
@@ -64,6 +42,28 @@ function EditableCell({ value, recordId, field, onUpdate }: EditableCellProps) {
         description: "Dữ liệu đã được lưu thành công!",
       });
     }
+  }, [pendingValue, recordId, field, onUpdate]);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (showConfirm && pendingValue !== null) {
+      timeoutId = setTimeout(() => {
+        handleConfirm();
+      }, 2000);
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [showConfirm, pendingValue, handleConfirm]);
+
+  const handleSave = () => {
+    const newValue = parseInt(editValue) || 0;
+    if (newValue !== value) {
+      setPendingValue(newValue);
+      setShowConfirm(true);
+    } else {
+      setIsEditing(false);
+    }
   };
 
   const handleCancel = () => {
@@ -72,14 +72,14 @@ function EditableCell({ value, recordId, field, onUpdate }: EditableCellProps) {
     setEditValue(value.toString());
   };
 
-  if (showConfirm) {
+  if (showConfirm && pendingValue !== null) {
     return (
-      <div className="flex items-center space-x-2 bg-yellow-50 p-2 rounded border">
-        <span className="text-sm">{pendingValue}</span>
-        <Button size="sm" variant="outline" onClick={handleConfirm} className="h-6 w-6 p-0">
+      <div className="flex items-center space-x-1 bg-yellow-100 p-1 rounded border border-yellow-300">
+        <span className="text-sm font-medium min-w-[20px] text-center">{pendingValue}</span>
+        <Button size="sm" variant="outline" onClick={handleConfirm} className="h-5 w-5 p-0">
           <Check className="h-3 w-3 text-green-600" />
         </Button>
-        <Button size="sm" variant="outline" onClick={handleCancel} className="h-6 w-6 p-0">
+        <Button size="sm" variant="outline" onClick={handleCancel} className="h-5 w-5 p-0">
           <X className="h-3 w-3 text-red-600" />
         </Button>
       </div>
@@ -89,25 +89,30 @@ function EditableCell({ value, recordId, field, onUpdate }: EditableCellProps) {
   if (isEditing) {
     return (
       <Input
+        type="number"
         value={editValue}
         onChange={(e) => setEditValue(e.target.value)}
         onBlur={handleSave}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') handleSave();
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            handleSave();
+          }
           if (e.key === 'Escape') {
             setEditValue(value.toString());
             setIsEditing(false);
           }
         }}
-        className="w-20 h-8 text-center"
+        className="w-16 h-6 text-center text-xs"
         autoFocus
+        min="0"
       />
     );
   }
 
   return (
     <div 
-      className="cursor-pointer hover:bg-gray-100 p-1 rounded border border-dashed border-gray-300 min-w-[40px] text-center"
+      className="cursor-pointer hover:bg-blue-50 p-1 rounded border border-dashed border-gray-300 min-w-[30px] text-center text-xs font-medium transition-colors"
       onClick={() => setIsEditing(true)}
       title="Click để chỉnh sửa"
     >
