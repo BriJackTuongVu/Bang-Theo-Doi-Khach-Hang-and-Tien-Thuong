@@ -100,24 +100,20 @@ export function SummaryStats({ records }: SummaryStatsProps) {
       });
     },
     onMutate: async (data) => {
-      console.log('onMutate called with:', data);
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["/api/tracking-records"] });
 
       // Snapshot the previous value
       const previousRecords = queryClient.getQueryData(["/api/tracking-records"]);
-      console.log('Previous records:', previousRecords);
 
       // Optimistically update to the new value
       queryClient.setQueryData(["/api/tracking-records"], (oldRecords: any) => {
         if (!oldRecords) return oldRecords;
-        const updatedRecords = oldRecords.map((record: any) => 
+        return oldRecords.map((record: any) => 
           record.id === data.id 
             ? { ...record, [data.field]: data.value }
             : record
         );
-        console.log('Updated records:', updatedRecords);
-        return updatedRecords;
       });
 
       // Return a context object with the snapshotted value
@@ -141,7 +137,6 @@ export function SummaryStats({ records }: SummaryStatsProps) {
   });
 
   const handleCellUpdate = (id: number, field: string, value: number) => {
-    console.log('Updating cell:', { id, field, value });
     updateMutation.mutate({ id, field, value });
   };
   
@@ -169,7 +164,7 @@ export function SummaryStats({ records }: SummaryStatsProps) {
     );
   };
 
-  const overallTotals = records.reduce(
+  const overallTotals = freshRecords.reduce(
     (acc, record) => {
       const { totalBonus } = calculateBonus(record.scheduledCustomers, record.reportedCustomers);
       return {
@@ -350,19 +345,21 @@ export function SummaryStats({ records }: SummaryStatsProps) {
                         <h4 className="text-sm font-medium text-gray-700 mb-2">Chi tiết theo ngày:</h4>
                         <div className="space-y-1 max-h-64 overflow-y-auto">
                           {month.records.map((record) => {
-                            const dailyBonus = calculateBonus(record.scheduledCustomers, record.reportedCustomers);
-                            const dayName = new Date(record.date).toLocaleDateString('vi-VN', { weekday: 'long' });
+                            // Use fresh record data for calculations
+                            const freshRecord = freshRecords.find(r => r.id === record.id) || record;
+                            const dailyBonus = calculateBonus(freshRecord.scheduledCustomers, freshRecord.reportedCustomers);
+                            const dayName = new Date(freshRecord.date).toLocaleDateString('vi-VN', { weekday: 'long' });
                             
                             return (
                               <div key={record.id} className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded text-sm">
                                 <span className="font-medium">
-                                  {dayName} ({new Date(record.date).toLocaleDateString('vi-VN')})
+                                  {dayName} ({new Date(freshRecord.date).toLocaleDateString('vi-VN')})
                                 </span>
                                 <div className="flex space-x-4 text-xs items-center">
                                   <div className="flex items-center space-x-1">
                                     <EditableCell 
-                                      value={record.scheduledCustomers} 
-                                      recordId={record.id} 
+                                      value={freshRecord.scheduledCustomers} 
+                                      recordId={freshRecord.id} 
                                       field="scheduledCustomers"
                                       onUpdate={handleCellUpdate}
                                     />
@@ -370,8 +367,8 @@ export function SummaryStats({ records }: SummaryStatsProps) {
                                   </div>
                                   <div className="flex items-center space-x-1">
                                     <EditableCell 
-                                      value={record.reportedCustomers} 
-                                      recordId={record.id} 
+                                      value={freshRecord.reportedCustomers} 
+                                      recordId={freshRecord.id} 
                                       field="reportedCustomers"
                                       onUpdate={handleCellUpdate}
                                     />
