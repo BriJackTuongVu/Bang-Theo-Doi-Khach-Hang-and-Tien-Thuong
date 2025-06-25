@@ -18,7 +18,7 @@ import {
 import { CustomerReport, InsertCustomerReport } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDate, getTodayDate, getDayOfWeek, getNextWorkingDay } from "@/lib/utils";
-import { Plus, User, Send, Calendar, Trash2 } from "lucide-react";
+import { Plus, User, Send, Calendar, Trash2, Upload } from "lucide-react";
 
 interface CustomerReportsTableProps {
   tableId?: number;
@@ -40,6 +40,8 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
   const [pin, setPin] = useState("");
   const [pendingEdit, setPendingEdit] = useState<{id: number, field: string, value: any} | null>(null);
   const [selectedDate, setSelectedDate] = useState(initialDate || getTodayDate());
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importText, setImportText] = useState("");
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["/api/customer-reports", tableId],
@@ -91,6 +93,35 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
       customerDate: selectedDate,
       trackingRecordId: tableId, // Use tableId to group customers by table
     });
+  };
+
+  const handleImportFromCalendar = () => {
+    if (!importText.trim()) return;
+    
+    // Parse names from the import text (split by lines and clean up)
+    const names = importText
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .map(line => {
+        // Remove "and Tuong" suffix if present and extract first name
+        const cleanName = line.replace(/\s+and\s+Tuong.*$/i, '').trim();
+        return cleanName || line.trim();
+      });
+
+    // Create customer reports for each name
+    names.forEach(name => {
+      createMutation.mutate({
+        customerName: name,
+        reportSent: false,
+        reportReceivedDate: null,
+        customerDate: selectedDate,
+        trackingRecordId: tableId,
+      });
+    });
+
+    setImportText("");
+    setShowImportDialog(false);
   };
 
   const handleStartEdit = (
@@ -428,6 +459,46 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 Xác nhận
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Import from Calendar Dialog */}
+        <AlertDialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+          <AlertDialogContent className="max-w-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Import Khách Hàng từ Google Calendar</AlertDialogTitle>
+              <AlertDialogDescription>
+                Copy danh sách tên khách hàng từ Google Calendar và paste vào đây. Mỗi tên một dòng.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="my-4">
+              <textarea
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                placeholder="Ví dụ:
+Heny phan
+Simone Le
+Van hul
+Jackie pham
+Huan Nguyen
+..."
+                className="w-full h-64 p-3 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => {
+                setImportText("");
+                setShowImportDialog(false);
+              }}>
+                Hủy bỏ
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleImportFromCalendar}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                Import ({importText.split('\n').filter(line => line.trim().length > 0).length} khách hàng)
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
