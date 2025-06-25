@@ -2,13 +2,23 @@ import { TrackingTable } from "@/components/tracking-table";
 import { BonusTierIndicator } from "@/components/bonus-tier-indicator";
 import { SummaryStats } from "@/components/summary-stats";
 import { CustomerReportsTable } from "@/components/customer-reports-table";
+import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { TrackingRecord } from "@shared/schema";
+import { useState } from "react";
+import { Plus } from "lucide-react";
 
 export default function TrackingPage() {
   const { data: records = [] } = useQuery<TrackingRecord[]>({
     queryKey: ['/api/tracking-records'],
   });
+
+  const [customerTables, setCustomerTables] = useState([1]); // Start with one table
+
+  const addNewCustomerTable = () => {
+    const newTableId = Math.max(...customerTables) + 1;
+    setCustomerTables([...customerTables, newTableId]);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -37,8 +47,22 @@ export default function TrackingPage() {
         {/* Tracking Table */}
         <TrackingTable />
         
-        {/* Customer Reports Table */}
-        <CustomerReportsTable />
+        {/* Customer Reports Tables */}
+        {customerTables.map((tableId) => (
+          <CustomerReportsTable key={tableId} tableId={tableId} />
+        ))}
+        
+        {/* Add New Customer Table Button */}
+        <div className="flex justify-center">
+          <Button
+            onClick={addNewCustomerTable}
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3"
+            size="lg"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Thêm Bảng Chi Tiết Khách Hàng Mới
+          </Button>
+        </div>
       </div>
     </div>
   );

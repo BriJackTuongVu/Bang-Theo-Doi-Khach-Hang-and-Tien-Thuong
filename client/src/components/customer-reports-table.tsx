@@ -20,7 +20,11 @@ import { apiRequest } from "@/lib/queryClient";
 import { formatDate, getTodayDate } from "@/lib/utils";
 import { Plus, User, Send, Calendar, Trash2 } from "lucide-react";
 
-export function CustomerReportsTable() {
+interface CustomerReportsTableProps {
+  tableId?: number;
+}
+
+export function CustomerReportsTable({ tableId = 1 }: CustomerReportsTableProps) {
   const queryClient = useQueryClient();
 
   const [editingCell, setEditingCell] = useState<{
@@ -37,7 +41,7 @@ export function CustomerReportsTable() {
   const [selectedDate, setSelectedDate] = useState(getTodayDate());
 
   const { data: reports = [], isLoading } = useQuery({
-    queryKey: ["/api/customer-reports"],
+    queryKey: ["/api/customer-reports", tableId],
   });
 
   const createMutation = useMutation({
@@ -80,11 +84,11 @@ export function CustomerReportsTable() {
 
   const handleAddCustomer = () => {
     createMutation.mutate({
-      customerName: "Khách hàng mới",
+      customerName: `Khách hàng mới - Bảng ${tableId}`,
       reportSent: false,
       reportReceivedDate: null,
       customerDate: selectedDate,
-      trackingRecordId: null,
+      trackingRecordId: tableId, // Use tableId to group customers by table
     });
   };
 
@@ -197,7 +201,7 @@ export function CustomerReportsTable() {
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            Chi Tiết Khách Hàng
+            Chi Tiết Khách Hàng #{tableId}
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
@@ -240,7 +244,8 @@ export function CustomerReportsTable() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {(reports as CustomerReport[]).filter((report: CustomerReport) => 
-                report.customerDate === selectedDate
+                report.customerDate === selectedDate && 
+                (report.trackingRecordId === tableId || (!report.trackingRecordId && tableId === 1))
               ).map((report: CustomerReport) => (
                 <tr key={report.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
