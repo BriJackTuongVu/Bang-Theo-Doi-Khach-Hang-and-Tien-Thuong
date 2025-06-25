@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { CustomerReport, InsertCustomerReport } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
-import { formatDate, getTodayDate } from "@/lib/utils";
+import { formatDate, getTodayDate, getDayOfWeek } from "@/lib/utils";
 import { Plus, User, Send, Calendar, Trash2 } from "lucide-react";
 
 interface CustomerReportsTableProps {
@@ -205,12 +205,17 @@ export function CustomerReportsTable({ tableId = 1 }: CustomerReportsTableProps)
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
-            <Input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-40"
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-40"
+              />
+              <span className="text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                {getDayOfWeek(selectedDate)}
+              </span>
+            </div>
           </div>
         </CardTitle>
       </CardHeader>

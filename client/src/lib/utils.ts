@@ -127,3 +127,15 @@ export function groupRecordsByWeek(records: any[]) {
     };
   }).sort((a, b) => b.start.getTime() - a.start.getTime()); // Sort by newest week first
 }
+
+export function getDayOfWeek(date: string): string {
+  const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+  const dayIndex = new Date(date).getDay();
+  return days[dayIndex];
+}
+
+export function formatDateWithDay(date: string): string {
+  const dayOfWeek = getDayOfWeek(date);
+  const formattedDate = formatDate(date);
+  return `${formattedDate} (${dayOfWeek})`;
+}
