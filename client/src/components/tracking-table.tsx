@@ -55,6 +55,7 @@ export function TrackingTable() {
   } | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<number | null>(null);
+  const [highlightedRow, setHighlightedRow] = useState<number | null>(null);
   
   const { data: records = [], isLoading } = useQuery<TrackingRecord[]>({
     queryKey: ['/api/tracking-records'],
@@ -65,8 +66,15 @@ export function TrackingTable() {
       const response = await apiRequest('POST', '/api/tracking-records', data);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (newRecord) => {
       queryClient.invalidateQueries({ queryKey: ['/api/tracking-records'] });
+      
+      // Highlight the new row
+      setHighlightedRow(newRecord.id);
+      setTimeout(() => {
+        setHighlightedRow(null);
+      }, 2000);
+      
       toast({
         title: "Thành công",
         description: "Đã thêm bản ghi mới",
@@ -262,7 +270,14 @@ export function TrackingTable() {
                 );
 
                 return (
-                  <tr key={record.id} className="hover:bg-gray-50 transition-colors">
+                  <tr 
+                    key={record.id} 
+                    className={`transition-all duration-500 ${
+                      highlightedRow === record.id 
+                        ? 'bg-green-100 animate-pulse border-2 border-green-300 shadow-lg' 
+                        : 'hover:bg-gray-50'
+                    }`}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
                         {editingCell?.id === record.id && editingCell?.field === 'date' ? (
