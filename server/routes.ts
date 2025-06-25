@@ -91,6 +91,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Customer Reports endpoints
+  app.get("/api/customer-reports", async (req, res) => {
+    try {
+      const reports = await storage.getCustomerReports();
+      res.json(reports);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch customer reports" });
+    }
+  });
+
+  app.get("/api/customer-reports/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const report = await storage.getCustomerReport(id);
+      if (!report) {
+        return res.status(404).json({ error: "Customer report not found" });
+      }
+      res.json(report);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch customer report" });
+    }
+  });
+
+  app.post("/api/customer-reports", async (req, res) => {
+    try {
+      const validatedData = insertCustomerReportSchema.parse(req.body);
+      const report = await storage.createCustomerReport(validatedData);
+      res.status(201).json(report);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid data format" });
+      }
+      res.status(500).json({ error: "Failed to create customer report" });
+    }
+  });
+
+  app.patch("/api/customer-reports/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertCustomerReportSchema.partial().parse(req.body);
+      const report = await storage.updateCustomerReport(id, validatedData);
+      if (!report) {
+        return res.status(404).json({ error: "Customer report not found" });
+      }
+      res.json(report);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid data format" });
+      }
+      res.status(500).json({ error: "Failed to update customer report" });
+    }
+  });
+
+  app.delete("/api/customer-reports/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteCustomerReport(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Customer report not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete customer report" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

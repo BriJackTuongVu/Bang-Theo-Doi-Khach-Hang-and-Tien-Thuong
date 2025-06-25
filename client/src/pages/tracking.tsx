@@ -1,6 +1,7 @@
 import { TrackingTable } from "@/components/tracking-table";
 import { BonusTierIndicator } from "@/components/bonus-tier-indicator";
 import { SummaryStats } from "@/components/summary-stats";
+import { CustomerReportsTable } from "@/components/customer-reports-table";
 import { useQuery } from "@tanstack/react-query";
 import { TrackingRecord } from "@shared/schema";
 
@@ -35,6 +36,9 @@ export default function TrackingPage() {
 
         {/* Tracking Table */}
         <TrackingTable />
+        
+        {/* Customer Reports Table */}
+        <CustomerReportsTable />
       </div>
     </div>
   );

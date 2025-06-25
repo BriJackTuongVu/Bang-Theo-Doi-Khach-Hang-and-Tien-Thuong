@@ -22,7 +22,9 @@ export class MemStorage implements IStorage {
 
   constructor() {
     this.records = new Map();
+    this.customerReports = new Map();
     this.currentId = 1;
+    this.currentReportId = 1;
     
     // Initialize with sample data
     this.initializeData();
@@ -103,6 +105,37 @@ export class MemStorage implements IStorage {
 
   async deleteTrackingRecord(id: number): Promise<boolean> {
     return this.records.delete(id);
+  }
+
+  async getCustomerReports(): Promise<CustomerReport[]> {
+    return Array.from(this.customerReports.values());
+  }
+
+  async getCustomerReport(id: number): Promise<CustomerReport | undefined> {
+    return this.customerReports.get(id);
+  }
+
+  async createCustomerReport(insertReport: InsertCustomerReport): Promise<CustomerReport> {
+    const report: CustomerReport = { 
+      id: this.currentReportId++, 
+      ...insertReport,
+      createdAt: new Date()
+    };
+    this.customerReports.set(report.id, report);
+    return report;
+  }
+
+  async updateCustomerReport(id: number, updateReport: Partial<InsertCustomerReport>): Promise<CustomerReport | undefined> {
+    const existing = this.customerReports.get(id);
+    if (!existing) return undefined;
+    
+    const updated: CustomerReport = { ...existing, ...updateReport };
+    this.customerReports.set(id, updated);
+    return updated;
+  }
+
+  async deleteCustomerReport(id: number): Promise<boolean> {
+    return this.customerReports.delete(id);
   }
 }
 
