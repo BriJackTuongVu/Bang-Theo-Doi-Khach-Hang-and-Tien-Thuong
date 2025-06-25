@@ -143,8 +143,8 @@ export class MemStorage implements IStorage {
   }
 }
 
-// Database Storage Implementation
-import { users, trackingRecords, customerReports, type TrackingRecord, type InsertTrackingRecord, type CustomerReport, type InsertCustomerReport } from "@shared/schema";
+// Database Storage Implementation  
+import { trackingRecords, customerReports } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
@@ -177,7 +177,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTrackingRecord(id: number): Promise<boolean> {
     const result = await db.delete(trackingRecords).where(eq(trackingRecords.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   async getCustomerReports(): Promise<CustomerReport[]> {
@@ -208,7 +208,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCustomerReport(id: number): Promise<boolean> {
     const result = await db.delete(customerReports).where(eq(customerReports.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 }
 
