@@ -42,10 +42,7 @@ export function CustomerReportsTable() {
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertCustomerReport) => {
-      const response = await apiRequest("/api/customer-reports", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest("POST", "/api/customer-reports", data);
       return response.json();
     },
     onSuccess: () => {
@@ -63,10 +60,7 @@ export function CustomerReportsTable() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<InsertCustomerReport> }) => {
-      const response = await apiRequest(`/api/customer-reports/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest("PATCH", `/api/customer-reports/${id}`, data);
       return response.json();
     },
     onSuccess: () => {
@@ -84,13 +78,18 @@ export function CustomerReportsTable() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest(`/api/customer-reports/${id}`, {
-        method: "DELETE",
-      });
+      await apiRequest("DELETE", `/api/customer-reports/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/customer-reports"] });
       toast({ description: "Đã xóa khách hàng" });
+    },
+    onError: (error) => {
+      console.error("Error deleting customer:", error);
+      toast({ 
+        description: "Lỗi khi xóa khách hàng",
+        variant: "destructive"
+      });
     },
   });
 
