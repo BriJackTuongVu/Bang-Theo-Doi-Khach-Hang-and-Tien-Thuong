@@ -22,6 +22,13 @@ interface EditableCellProps {
   onUpdate: (id: number, field: string, value: number) => void;
 }
 
+// Extend window to include autoSaveTimeout
+declare global {
+  interface Window {
+    autoSaveTimeout: number;
+  }
+}
+
 function EditableCell({ value, recordId, field, onUpdate }: EditableCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value.toString());
@@ -29,6 +36,15 @@ function EditableCell({ value, recordId, field, onUpdate }: EditableCellProps) {
   useEffect(() => {
     setEditValue(value.toString());
   }, [value]);
+
+  useEffect(() => {
+    // Cleanup timeout when component unmounts
+    return () => {
+      if (window.autoSaveTimeout) {
+        clearTimeout(window.autoSaveTimeout);
+      }
+    };
+  }, []);
 
   const handleSave = () => {
     const newValue = parseInt(editValue) || 0;
@@ -50,14 +66,30 @@ function EditableCell({ value, recordId, field, onUpdate }: EditableCellProps) {
       <Input
         type="number"
         value={editValue}
-        onChange={(e) => setEditValue(e.target.value)}
-        onBlur={handleSave}
+        onChange={(e) => {
+          setEditValue(e.target.value);
+          // Auto-save on every change with a small delay
+          const newValue = parseInt(e.target.value) || 0;
+          if (newValue !== value) {
+            clearTimeout(window.autoSaveTimeout);
+            window.autoSaveTimeout = setTimeout(() => {
+              onUpdate(recordId, field, newValue);
+              setIsEditing(false);
+            }, 500); // 500ms delay
+          }
+        }}
+        onBlur={() => {
+          clearTimeout(window.autoSaveTimeout);
+          handleSave();
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
+            clearTimeout(window.autoSaveTimeout);
             handleSave();
           }
           if (e.key === 'Escape') {
+            clearTimeout(window.autoSaveTimeout);
             handleCancel();
           }
         }}
@@ -72,7 +104,7 @@ function EditableCell({ value, recordId, field, onUpdate }: EditableCellProps) {
     <div 
       className="cursor-pointer hover:bg-blue-50 p-1 rounded border border-dashed border-gray-300 min-w-[30px] text-center text-xs font-medium transition-colors"
       onClick={() => setIsEditing(true)}
-      title="Click để chỉnh sửa"
+      title="Click để chỉnh sửa - tự động lưu khi nhập"
     >
       {value}
     </div>
