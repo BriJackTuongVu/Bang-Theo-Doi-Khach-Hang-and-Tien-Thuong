@@ -50,8 +50,7 @@ export default function TrackingPage() {
         {/* Summary Stats - moved to top */}
         <SummaryStats records={records} />
 
-        {/* Bonus Tier Indicator - compact version */}
-        <BonusTierIndicator />
+
 
         {/* Tracking Table */}
         <TrackingTable />
