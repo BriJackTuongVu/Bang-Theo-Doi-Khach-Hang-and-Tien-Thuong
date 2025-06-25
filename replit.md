@@ -111,4 +111,5 @@ Changelog:
 
 ```
 Preferred communication style: Simple, everyday language.
+Development approach: Must ask user permission before creating new solutions or features. Only implement after user approval.
 ```
