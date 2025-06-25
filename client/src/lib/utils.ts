@@ -32,3 +32,19 @@ export function formatDate(date: string): string {
 export function getTodayDate(): string {
   return new Date().toISOString().split('T')[0];
 }
+
+export function getNextDate(records: any[]): string {
+  if (records.length === 0) {
+    return getTodayDate();
+  }
+  
+  // Sort records by date and get the latest date
+  const sortedRecords = records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const latestDate = new Date(sortedRecords[0].date);
+  
+  // Add one day to the latest date
+  const nextDate = new Date(latestDate);
+  nextDate.setDate(nextDate.getDate() + 1);
+  
+  return nextDate.toISOString().split('T')[0];
+}

@@ -42,7 +42,12 @@ export class MemStorage implements IStorage {
 
     sampleRecords.forEach(record => {
       const id = this.currentId++;
-      const trackingRecord: TrackingRecord = { ...record, id };
+      const trackingRecord: TrackingRecord = { 
+        ...record, 
+        id,
+        scheduledCustomers: record.scheduledCustomers ?? 0,
+        reportedCustomers: record.reportedCustomers ?? 0
+      };
       this.records.set(id, trackingRecord);
     });
   }
@@ -59,7 +64,12 @@ export class MemStorage implements IStorage {
 
   async createTrackingRecord(insertRecord: InsertTrackingRecord): Promise<TrackingRecord> {
     const id = this.currentId++;
-    const record: TrackingRecord = { ...insertRecord, id };
+    const record: TrackingRecord = { 
+      ...insertRecord, 
+      id,
+      scheduledCustomers: insertRecord.scheduledCustomers ?? 0,
+      reportedCustomers: insertRecord.reportedCustomers ?? 0
+    };
     this.records.set(id, record);
     return record;
   }

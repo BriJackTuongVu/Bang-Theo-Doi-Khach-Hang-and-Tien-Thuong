@@ -11,7 +11,7 @@ import {
   BONUS_TIERS 
 } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
-import { formatCurrency, formatPercentage, getTodayDate } from "@/lib/utils";
+import { formatCurrency, formatPercentage, getTodayDate, getNextDate } from "@/lib/utils";
 import { 
   Plus, 
   Calendar, 
@@ -100,7 +100,7 @@ export function TrackingTable() {
 
   const handleAddRow = () => {
     createMutation.mutate({
-      date: getTodayDate(),
+      date: getNextDate(records),
       scheduledCustomers: 0,
       reportedCustomers: 0,
     });
