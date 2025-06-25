@@ -478,13 +478,7 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
             <Plus className="h-4 w-4 mr-2" />
             Thêm Khách Hàng
           </Button>
-          <Button
-            onClick={() => setShowImportDialog(true)}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            Import từ Google Calendar
-          </Button>
+
         </div>
 
         {/* Confirmation Dialog for Delete */}
