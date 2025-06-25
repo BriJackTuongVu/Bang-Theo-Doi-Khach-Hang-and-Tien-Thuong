@@ -111,9 +111,10 @@ function EditableCell({ value, recordId, field, onUpdate }: EditableCellProps) {
   );
 }
 
-// Auto-sync hook
+// Auto-sync hook with debounce to prevent infinite loops
 function useAutoSync() {
   const queryClient = useQueryClient();
+  const [isSyncing, setIsSyncing] = useState(false);
   
   const { data: customerReports = [] } = useQuery<CustomerReport[]>({
     queryKey: ['/api/customer-reports'],
@@ -129,53 +130,72 @@ function useAutoSync() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tracking-records'] });
+      // Don't invalidate during sync to prevent infinite loop
+      if (!isSyncing) {
+        queryClient.invalidateQueries({ queryKey: ['/api/tracking-records'] });
+      }
     },
   });
 
   useEffect(() => {
+    if (isSyncing || trackingRecords.length === 0) return;
+
     const syncData = async () => {
-      if (trackingRecords.length === 0) return;
-
-      // Group customer reports by date
-      const reportsByDate: { [date: string]: { scheduled: number; reported: number } } = {};
+      setIsSyncing(true);
       
-      customerReports.forEach(report => {
-        const date = report.customerDate;
-        if (!reportsByDate[date]) {
-          reportsByDate[date] = { scheduled: 0, reported: 0 };
-        }
-        reportsByDate[date].scheduled++;
-        if (report.reportSent) {
-          reportsByDate[date].reported++;
-        }
-      });
-
-      // Update tracking records automatically
-      for (const record of trackingRecords) {
-        const dateData = reportsByDate[record.date] || { scheduled: 0, reported: 0 };
-        const { scheduled, reported } = dateData;
+      try {
+        // Group customer reports by date
+        const reportsByDate: { [date: string]: { scheduled: number; reported: number } } = {};
         
-        // Always update to match customer reports data (including 0 if no customers)
-        if (record.scheduledCustomers !== scheduled || record.reportedCustomers !== reported) {
-          try {
-            await updateMutation.mutateAsync({
-              id: record.id,
-              data: {
-                scheduledCustomers: scheduled,
-                reportedCustomers: reported,
-              },
-            });
-          } catch (error) {
-            console.error('Auto-sync error:', error);
+        customerReports.forEach(report => {
+          const date = report.customerDate;
+          if (!reportsByDate[date]) {
+            reportsByDate[date] = { scheduled: 0, reported: 0 };
+          }
+          reportsByDate[date].scheduled++;
+          if (report.reportSent) {
+            reportsByDate[date].reported++;
+          }
+        });
+
+        // Update tracking records with batched updates
+        const updates: Promise<any>[] = [];
+        
+        for (const record of trackingRecords) {
+          const dateData = reportsByDate[record.date] || { scheduled: 0, reported: 0 };
+          const { scheduled, reported } = dateData;
+          
+          // Only update if values are different
+          if (record.scheduledCustomers !== scheduled || record.reportedCustomers !== reported) {
+            updates.push(
+              updateMutation.mutateAsync({
+                id: record.id,
+                data: {
+                  scheduledCustomers: scheduled,
+                  reportedCustomers: reported,
+                },
+              })
+            );
           }
         }
+
+        // Execute all updates
+        if (updates.length > 0) {
+          await Promise.all(updates);
+          // Refresh data after all updates are complete
+          queryClient.invalidateQueries({ queryKey: ['/api/tracking-records'] });
+        }
+      } catch (error) {
+        console.error('Auto-sync error:', error);
+      } finally {
+        setIsSyncing(false);
       }
     };
 
-    // Sync whenever customer reports or tracking records change
-    syncData();
-  }, [customerReports, trackingRecords, updateMutation]);
+    // Debounce the sync operation
+    const timeoutId = setTimeout(syncData, 500);
+    return () => clearTimeout(timeoutId);
+  }, [customerReports, trackingRecords, updateMutation, isSyncing, queryClient]);
 }
 
 export function SummaryStats({ records }: SummaryStatsProps) {
