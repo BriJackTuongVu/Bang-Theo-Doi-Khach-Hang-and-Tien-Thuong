@@ -98,16 +98,40 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
   const handleImportFromCalendar = () => {
     if (!importText.trim()) return;
     
-    // Parse names from the import text (split by lines and clean up)
-    const names = importText
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
-      .map(line => {
-        // Remove "and Tuong" suffix if present and extract first name
-        const cleanName = line.replace(/\s+and\s+Tuong.*$/i, '').trim();
-        return cleanName || line.trim();
-      });
+    // Parse names from various formats
+    let names: string[] = [];
+    
+    // Method 1: Split by lines first
+    const lines = importText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    for (const line of lines) {
+      // Method 2: Handle comma-separated names in a line
+      if (line.includes(',')) {
+        const commaSeparated = line.split(',').map(name => name.trim()).filter(name => name.length > 0);
+        names.push(...commaSeparated);
+      }
+      // Method 3: Handle "and" separated names  
+      else if (line.includes(' and ')) {
+        const andSeparated = line.split(' and ').map(name => name.trim()).filter(name => name.length > 0);
+        names.push(...andSeparated);
+      }
+      // Method 4: Single name per line
+      else {
+        names.push(line);
+      }
+    }
+    
+    // Clean up names - remove common suffixes
+    names = names.map(name => {
+      return name
+        .replace(/\s+and\s+Tuong.*$/i, '')
+        .replace(/\s*-.*$/, '') // Remove anything after dash
+        .replace(/\s*\(.*\)/, '') // Remove anything in parentheses
+        .trim();
+    }).filter(name => name.length > 0);
+
+    // Remove duplicates
+    names = [...new Set(names)];
 
     // Create customer reports for each name
     names.forEach(name => {
