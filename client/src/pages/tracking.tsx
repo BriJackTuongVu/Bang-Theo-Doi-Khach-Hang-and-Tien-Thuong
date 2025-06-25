@@ -24,7 +24,11 @@ export default function TrackingPage() {
     );
     const nextWorkingDate = getNextWorkingDay(latestDate);
     
-    setCustomerTables([...customerTables, { id: newTableId, date: nextWorkingDate }]);
+    // Add new table to the end of the array
+    const newTables = [...customerTables, { id: newTableId, date: nextWorkingDate }];
+    // Sort by ID to ensure consistent order (newest at end)
+    newTables.sort((a, b) => a.id - b.id);
+    setCustomerTables(newTables);
   };
 
   return (
