@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CustomerReport, InsertCustomerReport } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDate, getTodayDate, getDayOfWeek, getNextWorkingDay } from "@/lib/utils";
-import { Plus, User, Send, Calendar, Trash2, Upload, Link } from "lucide-react";
+import { Plus, User, Send, Calendar, Trash2, Upload, Link, Image } from "lucide-react";
 
 interface CalendarEvent {
   name: string;
@@ -59,6 +59,7 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
   const [importText, setImportText] = useState("");
   const [quickAddCount, setQuickAddCount] = useState(5);
   const [isAutoDetecting, setIsAutoDetecting] = useState(false);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["/api/customer-reports", tableId],
@@ -155,6 +156,92 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
         document.body.removeChild(notification);
       }
     }, 10000);
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check if it's an image
+    if (!file.type.startsWith('image/')) {
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      notification.textContent = 'Vui lòng chọn file hình ảnh (JPG, PNG, etc.)';
+      document.body.appendChild(notification);
+      setTimeout(() => document.body.removeChild(notification), 3000);
+      return;
+    }
+
+    setIsProcessingImage(true);
+
+    try {
+      // Convert image to base64
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Remove data:image/...;base64, prefix
+          const base64Data = result.split(',')[1];
+          resolve(base64Data);
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // Send to backend for OCR processing
+      const response = await apiRequest('POST', '/api/ocr/extract-names', {
+        image: base64,
+        date: selectedDate
+      });
+
+      const result = await response.json();
+
+      if (result.names && result.names.length > 0) {
+        let addedCount = 0;
+        
+        for (const name of result.names) {
+          // Check if customer already exists
+          const existingReports = reports as CustomerReport[];
+          const exists = existingReports.some(report => 
+            report.customerName.toLowerCase().trim() === name.toLowerCase().trim() &&
+            report.customerDate === selectedDate
+          );
+          
+          if (!exists) {
+            await createMutation.mutateAsync({
+              customerName: name.trim(),
+              reportSent: false,
+              reportReceivedDate: null,
+              customerDate: selectedDate,
+              trackingRecordId: tableId,
+            });
+            addedCount++;
+          }
+        }
+
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        notification.textContent = `Đã thêm ${addedCount} khách hàng từ hình ảnh`;
+        document.body.appendChild(notification);
+        setTimeout(() => document.body.removeChild(notification), 3000);
+      } else {
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        notification.textContent = 'Không tìm thấy tên khách hàng trong hình ảnh';
+        document.body.appendChild(notification);
+        setTimeout(() => document.body.removeChild(notification), 3000);
+      }
+    } catch (error) {
+      console.error('Error processing image:', error);
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      notification.textContent = 'Lỗi khi xử lý hình ảnh. Vui lòng thử lại.';
+      document.body.appendChild(notification);
+      setTimeout(() => document.body.removeChild(notification), 3000);
+    } finally {
+      setIsProcessingImage(false);
+      // Reset input
+      event.target.value = '';
+    }
   };
 
   const handleImportFromCalendar = () => {
