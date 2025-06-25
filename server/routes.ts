@@ -462,6 +462,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check Calendly connection status
+  app.get("/api/calendly/status", async (req, res) => {
+    try {
+      if (!process.env.CALENDLY_API_TOKEN) {
+        return res.json({ connected: false });
+      }
+
+      // Test the token by making a simple API call
+      const testResponse = await fetch('https://api.calendly.com/users/me', {
+        headers: {
+          'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      res.json({ connected: testResponse.ok });
+    } catch (error) {
+      res.json({ connected: false });
+    }
+  });
+
+  // Disconnect Calendly
+  app.post("/api/calendly/disconnect", (req, res) => {
+    try {
+      delete process.env.CALENDLY_API_TOKEN;
+      res.json({ success: true, message: 'Calendly disconnected successfully' });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to disconnect' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
