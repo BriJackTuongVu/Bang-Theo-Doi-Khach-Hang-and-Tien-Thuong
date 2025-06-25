@@ -16,6 +16,7 @@ export const customerReports = pgTable("customer_reports", {
   customerName: text("customer_name").notNull(),
   reportSent: boolean("report_sent").notNull().default(false),
   reportReceivedDate: date("report_received_date"),
+  customerDate: date("customer_date").notNull(),
   trackingRecordId: integer("tracking_record_id").references(() => trackingRecords.id),
   createdAt: timestamp("created_at").defaultNow(),
 });

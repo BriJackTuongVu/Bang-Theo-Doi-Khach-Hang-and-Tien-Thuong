@@ -34,6 +34,7 @@ export function CustomerReportsTable() {
   const [showPinDialog, setShowPinDialog] = useState(false);
   const [pin, setPin] = useState("");
   const [pendingEdit, setPendingEdit] = useState<{id: number, field: string, value: any} | null>(null);
+  const [selectedDate, setSelectedDate] = useState(getTodayDate());
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["/api/customer-reports"],
@@ -82,6 +83,7 @@ export function CustomerReportsTable() {
       customerName: "Khách hàng mới",
       reportSent: false,
       reportReceivedDate: null,
+      customerDate: selectedDate,
       trackingRecordId: null,
     });
   };
@@ -192,9 +194,20 @@ export function CustomerReportsTable() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <User className="h-5 w-5" />
-          Chi Tiết Khách Hàng
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Chi Tiết Khách Hàng
+          </div>
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-40"
+            />
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -226,7 +239,9 @@ export function CustomerReportsTable() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {reports.map((report: CustomerReport) => (
+              {(reports as CustomerReport[]).filter((report: CustomerReport) => 
+                report.customerDate === selectedDate
+              ).map((report: CustomerReport) => (
                 <tr key={report.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     {editingCell?.id === report.id && editingCell.field === "customerName" ? (

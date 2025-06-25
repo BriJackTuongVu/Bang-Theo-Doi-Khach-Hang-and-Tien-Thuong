@@ -121,6 +121,7 @@ export class MemStorage implements IStorage {
       customerName: insertReport.customerName,
       reportSent: insertReport.reportSent ?? false,
       reportReceivedDate: insertReport.reportReceivedDate ?? null,
+      customerDate: insertReport.customerDate,
       trackingRecordId: insertReport.trackingRecordId ?? null,
       createdAt: new Date()
     };
