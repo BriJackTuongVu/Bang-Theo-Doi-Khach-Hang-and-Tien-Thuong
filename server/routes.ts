@@ -497,6 +497,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sync tracking data from customer reports
+  app.post("/api/sync-tracking-data", async (req, res) => {
+    try {
+      console.log('=== Starting sync-tracking-data ===');
+      const reports = await storage.getCustomerReports();
+      const records = await storage.getTrackingRecords();
+      
+      console.log('Found reports:', reports.length);
+      console.log('Found records:', records.length);
+      console.log('All reports:', reports.map(r => ({ name: r.customerName, date: r.customerDate, received: r.reportReceivedDate })));
+      
+      // Group reports by date
+      const reportsByDate = new Map();
+      for (const report of reports) {
+        const date = report.customerDate;
+        if (!reportsByDate.has(date)) {
+          reportsByDate.set(date, []);
+        }
+        reportsByDate.get(date).push(report);
+      }
+      
+      console.log('Reports grouped by date:', Object.fromEntries(reportsByDate));
+      
+      // Update tracking records
+      let updatedCount = 0;
+      for (const record of records) {
+        const dateReports = reportsByDate.get(record.date) || [];
+        const scheduledCount = dateReports.length;
+        const reportedCount = dateReports.filter(r => r.reportSent).length;
+        const closedCount = dateReports.filter(r => r.reportReceivedDate !== null && r.reportReceivedDate !== undefined).length;
+        
+        console.log(`=== Processing record for date ${record.date} ===`);
+        console.log(`Date reports:`, dateReports.map(r => ({ name: r.customerName, received: r.reportReceivedDate })));
+        console.log(`Counts - scheduled: ${scheduledCount}, reported: ${reportedCount}, closed: ${closedCount}`);
+        console.log(`Current record - scheduled: ${record.scheduledCustomers}, reported: ${record.reportedCustomers}, closed: ${record.closedCustomers}`);
+        
+        if (record.scheduledCustomers !== scheduledCount || 
+            record.reportedCustomers !== reportedCount ||
+            record.closedCustomers !== closedCount) {
+          console.log(`>>> UPDATING record ${record.id} for date ${record.date}`);
+          await storage.updateTrackingRecord(record.id, {
+            scheduledCustomers: scheduledCount,
+            reportedCustomers: reportedCount,
+            closedCustomers: closedCount
+          });
+          updatedCount++;
+        } else {
+          console.log(`>>> No update needed for record ${record.id}`);
+        }
+      }
+      
+      console.log(`=== Sync completed. Updated ${updatedCount} records ===`);
+      
+      res.json({ 
+        success: true, 
+        message: `Updated ${updatedCount} tracking records`,
+        updatedCount 
+      });
+    } catch (error) {
+      console.error("Sync error:", error);
+      res.status(500).json({ error: "Failed to sync tracking data" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
