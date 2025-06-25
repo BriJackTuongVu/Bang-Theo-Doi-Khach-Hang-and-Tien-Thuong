@@ -58,6 +58,7 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importText, setImportText] = useState("");
   const [quickAddCount, setQuickAddCount] = useState(5);
+  const [isAutoDetecting, setIsAutoDetecting] = useState(false);
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["/api/customer-reports", tableId],
@@ -176,6 +177,30 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
       });
     }
     setShowImportDialog(false);
+  };
+
+  const startAutoDetect = async () => {
+    setIsAutoDetecting(true);
+    
+    try {
+      // Try to read from clipboard
+      const clipboardText = await navigator.clipboard.readText();
+      if (clipboardText && clipboardText.trim()) {
+        setImportText(clipboardText);
+        // Auto-detect if it looks like calendar data
+        if (clipboardText.includes('PM') || clipboardText.includes('AM') || clipboardText.includes('and Tuong')) {
+          // Automatically process the import
+          setTimeout(() => {
+            handleImportFromCalendar();
+          }, 1000);
+        }
+      }
+    } catch (error) {
+      // Fallback: show instruction for manual paste
+      alert('Vui lòng copy nội dung từ Google Calendar, sau đó paste vào ô bên dưới');
+    }
+    
+    setIsAutoDetecting(false);
   };
 
   const handleStartEdit = (
@@ -457,8 +482,8 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
             onClick={() => setShowImportDialog(true)}
             className="bg-green-600 hover:bg-green-700"
           >
-            <Upload className="h-4 w-4 mr-2" />
-            Import từ Calendar
+            <Calendar className="h-4 w-4 mr-2" />
+            Import từ Google Calendar
           </Button>
         </div>
 
@@ -542,15 +567,35 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
                   Tự động từ Google Calendar
                 </h4>
                 <div className="space-y-3">
-                  <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                    <strong>Hướng dẫn:</strong>
-                    <ol className="list-decimal list-inside mt-1 space-y-1">
-                      <li>Mở Google Calendar của ngày {formatDate(selectedDate)}</li>
-                      <li>Bôi chọn tất cả appointments (Ctrl+A hoặc drag chuột)</li>
-                      <li>Copy (Ctrl+C)</li>
-                      <li>Paste vào ô bên dưới (Ctrl+V)</li>
-                      <li>Click "Tự động import" để thêm tất cả khách hàng</li>
-                    </ol>
+                  <div className="space-y-3">
+                    <div className="text-center">
+                      <Button 
+                        onClick={startAutoDetect}
+                        disabled={isAutoDetecting}
+                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 text-lg"
+                        size="lg"
+                      >
+                        {isAutoDetecting ? 'Đang phát hiện...' : '🔍 Tự động phát hiện từ Clipboard'}
+                      </Button>
+                      <p className="text-xs text-gray-500 mt-2">
+                        Copy từ Google Calendar trước, sau đó click nút này
+                      </p>
+                    </div>
+                    
+                    <div className="text-center text-gray-400">
+                      <span>hoặc</span>
+                    </div>
+                    
+                    <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                      <strong>Hướng dẫn thủ công:</strong>
+                      <ol className="list-decimal list-inside mt-1 space-y-1">
+                        <li>Mở Google Calendar của ngày {formatDate(selectedDate)}</li>
+                        <li>Bôi chọn tất cả appointments (Ctrl+A hoặc drag chuột)</li>
+                        <li>Copy (Ctrl+C)</li>
+                        <li>Paste vào ô bên dưới (Ctrl+V)</li>
+                        <li>Click "Tự động import" để thêm tất cả khách hàng</li>
+                      </ol>
+                    </div>
                   </div>
                   
                   <Textarea
