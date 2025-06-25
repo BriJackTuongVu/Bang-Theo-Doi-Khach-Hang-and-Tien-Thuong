@@ -2,11 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, FileText, Percent, DollarSign, Calendar, ChevronDown, ChevronUp, Check, X } from "lucide-react";
+import { Users, FileText, Percent, DollarSign, Calendar, ChevronDown, ChevronUp, Check, X, RefreshCw } from "lucide-react";
 import { formatCurrency, formatNumber, formatPercentage, groupRecordsByMonth } from "@/lib/utils";
-import { TrackingRecord, calculateBonus } from "@shared/schema";
+import { TrackingRecord, CustomerReport, calculateBonus } from "@shared/schema";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { toast } from "@/hooks/use-toast";
 
@@ -108,6 +108,94 @@ function EditableCell({ value, recordId, field, onUpdate }: EditableCellProps) {
     >
       {value}
     </div>
+  );
+}
+
+// Sync Button Component
+function SyncButton() {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const queryClient = useQueryClient();
+  
+  const { data: customerReports = [] } = useQuery<CustomerReport[]>({
+    queryKey: ['/api/customer-reports'],
+  });
+
+  const { data: trackingRecords = [] } = useQuery<TrackingRecord[]>({
+    queryKey: ['/api/tracking-records'],
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const response = await apiRequest('PATCH', `/api/tracking-records/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tracking-records'] });
+    },
+  });
+
+  const handleSync = async () => {
+    setIsUpdating(true);
+    try {
+      // Group customer reports by date
+      const reportsByDate: { [date: string]: { scheduled: number; reported: number } } = {};
+      
+      customerReports.forEach(report => {
+        const date = report.customerDate;
+        if (!reportsByDate[date]) {
+          reportsByDate[date] = { scheduled: 0, reported: 0 };
+        }
+        reportsByDate[date].scheduled++;
+        if (report.reportSent) {
+          reportsByDate[date].reported++;
+        }
+      });
+
+      // Update tracking records
+      let updatedCount = 0;
+      for (const record of trackingRecords) {
+        const dateData = reportsByDate[record.date];
+        if (dateData) {
+          const { scheduled, reported } = dateData;
+          
+          if (record.scheduledCustomers !== scheduled || record.reportedCustomers !== reported) {
+            await updateMutation.mutateAsync({
+              id: record.id,
+              data: {
+                scheduledCustomers: scheduled,
+                reportedCustomers: reported,
+              },
+            });
+            updatedCount++;
+          }
+        }
+      }
+
+      toast({
+        title: "Đồng bộ hoàn tất",
+        description: `Đã cập nhật ${updatedCount} bản ghi từ bảng chi tiết khách hàng`,
+      });
+    } catch (error) {
+      toast({
+        title: "Lỗi đồng bộ",
+        description: "Không thể đồng bộ dữ liệu",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  return (
+    <Button
+      onClick={handleSync}
+      disabled={isUpdating}
+      className="bg-blue-600 hover:bg-blue-700 text-white"
+      size="sm"
+    >
+      <RefreshCw className={`h-4 w-4 mr-2 ${isUpdating ? 'animate-spin' : ''}`} />
+      {isUpdating ? 'Đang đồng bộ...' : 'Đồng bộ từ bảng chi tiết'}
+    </Button>
   );
 }
 
