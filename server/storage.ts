@@ -190,11 +190,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCustomerReport(insertReport: InsertCustomerReport): Promise<CustomerReport> {
-    const [report] = await db
-      .insert(customerReports)
-      .values(insertReport)
-      .returning();
-    return report;
+    console.log("DatabaseStorage: Creating customer report with data:", insertReport);
+    try {
+      const [report] = await db
+        .insert(customerReports)
+        .values(insertReport)
+        .returning();
+      console.log("DatabaseStorage: Successfully created report:", report);
+      return report;
+    } catch (error) {
+      console.error("DatabaseStorage: Error creating customer report:", error);
+      throw error;
+    }
   }
 
   async updateCustomerReport(id: number, updateReport: Partial<InsertCustomerReport>): Promise<CustomerReport | undefined> {

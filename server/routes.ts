@@ -130,14 +130,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/customer-reports", async (req, res) => {
     try {
+      console.log("Received request body:", req.body);
       const validatedData = insertCustomerReportSchema.parse(req.body);
+      console.log("Validated data:", validatedData);
       const report = await storage.createCustomerReport(validatedData);
+      console.log("Created report:", report);
       res.status(201).json(report);
     } catch (error) {
+      console.error("Full error in POST /api/customer-reports:", error);
       if (error instanceof Error && error.name === 'ZodError') {
-        return res.status(400).json({ error: "Invalid data format" });
+        return res.status(400).json({ error: "Invalid data format", details: error.message });
       }
-      res.status(500).json({ error: "Failed to create customer report" });
+      res.status(500).json({ error: "Failed to create customer report", details: error.message });
     }
   });
 
