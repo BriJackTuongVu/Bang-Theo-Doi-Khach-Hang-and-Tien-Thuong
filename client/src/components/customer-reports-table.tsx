@@ -42,6 +42,9 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
   const [selectedDate, setSelectedDate] = useState(initialDate || getTodayDate());
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importText, setImportText] = useState("");
+  const [isGoogleAuthenticated, setIsGoogleAuthenticated] = useState(false);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [isLoadingCalendar, setIsLoadingCalendar] = useState(false);
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["/api/customer-reports", tableId],
@@ -145,6 +148,42 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
     });
 
     setImportText("");
+    setShowImportDialog(false);
+  };
+
+  const handleGoogleAuth = () => {
+    window.location.href = '/auth/google';
+  };
+
+  const loadCalendarEvents = async () => {
+    setIsLoadingCalendar(true);
+    try {
+      const response = await fetch(`/api/calendar/events?date=${selectedDate}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCalendarEvents(data.customers);
+        setIsGoogleAuthenticated(true);
+      } else if (response.status === 401) {
+        setIsGoogleAuthenticated(false);
+      }
+    } catch (error) {
+      console.error('Error loading calendar events:', error);
+      setIsGoogleAuthenticated(false);
+    } finally {
+      setIsLoadingCalendar(false);
+    }
+  };
+
+  const importFromGoogleCalendar = () => {
+    calendarEvents.forEach(event => {
+      createMutation.mutate({
+        customerName: event.name,
+        reportSent: false,
+        reportReceivedDate: null,
+        customerDate: selectedDate,
+        trackingRecordId: tableId,
+      });
+    });
     setShowImportDialog(false);
   };
 
