@@ -4,6 +4,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   TrackingRecord, 
   InsertTrackingRecord, 
@@ -23,7 +33,9 @@ import {
   Star,
   Award,
   Gem,
-  Minus
+  Minus,
+  Save,
+  X
 } from "lucide-react";
 
 const iconMap = {
@@ -35,6 +47,14 @@ const iconMap = {
 export function TrackingTable() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [editingCell, setEditingCell] = useState<{
+    id: number;
+    field: keyof InsertTrackingRecord;
+    value: string | number;
+    originalValue: string | number;
+  } | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<number | null>(null);
   
   const { data: records = [], isLoading } = useQuery<TrackingRecord[]>({
     queryKey: ['/api/tracking-records'],
@@ -106,19 +126,58 @@ export function TrackingTable() {
     });
   };
 
-  const handleUpdateField = (
-    id: number, 
-    field: keyof InsertTrackingRecord, 
-    value: string | number
+  const handleStartEdit = (
+    id: number,
+    field: keyof InsertTrackingRecord,
+    currentValue: string | number
   ) => {
-    updateMutation.mutate({
+    setEditingCell({
       id,
-      data: { [field]: value },
+      field,
+      value: currentValue,
+      originalValue: currentValue,
     });
   };
 
+  const handleCancelEdit = () => {
+    setEditingCell(null);
+  };
+
+  const handleConfirmEdit = () => {
+    if (editingCell) {
+      updateMutation.mutate({
+        id: editingCell.id,
+        data: { [editingCell.field]: editingCell.value },
+      });
+      setEditingCell(null);
+    }
+  };
+
+  const handleInputChange = (value: string | number) => {
+    if (editingCell) {
+      setEditingCell({
+        ...editingCell,
+        value,
+      });
+    }
+  };
+
   const handleDelete = (id: number) => {
-    deleteMutation.mutate(id);
+    setPendingDelete(id);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmDelete = () => {
+    if (pendingDelete) {
+      deleteMutation.mutate(pendingDelete);
+      setPendingDelete(null);
+    }
+    setShowConfirmDialog(false);
+  };
+
+  const cancelDelete = () => {
+    setPendingDelete(null);
+    setShowConfirmDialog(false);
   };
 
   const getTierBadge = (percentage: number) => {
@@ -205,37 +264,124 @@ export function TrackingTable() {
                 return (
                   <tr key={record.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Input
-                        type="date"
-                        value={record.date}
-                        onChange={(e) => handleUpdateField(record.id, 'date', e.target.value)}
-                        className="border-0 bg-transparent focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
+                      <div className="flex items-center space-x-2">
+                        {editingCell?.id === record.id && editingCell?.field === 'date' ? (
+                          <>
+                            <Input
+                              type="date"
+                              value={editingCell.value as string}
+                              onChange={(e) => handleInputChange(e.target.value)}
+                              className="border border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={handleConfirmEdit}
+                              className="text-green-600 hover:text-green-900 hover:bg-green-50"
+                            >
+                              <Save className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={handleCancelEdit}
+                              className="text-red-600 hover:text-red-900 hover:bg-red-50"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <div
+                            onClick={() => handleStartEdit(record.id, 'date', record.date)}
+                            className="cursor-pointer hover:bg-blue-50 p-2 rounded border-2 border-transparent hover:border-blue-200"
+                          >
+                            {record.date}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Input
-                        type="number"
-                        value={record.scheduledCustomers}
-                        onChange={(e) => {
-                          const value = Math.max(0, parseInt(e.target.value) || 0);
-                          handleUpdateField(record.id, 'scheduledCustomers', value);
-                        }}
-                        min="0"
-                        className="w-20 border-0 bg-transparent focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
-                      />
+                      <div className="flex items-center space-x-2">
+                        {editingCell?.id === record.id && editingCell?.field === 'scheduledCustomers' ? (
+                          <>
+                            <Input
+                              type="number"
+                              value={editingCell.value as number}
+                              onChange={(e) => {
+                                const value = Math.max(0, parseInt(e.target.value) || 0);
+                                handleInputChange(value);
+                              }}
+                              min="0"
+                              className="w-20 border border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={handleConfirmEdit}
+                              className="text-green-600 hover:text-green-900 hover:bg-green-50"
+                            >
+                              <Save className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={handleCancelEdit}
+                              className="text-red-600 hover:text-red-900 hover:bg-red-50"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <div
+                            onClick={() => handleStartEdit(record.id, 'scheduledCustomers', record.scheduledCustomers)}
+                            className="cursor-pointer hover:bg-blue-50 p-2 rounded border-2 border-transparent hover:border-blue-200 text-center w-20"
+                          >
+                            {record.scheduledCustomers}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Input
-                        type="number"
-                        value={record.reportedCustomers}
-                        onChange={(e) => {
-                          const value = Math.max(0, Math.min(record.scheduledCustomers, parseInt(e.target.value) || 0));
-                          handleUpdateField(record.id, 'reportedCustomers', value);
-                        }}
-                        min="0"
-                        max={record.scheduledCustomers}
-                        className="w-20 border-0 bg-transparent focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
-                      />
+                      <div className="flex items-center space-x-2">
+                        {editingCell?.id === record.id && editingCell?.field === 'reportedCustomers' ? (
+                          <>
+                            <Input
+                              type="number"
+                              value={editingCell.value as number}
+                              onChange={(e) => {
+                                const value = Math.max(0, Math.min(record.scheduledCustomers, parseInt(e.target.value) || 0));
+                                handleInputChange(value);
+                              }}
+                              min="0"
+                              max={record.scheduledCustomers}
+                              className="w-20 border border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={handleConfirmEdit}
+                              className="text-green-600 hover:text-green-900 hover:bg-green-50"
+                            >
+                              <Save className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={handleCancelEdit}
+                              className="text-red-600 hover:text-red-900 hover:bg-red-50"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <div
+                            onClick={() => handleStartEdit(record.id, 'reportedCustomers', record.reportedCustomers)}
+                            className="cursor-pointer hover:bg-blue-50 p-2 rounded border-2 border-transparent hover:border-blue-200 text-center w-20"
+                          >
+                            {record.reportedCustomers}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -285,6 +431,30 @@ export function TrackingTable() {
             Thêm Dòng
           </Button>
         </div>
+        
+        {/* Confirmation Dialog for Delete */}
+        <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn có chắc chắn muốn xóa bản ghi này? 
+                Hành động này không thể hoàn tác.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={cancelDelete}>
+                Hủy bỏ
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={confirmDelete}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Xóa
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );
