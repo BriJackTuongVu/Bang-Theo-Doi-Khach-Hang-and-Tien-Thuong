@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +21,6 @@ import { formatDate, getTodayDate } from "@/lib/utils";
 import { Plus, User, Send, Calendar, Trash2 } from "lucide-react";
 
 export function CustomerReportsTable() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const [editingCell, setEditingCell] = useState<{
@@ -47,14 +46,9 @@ export function CustomerReportsTable() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/customer-reports"] });
-      toast({ description: "Đã thêm khách hàng mới" });
     },
     onError: (error) => {
       console.error("Error creating customer:", error);
-      toast({ 
-        description: "Lỗi khi thêm khách hàng",
-        variant: "destructive"
-      });
     },
   });
 
@@ -65,14 +59,9 @@ export function CustomerReportsTable() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/customer-reports"] });
-      toast({ description: "Đã cập nhật thông tin" });
     },
     onError: (error) => {
       console.error("Error updating customer:", error);
-      toast({ 
-        description: "Lỗi khi cập nhật thông tin",
-        variant: "destructive"
-      });
     },
   });
 
@@ -82,14 +71,9 @@ export function CustomerReportsTable() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/customer-reports"] });
-      toast({ description: "Đã xóa khách hàng" });
     },
     onError: (error) => {
       console.error("Error deleting customer:", error);
-      toast({ 
-        description: "Lỗi khi xóa khách hàng",
-        variant: "destructive"
-      });
     },
   });
 
