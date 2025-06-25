@@ -1,4 +1,4 @@
-import { trackingRecords, type TrackingRecord, type InsertTrackingRecord } from "@shared/schema";
+import { TrackingRecord, InsertTrackingRecord, CustomerReport, InsertCustomerReport } from "@shared/schema";
 
 export interface IStorage {
   getTrackingRecords(): Promise<TrackingRecord[]>;
@@ -6,11 +6,19 @@ export interface IStorage {
   createTrackingRecord(record: InsertTrackingRecord): Promise<TrackingRecord>;
   updateTrackingRecord(id: number, record: Partial<InsertTrackingRecord>): Promise<TrackingRecord | undefined>;
   deleteTrackingRecord(id: number): Promise<boolean>;
+  
+  getCustomerReports(): Promise<CustomerReport[]>;
+  getCustomerReport(id: number): Promise<CustomerReport | undefined>;
+  createCustomerReport(report: InsertCustomerReport): Promise<CustomerReport>;
+  updateCustomerReport(id: number, report: Partial<InsertCustomerReport>): Promise<CustomerReport | undefined>;
+  deleteCustomerReport(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
   private records: Map<number, TrackingRecord>;
+  private customerReports: Map<number, CustomerReport>;
   private currentId: number;
+  private currentReportId: number;
 
   constructor() {
     this.records = new Map();

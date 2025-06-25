@@ -11,12 +11,28 @@ export const trackingRecords = pgTable("tracking_records", {
   paymentStatus: text("payment_status", { enum: ["chưa pay", "đã pay"] }).notNull().default("chưa pay"),
 });
 
+export const customerReports = pgTable("customer_reports", {
+  id: serial("id").primaryKey(),
+  customerName: text("customer_name").notNull(),
+  reportSent: boolean("report_sent").notNull().default(false),
+  reportReceivedDate: date("report_received_date"),
+  trackingRecordId: integer("tracking_record_id").references(() => trackingRecords.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertTrackingRecordSchema = createInsertSchema(trackingRecords).omit({
   id: true,
 });
 
+export const insertCustomerReportSchema = createInsertSchema(customerReports).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertTrackingRecord = z.infer<typeof insertTrackingRecordSchema>;
 export type TrackingRecord = typeof trackingRecords.$inferSelect;
+export type InsertCustomerReport = z.infer<typeof insertCustomerReportSchema>;
+export type CustomerReport = typeof customerReports.$inferSelect;
 
 // Bonus calculation utilities
 export const BONUS_TIERS = {

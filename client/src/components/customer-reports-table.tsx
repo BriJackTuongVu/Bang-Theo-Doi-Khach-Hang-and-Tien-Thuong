@@ -1,0 +1,412 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { CustomerReport, InsertCustomerReport } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { formatDate, getTodayDate } from "@/lib/utils";
+import { Plus, User, Send, Calendar, Trash2 } from "lucide-react";
+
+export function CustomerReportsTable() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const [editingCell, setEditingCell] = useState<{
+    id: number;
+    field: keyof InsertCustomerReport;
+    value: string | boolean;
+    originalValue: string | boolean;
+  } | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<number | null>(null);
+  const [showPinDialog, setShowPinDialog] = useState(false);
+  const [pin, setPin] = useState("");
+  const [pendingEdit, setPendingEdit] = useState<{id: number, field: string, value: any} | null>(null);
+
+  const { data: reports = [], isLoading } = useQuery({
+    queryKey: ["/api/customer-reports"],
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: InsertCustomerReport) => {
+      const response = await apiRequest("/api/customer-reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/customer-reports"] });
+      toast({ description: "Đã thêm khách hàng mới" });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<InsertCustomerReport> }) => {
+      const response = await apiRequest(`/api/customer-reports/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/customer-reports"] });
+      toast({ description: "Đã cập nhật thông tin" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest(`/api/customer-reports/${id}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/customer-reports"] });
+      toast({ description: "Đã xóa khách hàng" });
+    },
+  });
+
+  const handleAddCustomer = () => {
+    createMutation.mutate({
+      customerName: "Khách hàng mới",
+      reportSent: false,
+      reportReceivedDate: null,
+      trackingRecordId: null,
+    });
+  };
+
+  const handleStartEdit = (
+    id: number,
+    field: keyof InsertCustomerReport,
+    currentValue: string | boolean
+  ) => {
+    // Yêu cầu PIN cho việc xóa
+    if (field === 'delete') {
+      setPendingEdit({ id, field: field as string, value: currentValue });
+      setShowPinDialog(true);
+      setPin("");
+    } else {
+      setEditingCell({
+        id,
+        field,
+        value: currentValue,
+        originalValue: currentValue,
+      });
+    }
+  };
+
+  const handlePinConfirm = () => {
+    if (pin === "1995" && pendingEdit) {
+      if (pendingEdit.field === 'delete') {
+        setPendingDelete(pendingEdit.id);
+        setShowConfirmDialog(true);
+      }
+      setShowPinDialog(false);
+      setPendingEdit(null);
+      setPin("");
+    } else {
+      alert("Mã PIN không chính xác!");
+      setPin("");
+    }
+  };
+
+  const handlePinCancel = () => {
+    setShowPinDialog(false);
+    setPendingEdit(null);
+    setPin("");
+  };
+
+  const handleDelete = (id: number) => {
+    setPendingEdit({ id, field: 'delete', value: id });
+    setShowPinDialog(true);
+    setPin("");
+  };
+
+  const handleConfirmEdit = () => {
+    if (editingCell) {
+      updateMutation.mutate({
+        id: editingCell.id,
+        data: { [editingCell.field]: editingCell.value },
+      });
+      setEditingCell(null);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCell(null);
+  };
+
+  const handleInputChange = (value: string | boolean) => {
+    if (editingCell) {
+      setEditingCell({
+        ...editingCell,
+        value,
+      });
+    }
+  };
+
+  const confirmDelete = () => {
+    if (pendingDelete) {
+      deleteMutation.mutate(pendingDelete);
+      setPendingDelete(null);
+    }
+    setShowConfirmDialog(false);
+  };
+
+  const cancelDelete = () => {
+    setPendingDelete(null);
+    setShowConfirmDialog(false);
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Chi Tiết Khách Hàng
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-12 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <User className="h-5 w-5" />
+          Chi Tiết Khách Hàng
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Tên Khách Hàng
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex items-center gap-2">
+                    <Send className="h-4 w-4" />
+                    Đã Gửi Report
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Ngày Nhận Report
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Hành Động
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {reports.map((report: CustomerReport) => (
+                <tr key={report.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {editingCell?.id === report.id && editingCell.field === "customerName" ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={editingCell.value as string}
+                          onChange={(e) => handleInputChange(e.target.value)}
+                          className="w-48"
+                          autoFocus
+                        />
+                        <Button
+                          size="sm"
+                          onClick={handleConfirmEdit}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          ✓
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleCancelEdit}
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                    ) : (
+                      <div
+                        className="text-sm font-medium text-gray-900 cursor-pointer hover:bg-blue-50 px-2 py-1 rounded"
+                        onClick={() => handleStartEdit(report.id, "customerName", report.customerName)}
+                      >
+                        {report.customerName}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <Checkbox
+                        checked={report.reportSent}
+                        onCheckedChange={(checked) => {
+                          updateMutation.mutate({
+                            id: report.id,
+                            data: { reportSent: !!checked },
+                          });
+                        }}
+                      />
+                      <span className="ml-2 text-sm text-gray-900">
+                        {report.reportSent ? "Đã gửi" : "Chưa gửi"}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {editingCell?.id === report.id && editingCell.field === "reportReceivedDate" ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="date"
+                          value={editingCell.value as string || ""}
+                          onChange={(e) => handleInputChange(e.target.value)}
+                          className="w-40"
+                          autoFocus
+                        />
+                        <Button
+                          size="sm"
+                          onClick={handleConfirmEdit}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          ✓
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleCancelEdit}
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                    ) : (
+                      <div
+                        className="text-sm text-gray-900 cursor-pointer hover:bg-blue-50 px-2 py-1 rounded"
+                        onClick={() => handleStartEdit(report.id, "reportReceivedDate", report.reportReceivedDate || "")}
+                      >
+                        {report.reportReceivedDate ? formatDate(report.reportReceivedDate) : "Chưa nhận"}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(report.id)}
+                      disabled={deleteMutation.isPending}
+                      className="hover:bg-red-600"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-4">
+          <Button
+            onClick={handleAddCustomer}
+            disabled={createMutation.isPending}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Thêm Khách Hàng
+          </Button>
+        </div>
+
+        {/* Confirmation Dialog for Delete */}
+        <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn có chắc chắn muốn xóa khách hàng này?
+                Hành động này không thể hoàn tác.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={cancelDelete}>
+                Hủy bỏ
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDelete}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Xóa
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* PIN Confirmation Dialog */}
+        <AlertDialog open={showPinDialog} onOpenChange={setShowPinDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xác nhận quyền xóa</AlertDialogTitle>
+              <AlertDialogDescription>
+                Nhập mã PIN để xóa khách hàng:
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="py-4">
+              <Input
+                type="password"
+                placeholder="Nhập mã PIN"
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handlePinConfirm();
+                  }
+                }}
+                className="text-center text-lg tracking-widest"
+                maxLength={4}
+                autoFocus
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handlePinCancel}>
+                Hủy bỏ
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handlePinConfirm}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Xác nhận
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </CardContent>
+    </Card>
+  );
+}
