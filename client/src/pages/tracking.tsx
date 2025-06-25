@@ -55,13 +55,8 @@ export default function TrackingPage() {
         {/* Tracking Table */}
         <TrackingTable />
         
-        {/* Customer Reports Tables */}
-        {customerTables.map((table) => (
-          <CustomerReportsTable key={table.id} tableId={table.id} initialDate={table.date} />
-        ))}
-        
-        {/* Add New Customer Table Button */}
-        <div className="flex justify-center">
+        {/* Add New Customer Table Button - Between tables */}
+        <div className="flex justify-center py-4">
           <Button
             onClick={addNewCustomerTable}
             className="bg-green-600 hover:bg-green-700 text-white px-6 py-3"
@@ -71,6 +66,11 @@ export default function TrackingPage() {
             Thêm Bảng Chi Tiết Khách Hàng Mới
           </Button>
         </div>
+        
+        {/* Customer Reports Tables */}
+        {customerTables.map((table) => (
+          <CustomerReportsTable key={table.id} tableId={table.id} initialDate={table.date} />
+        ))}
       </div>
     </div>
   );
