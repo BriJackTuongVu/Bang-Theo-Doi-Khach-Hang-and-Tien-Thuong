@@ -129,21 +129,24 @@ function useAutoSync() {
       console.log('Frontend: Auto-sync result:', result);
       return result;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tracking-records'] });
+    onSuccess: (data) => {
+      if (data.updatedCount > 0) {
+        queryClient.invalidateQueries({ queryKey: ['/api/tracking-records'] });
+        queryClient.refetchQueries({ queryKey: ['/api/tracking-records'] });
+      }
     },
     onError: (error) => {
       console.error('Frontend: Auto-sync error:', error);
     }
   });
 
-  // Auto-sync every 2 seconds
+  // Auto-sync every 5 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       if (!syncMutation.isPending) {
         syncMutation.mutate();
       }
-    }, 2000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [syncMutation]);
