@@ -130,7 +130,9 @@ export function groupRecordsByWeek(records: any[]) {
 
 export function getDayOfWeek(date: string): string {
   const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-  const dayIndex = new Date(date).getDay();
+  // Create date in Vietnam timezone to get correct day
+  const vietnamDate = new Date(date + 'T12:00:00+07:00');
+  const dayIndex = vietnamDate.getDay();
   return days[dayIndex];
 }
 
