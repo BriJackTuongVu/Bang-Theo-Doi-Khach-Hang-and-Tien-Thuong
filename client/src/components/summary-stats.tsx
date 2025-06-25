@@ -202,46 +202,68 @@ export function SummaryStats({ records }: SummaryStatsProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-blue-50 rounded-lg p-4">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+            <div className="bg-blue-50 rounded-lg p-3">
               <div className="flex items-center">
-                <Users className="text-blue-600 mr-3 h-6 w-6" />
+                <Users className="text-blue-600 mr-2 h-5 w-5" />
                 <div>
-                  <p className="text-sm text-gray-600">Tổng Khách Hẹn</p>
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-xs text-gray-600">Tổng Khách Hẹn</p>
+                  <p className="text-xl font-bold text-blue-600">
                     {formatNumber(overallTotals.totalScheduled)}
                   </p>
                 </div>
               </div>
             </div>
-            <div className="bg-green-50 rounded-lg p-4">
+            <div className="bg-green-50 rounded-lg p-3">
               <div className="flex items-center">
-                <FileText className="text-green-600 mr-3 h-6 w-6" />
+                <FileText className="text-green-600 mr-2 h-5 w-5" />
                 <div>
-                  <p className="text-sm text-gray-600">Tổng Report</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-xs text-gray-600">Tổng Report</p>
+                  <p className="text-xl font-bold text-green-600">
                     {formatNumber(overallTotals.totalReported)}
                   </p>
                 </div>
               </div>
             </div>
-            <div className="bg-yellow-50 rounded-lg p-4">
+            <div className="bg-orange-50 rounded-lg p-3">
               <div className="flex items-center">
-                <Percent className="text-yellow-600 mr-3 h-6 w-6" />
+                <Users className="text-orange-600 mr-2 h-5 w-5" />
                 <div>
-                  <p className="text-sm text-gray-600">Tỉ Lệ TB</p>
-                  <p className="text-2xl font-bold text-yellow-600">
+                  <p className="text-xs text-gray-600">Tổng Chốt</p>
+                  <p className="text-xl font-bold text-orange-600">
+                    {formatNumber(overallTotals.totalClosed)}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-yellow-50 rounded-lg p-3">
+              <div className="flex items-center">
+                <Percent className="text-yellow-600 mr-2 h-5 w-5" />
+                <div>
+                  <p className="text-xs text-gray-600">Tỉ Lệ Report</p>
+                  <p className="text-xl font-bold text-yellow-600">
                     {formatPercentage(overallAveragePercentage)}
                   </p>
                 </div>
               </div>
             </div>
-            <div className="bg-purple-50 rounded-lg p-4">
+            <div className="bg-pink-50 rounded-lg p-3">
               <div className="flex items-center">
-                <DollarSign className="text-purple-600 mr-3 h-6 w-6" />
+                <Percent className="text-pink-600 mr-2 h-5 w-5" />
                 <div>
-                  <p className="text-sm text-gray-600">Tổng Thưởng</p>
-                  <p className="text-2xl font-bold text-purple-600">
+                  <p className="text-xs text-gray-600">Tỉ Lệ Chốt</p>
+                  <p className="text-xl font-bold text-pink-600">
+                    {formatPercentage(overallClosureRate)}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-purple-50 rounded-lg p-3">
+              <div className="flex items-center">
+                <DollarSign className="text-purple-600 mr-2 h-5 w-5" />
+                <div>
+                  <p className="text-xs text-gray-600">Tổng Thưởng</p>
+                  <p className="text-xl font-bold text-purple-600">
                     {formatCurrency(overallTotals.totalBonus)}
                   </p>
                 </div>
@@ -304,10 +326,10 @@ export function SummaryStats({ records }: SummaryStatsProps) {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <div className="px-4 pb-4">
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mt-4">
                         <div className="bg-blue-50 rounded-lg p-3">
                           <div className="flex items-center">
-                            <Users className="text-blue-600 mr-2 h-5 w-5" />
+                            <Users className="text-blue-600 mr-2 h-4 w-4" />
                             <div>
                               <p className="text-xs text-gray-600">Khách Hẹn</p>
                               <p className="text-lg font-bold text-blue-600">
@@ -318,7 +340,7 @@ export function SummaryStats({ records }: SummaryStatsProps) {
                         </div>
                         <div className="bg-green-50 rounded-lg p-3">
                           <div className="flex items-center">
-                            <FileText className="text-green-600 mr-2 h-5 w-5" />
+                            <FileText className="text-green-600 mr-2 h-4 w-4" />
                             <div>
                               <p className="text-xs text-gray-600">Reports</p>
                               <p className="text-lg font-bold text-green-600">
@@ -327,20 +349,42 @@ export function SummaryStats({ records }: SummaryStatsProps) {
                             </div>
                           </div>
                         </div>
+                        <div className="bg-orange-50 rounded-lg p-3">
+                          <div className="flex items-center">
+                            <Users className="text-orange-600 mr-2 h-4 w-4" />
+                            <div>
+                              <p className="text-xs text-gray-600">Chốt</p>
+                              <p className="text-lg font-bold text-orange-600">
+                                {formatNumber(monthStats.totalClosed)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
                         <div className="bg-yellow-50 rounded-lg p-3">
                           <div className="flex items-center">
-                            <Percent className="text-yellow-600 mr-2 h-5 w-5" />
+                            <Percent className="text-yellow-600 mr-2 h-4 w-4" />
                             <div>
-                              <p className="text-xs text-gray-600">Tỉ Lệ</p>
+                              <p className="text-xs text-gray-600">Tỉ Lệ Report</p>
                               <p className="text-lg font-bold text-yellow-600">
                                 {formatPercentage(monthPercentage)}
                               </p>
                             </div>
                           </div>
                         </div>
+                        <div className="bg-pink-50 rounded-lg p-3">
+                          <div className="flex items-center">
+                            <Percent className="text-pink-600 mr-2 h-4 w-4" />
+                            <div>
+                              <p className="text-xs text-gray-600">Tỉ Lệ Chốt</p>
+                              <p className="text-lg font-bold text-pink-600">
+                                {formatPercentage(monthStats.totalReported > 0 ? (monthStats.totalClosed / monthStats.totalReported) * 100 : 0)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
                         <div className="bg-purple-50 rounded-lg p-3">
                           <div className="flex items-center">
-                            <DollarSign className="text-purple-600 mr-2 h-5 w-5" />
+                            <DollarSign className="text-purple-600 mr-2 h-4 w-4" />
                             <div>
                               <p className="text-xs text-gray-600">Thưởng</p>
                               <p className="text-lg font-bold text-purple-600">
