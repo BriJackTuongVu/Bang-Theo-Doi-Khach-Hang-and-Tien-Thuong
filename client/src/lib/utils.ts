@@ -65,6 +65,40 @@ export function formatWeekRange(start: Date, end: Date): string {
   return `${startStr} - ${endStr}`;
 }
 
+export function groupRecordsByMonth(records: any[]) {
+  const months = new Map<string, any[]>();
+  
+  records.forEach(record => {
+    const recordDate = new Date(record.date);
+    const monthKey = `${recordDate.getFullYear()}-${String(recordDate.getMonth() + 1).padStart(2, '0')}`;
+    
+    if (!months.has(monthKey)) {
+      months.set(monthKey, []);
+    }
+    months.get(monthKey)!.push(record);
+  });
+  
+  return Array.from(months.entries()).map(([monthKey, monthRecords]) => {
+    const [year, month] = monthKey.split('-');
+    const monthDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+    const monthName = monthDate.toLocaleDateString('vi-VN', { 
+      month: 'long', 
+      year: 'numeric' 
+    });
+    
+    return {
+      monthKey,
+      year: parseInt(year),
+      month: parseInt(month),
+      monthName,
+      records: monthRecords.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    };
+  }).sort((a, b) => {
+    if (a.year !== b.year) return b.year - a.year;
+    return b.month - a.month;
+  }); // Sort by newest month first
+}
+
 export function groupRecordsByWeek(records: any[]) {
   const weeks = new Map<string, any[]>();
   

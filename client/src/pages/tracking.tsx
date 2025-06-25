@@ -27,14 +27,14 @@ export default function TrackingPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Bonus Tier Indicator */}
+        {/* Summary Stats - moved to top */}
+        <SummaryStats records={records} />
+
+        {/* Bonus Tier Indicator - compact version */}
         <BonusTierIndicator />
 
         {/* Tracking Table */}
         <TrackingTable />
-
-        {/* Summary Stats */}
-        <SummaryStats records={records} />
       </div>
     </div>
   );
