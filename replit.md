@@ -107,6 +107,8 @@ Changelog:
 - June 25, 2025. Initial setup
 - June 25, 2025. Attempted Google Calendar API integration but faced OAuth verification requirements
 - June 25, 2025. Implemented alternative Google Calendar import via manual copy-paste workflow
+- June 25, 2025. Attempted OCR image processing but faced OpenAI API quota limits
+- June 25, 2025. Created manual image-to-text workflow as alternative solution
 ```
 
 ## User Preferences

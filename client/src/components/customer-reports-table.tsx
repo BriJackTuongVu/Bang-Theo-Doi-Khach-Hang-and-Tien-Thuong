@@ -158,133 +158,52 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
     }, 10000);
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Check if it's an image
-    if (!file.type.startsWith('image/')) {
-      const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-      notification.textContent = 'Vui lòng chọn file hình ảnh (JPG, PNG, etc.)';
-      document.body.appendChild(notification);
-      setTimeout(() => document.body.removeChild(notification), 3000);
-      return;
-    }
-
-    setIsProcessingImage(true);
-
-    try {
-      // Resize and compress image before converting to base64
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        throw new Error('Canvas context not available');
+  const handleImageUpload = () => {
+    // Show instruction for manual text extraction from image
+    const notification = document.createElement('div');
+    notification.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    notification.innerHTML = `
+      <div class="bg-white rounded-lg p-6 max-w-md mx-4">
+        <div class="flex items-center gap-2 mb-4">
+          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <h3 class="text-lg font-semibold text-gray-900">Upload Hình Ảnh</h3>
+        </div>
+        <div class="space-y-3 text-sm text-gray-700">
+          <p><strong>Hướng dẫn:</strong></p>
+          <ol class="list-decimal list-inside space-y-1">
+            <li>Mở hình ảnh danh sách khách hàng</li>
+            <li>Copy tất cả text trong hình (Ctrl+A, Ctrl+C)</li>
+            <li>Paste vào ô "Import danh sách" bên dưới</li>
+            <li>Hệ thống sẽ tự động tách tên khách hàng</li>
+          </ol>
+          <p class="text-purple-600 font-medium">
+            Do giới hạn API, vui lòng sử dụng cách thủ công này. 
+            Bạn có thể sử dụng Google Lens hoặc OCR app để chuyển hình thành text.
+          </p>
+        </div>
+        <div class="flex gap-2 mt-4">
+          <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                  class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+            Đóng
+          </button>
+          <button onclick="this.parentElement.parentElement.parentElement.remove(); document.querySelector('[data-import-button]').click()" 
+                  class="flex-1 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
+            Mở Import Danh Sách
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto close after 15 seconds
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        document.body.removeChild(notification);
       }
-      
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const img = document.createElement('img');
-        
-        img.onload = () => {
-          try {
-            // Calculate new dimensions (max 800px width/height for smaller size)
-            const maxSize = 800;
-            let { width, height } = img;
-            
-            if (width > height) {
-              if (width > maxSize) {
-                height = (height * maxSize) / width;
-                width = maxSize;
-              }
-            } else {
-              if (height > maxSize) {
-                width = (width * maxSize) / height;
-                height = maxSize;
-              }
-            }
-            
-            canvas.width = width;
-            canvas.height = height;
-            
-            // Draw and compress with lower quality for smaller size
-            ctx.drawImage(img, 0, 0, width, height);
-            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
-            const base64Data = compressedDataUrl.split(',')[1];
-            resolve(base64Data);
-          } catch (error) {
-            reject(error);
-          }
-        };
-        
-        img.onerror = () => reject(new Error('Failed to load image'));
-        
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          if (e.target?.result) {
-            img.src = e.target.result as string;
-          } else {
-            reject(new Error('Failed to read file'));
-          }
-        };
-        reader.onerror = () => reject(new Error('Failed to read file'));
-        reader.readAsDataURL(file);
-      });
-
-      // Send to backend for OCR processing
-      const response = await apiRequest('POST', '/api/ocr/extract-names', {
-        image: base64,
-        date: selectedDate
-      });
-
-      const result = await response.json();
-
-      if (result.names && result.names.length > 0) {
-        let addedCount = 0;
-        
-        for (const name of result.names) {
-          // Check if customer already exists
-          const existingReports = reports as CustomerReport[];
-          const exists = existingReports.some(report => 
-            report.customerName.toLowerCase().trim() === name.toLowerCase().trim() &&
-            report.customerDate === selectedDate
-          );
-          
-          if (!exists) {
-            await createMutation.mutateAsync({
-              customerName: name.trim(),
-              reportSent: false,
-              reportReceivedDate: null,
-              customerDate: selectedDate,
-              trackingRecordId: tableId,
-            });
-            addedCount++;
-          }
-        }
-
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-        notification.textContent = `Đã thêm ${addedCount} khách hàng từ hình ảnh`;
-        document.body.appendChild(notification);
-        setTimeout(() => document.body.removeChild(notification), 3000);
-      } else {
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-        notification.textContent = 'Không tìm thấy tên khách hàng trong hình ảnh';
-        document.body.appendChild(notification);
-        setTimeout(() => document.body.removeChild(notification), 3000);
-      }
-    } catch (error) {
-      console.error('Error processing image:', error);
-      const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-      notification.textContent = 'Lỗi khi xử lý hình ảnh. Vui lòng thử lại.';
-      document.body.appendChild(notification);
-      setTimeout(() => document.body.removeChild(notification), 3000);
-    } finally {
-      setIsProcessingImage(false);
-      // Reset input
-      event.target.value = '';
-    }
+    }, 15000);
   };
 
   const handleImportFromCalendar = () => {
@@ -660,22 +579,13 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
             <Calendar className="h-4 w-4 mr-2" />
             Import từ Google Calendar
           </Button>
-          <div className="relative">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              disabled={isProcessingImage}
-            />
-            <Button 
-              className="bg-purple-600 hover:bg-purple-700 text-white"
-              disabled={isProcessingImage}
-            >
-              <Image className="h-4 w-4 mr-2" />
-              {isProcessingImage ? 'Đang xử lý...' : 'Upload Hình Ảnh'}
-            </Button>
-          </div>
+          <Button 
+            onClick={handleImageUpload}
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            <Image className="h-4 w-4 mr-2" />
+            Upload Hình Ảnh
+          </Button>
 
         </div>
 
