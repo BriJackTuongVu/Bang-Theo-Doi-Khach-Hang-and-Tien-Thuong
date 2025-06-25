@@ -115,23 +115,35 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
   const handleGoogleCalendarImport = async () => {
     try {
       // First check if we have authentication
-      const authResponse = await apiRequest('/api/google-auth-status');
+      const authResponse = await apiRequest('GET', '/api/google-auth-status');
+      const authData = await authResponse.json();
       
-      if (!authResponse.authenticated) {
+      if (!authData.authenticated) {
         // Need to authenticate first
         const authUrl = `/api/google-auth?returnTo=${encodeURIComponent(window.location.pathname)}`;
         window.open(authUrl, 'google-auth', 'width=500,height=600');
+        
+        // Show message
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        notification.textContent = 'Vui lòng đăng nhập Google Calendar trong cửa sổ mới';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 5000);
         return;
       }
 
       // Get events from Google Calendar for the selected date
-      const response = await apiRequest(`/api/google-calendar/events?date=${selectedDate}`);
+      const response = await apiRequest('GET', `/api/google-calendar/events?date=${selectedDate}`);
+      const eventData = await response.json();
       
-      if (response.events && response.events.length > 0) {
+      if (eventData.events && eventData.events.length > 0) {
         let addedCount = 0;
         
-        for (const event of response.events) {
-          if (event.summary && event.summary.trim() !== '') {
+        for (const event of eventData.events) {
+          if (event.summary && event.summary.trim() !== '' && event.summary !== 'Không có tiêu đề') {
             // Check if customer already exists
             const existingReports = reports as CustomerReport[];
             const exists = existingReports.some(report => 
