@@ -539,6 +539,50 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
     setShowConfirmDialog(false);
   };
 
+  const handleDeleteTable = async () => {
+    // Ask for PIN confirmation
+    const pin = prompt('Nhập PIN để xác nhận xóa toàn bộ bảng (không thể hoàn tác):');
+    
+    if (pin !== '1995') {
+      alert('PIN không đúng');
+      return;
+    }
+
+    const confirmDelete = confirm(`Bạn có chắc chắn muốn xóa toàn bộ bảng ${tableId}?\n\nThao tác này sẽ xóa tất cả ${(reports as CustomerReport[]).length} khách hàng và không thể hoàn tác.`);
+    
+    if (!confirmDelete) {
+      return;
+    }
+
+    try {
+      // Delete all customer reports for this table
+      const reportsToDelete = (reports as CustomerReport[]).filter(r => r.trackingRecordId === tableId);
+      
+      for (const report of reportsToDelete) {
+        await fetch(`/api/customer-reports/${report.id}`, {
+          method: 'DELETE'
+        });
+      }
+
+      // Show success notification
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      notification.textContent = `Đã xóa toàn bộ bảng ${tableId} với ${reportsToDelete.length} khách hàng`;
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 3000);
+
+      // Refetch data to update UI
+      queryClient.invalidateQueries({ queryKey: ['/api/customer-reports'] });
+    } catch (error) {
+      console.error('Error deleting table:', error);
+      alert('Lỗi khi xóa bảng. Vui lòng thử lại.');
+    }
+  };
+
   if (isLoading) {
     return (
       <Card className="w-full">
@@ -572,9 +616,9 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
+          <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
               <Input
                 type="date"
                 value={selectedDate}
@@ -585,6 +629,14 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
                 {getDayOfWeek(selectedDate)}
               </span>
             </div>
+            <Button
+              onClick={handleDeleteTable}
+              variant="destructive"
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Xóa Toàn Bộ Bảng
+            </Button>
           </div>
         </CardTitle>
       </CardHeader>
@@ -731,8 +783,13 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
             <Plus className="h-4 w-4 mr-2" />
             Thêm Khách Hàng
           </Button>
-
-
+          <Button
+            onClick={handleCalendlyImport}
+            className="bg-orange-600 hover:bg-orange-700 text-white"
+          >
+            <Clock className="h-4 w-4 mr-2" />
+            Import từ Calendly
+          </Button>
         </div>
 
         {/* Confirmation Dialog for Delete */}
