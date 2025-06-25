@@ -97,15 +97,40 @@ export function SummaryStats({ records }: SummaryStatsProps) {
         body: JSON.stringify(updateData),
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tracking-records"] });
+    onMutate: async (data) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/tracking-records"] });
+
+      // Snapshot the previous value
+      const previousRecords = queryClient.getQueryData(["/api/tracking-records"]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(["/api/tracking-records"], (oldRecords: any) => {
+        if (!oldRecords) return oldRecords;
+        return oldRecords.map((record: any) => 
+          record.id === data.id 
+            ? { ...record, [data.field]: data.value }
+            : record
+        );
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousRecords };
     },
-    onError: (error) => {
+    onError: (err, data, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousRecords) {
+        queryClient.setQueryData(["/api/tracking-records"], context.previousRecords);
+      }
       toast({
         title: "Lỗi cập nhật",
         description: "Không thể lưu dữ liệu. Vui lòng thử lại.",
         variant: "destructive",
       });
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure we have the latest data
+      queryClient.invalidateQueries({ queryKey: ["/api/tracking-records"] });
     },
   });
 
