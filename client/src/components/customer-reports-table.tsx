@@ -175,14 +175,42 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
     setIsProcessingImage(true);
 
     try {
-      // Convert image to base64
+      // Resize and compress image before converting to base64
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
       const base64 = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          // Remove data:image/...;base64, prefix
-          const base64Data = result.split(',')[1];
+        img.onload = () => {
+          // Calculate new dimensions (max 1200px width/height)
+          const maxSize = 1200;
+          let { width, height } = img;
+          
+          if (width > height) {
+            if (width > maxSize) {
+              height = (height * maxSize) / width;
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = (width * maxSize) / height;
+              height = maxSize;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw and compress
+          ctx?.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          const base64Data = compressedDataUrl.split(',')[1];
           resolve(base64Data);
+        };
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          img.src = e.target?.result as string;
         };
         reader.readAsDataURL(file);
       });

@@ -253,6 +253,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // OCR endpoint for extracting customer names from images
+  app.post("/api/ocr/extract-names", async (req, res) => {
+    try {
+      const { image, date } = req.body;
+      
+      if (!image) {
+        return res.status(400).json({ error: 'No image provided' });
+      }
+
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(500).json({ error: 'OpenAI API key not configured' });
+      }
+
+      // Import OpenAI inside the route to avoid initialization issues
+      const { default: OpenAI } = await import('openai');
+      
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: `You are an OCR assistant that extracts customer names from images. 
+            Please analyze the image and extract all customer names you can find.
+            Return ONLY a JSON object with a "names" array containing the extracted names.
+            Clean up the names by removing any extra text like "and Tuong", time stamps, or other irrelevant information.
+            Focus only on extracting actual customer names.
+            
+            Example output format:
+            {"names": ["John Smith", "Mary Johnson", "David Wilson"]}`
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `Extract all customer names from this image. Remove any unnecessary text and return only clean customer names in JSON format.`
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:image/jpeg;base64,${image}`
+                }
+              }
+            ]
+          }
+        ],
+        max_tokens: 1000,
+        response_format: { type: "json_object" }
+      });
+
+      const result = JSON.parse(response.choices[0].message.content || '{"names": []}');
+      
+      // Clean up names further
+      const cleanedNames = (result.names || [])
+        .map((name: string) => {
+          return name
+            .replace(/\s+and\s+Tuong.*$/i, '') // Remove "and Tuong ..." patterns
+            .replace(/\s*-.*$/, '') // Remove anything after dash
+            .replace(/\s*\(.*\)/, '') // Remove anything in parentheses
+            .replace(/^\d{1,2}:\d{2}\s*(AM|PM)?\s*-?\s*/i, '') // Remove time stamps
+            .replace(/^[✓✗☑☐]\s*/, '') // Remove checkmarks
+            .replace(/Canceled:\s*/i, '') // Remove "Canceled:" prefix
+            .trim();
+        })
+        .filter((name: string) => name.length > 0 && name.length < 100) // Filter out empty or too long names
+        .filter((name: string) => !name.match(/^\d+$/)) // Filter out pure numbers
+        .slice(0, 50); // Limit to 50 names maximum
+
+      res.json({ names: cleanedNames });
+    } catch (error) {
+      console.error('Error processing OCR request:', error);
+      res.status(500).json({ error: 'Failed to process image' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
