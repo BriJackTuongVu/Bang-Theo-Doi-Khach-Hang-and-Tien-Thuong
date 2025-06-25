@@ -332,6 +332,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Calendly API integration
+  app.get("/api/calendly/events", async (req, res) => {
+    try {
+      const { date } = req.query;
+      
+      if (!process.env.CALENDLY_API_TOKEN) {
+        return res.status(500).json({ 
+          error: 'Calendly API token not configured',
+          setup_instructions: 'Please add CALENDLY_API_TOKEN to environment variables'
+        });
+      }
+
+      // Get user info first
+      const userResponse = await fetch('https://api.calendly.com/users/me', {
+        headers: {
+          'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!userResponse.ok) {
+        throw new Error(`Calendly user API error: ${userResponse.status}`);
+      }
+
+      const userData = await userResponse.json();
+      const userUri = userData.resource.uri;
+
+      // Get scheduled events for the specific date
+      const startTime = new Date(`${date}T00:00:00.000Z`).toISOString();
+      const endTime = new Date(`${date}T23:59:59.999Z`).toISOString();
+
+      const eventsResponse = await fetch(`https://api.calendly.com/scheduled_events?user=${encodeURIComponent(userUri)}&min_start_time=${startTime}&max_start_time=${endTime}`, {
+        headers: {
+          'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!eventsResponse.ok) {
+        throw new Error(`Calendly events API error: ${eventsResponse.status}`);
+      }
+
+      const eventsData = await eventsResponse.json();
+      const events = eventsData.collection || [];
+
+      // Get invitee information for each event
+      const eventsWithInvitees = await Promise.all(
+        events.map(async (event: any) => {
+          try {
+            const inviteesResponse = await fetch(`https://api.calendly.com/scheduled_events/${event.uri.split('/').pop()}/invitees`, {
+              headers: {
+                'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            if (inviteesResponse.ok) {
+              const inviteesData = await inviteesResponse.json();
+              const invitees = inviteesData.collection || [];
+              
+              return {
+                event_name: event.name,
+                start_time: event.start_time,
+                end_time: event.end_time,
+                status: event.status,
+                invitee_name: invitees.length > 0 ? invitees[0].name : 'Unknown',
+                invitee_email: invitees.length > 0 ? invitees[0].email : ''
+              };
+            }
+            return null;
+          } catch (error) {
+            console.error('Error fetching invitee:', error);
+            return null;
+          }
+        })
+      );
+
+      const validEvents = eventsWithInvitees.filter(event => event !== null);
+
+      res.json({ 
+        events: validEvents,
+        total: validEvents.length,
+        date: date
+      });
+    } catch (error) {
+      console.error('Error fetching Calendly events:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch Calendly events',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
