@@ -5,16 +5,20 @@ import { insertTrackingRecordSchema, insertCustomerReportSchema } from "@shared/
 import { z } from "zod";
 import { google } from 'googleapis';
 
-// Google OAuth2 setup
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  'http://127.0.0.1:5000/auth/google/callback'
-);
+// Google OAuth2 setup - using dynamic callback URL
+let oauth2Client: any;
 
 const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize OAuth client with environment-specific callback URL
+  oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:5000/auth/google/callback'
+      : 'https://your-app.replit.app/auth/google/callback'
+  );
   // Get all tracking records
   app.get("/api/tracking-records", async (req, res) => {
     try {
@@ -167,14 +171,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Google Calendar OAuth routes
-  app.get("/auth/google", (req, res) => {
+  // Google Calendar API routes
+  app.get("/api/google-auth", (req, res) => {
     const scopes = ['https://www.googleapis.com/auth/calendar.readonly'];
-    const url = oauth2Client.generateAuthUrl({
+    const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
+      state: req.query.returnTo || '/',
     });
-    res.redirect(url);
+    res.redirect(authUrl);
+  });
+
+  app.get("/api/google-auth-status", (req, res) => {
+    res.json({ 
+      authenticated: !!oauth2Client.credentials?.access_token,
+      hasCredentials: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
+    });
   });
 
   app.get("/auth/google/callback", async (req, res) => {
