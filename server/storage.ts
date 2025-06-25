@@ -27,16 +27,22 @@ export class MemStorage implements IStorage {
         date: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         scheduledCustomers: 10,
         reportedCustomers: 8,
+        closedCustomers: 6,
+        paymentStatus: "đã pay" as const,
       },
       {
         date: new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         scheduledCustomers: 15,
         reportedCustomers: 6,
+        closedCustomers: 4,
+        paymentStatus: "chưa pay" as const,
       },
       {
         date: today.toISOString().split('T')[0],
         scheduledCustomers: 12,
         reportedCustomers: 2,
+        closedCustomers: 1,
+        paymentStatus: "chưa pay" as const,
       },
     ];
 
@@ -46,7 +52,9 @@ export class MemStorage implements IStorage {
         ...record, 
         id,
         scheduledCustomers: record.scheduledCustomers ?? 0,
-        reportedCustomers: record.reportedCustomers ?? 0
+        reportedCustomers: record.reportedCustomers ?? 0,
+        closedCustomers: record.closedCustomers ?? 0,
+        paymentStatus: record.paymentStatus ?? "chưa pay"
       };
       this.records.set(id, trackingRecord);
     });

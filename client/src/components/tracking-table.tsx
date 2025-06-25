@@ -131,6 +131,8 @@ export function TrackingTable() {
       date: getNextDate(records),
       scheduledCustomers: 0,
       reportedCustomers: 0,
+      closedCustomers: 0,
+      paymentStatus: "chưa pay" as const,
     });
   };
 
