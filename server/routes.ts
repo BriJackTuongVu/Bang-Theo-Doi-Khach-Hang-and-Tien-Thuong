@@ -457,13 +457,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const invitees = inviteesData.collection || [];
               console.log('Found invitees for event:', invitees.length);
               
+              // Extract phone from questions if available
+              let phone = null;
+              if (invitees.length > 0 && invitees[0].questions_and_answers) {
+                const phoneQuestion = invitees[0].questions_and_answers.find((qa: any) => 
+                  qa.question.toLowerCase().includes('phone') || 
+                  qa.question.toLowerCase().includes('số điện thoại') ||
+                  qa.question.toLowerCase().includes('contact') ||
+                  qa.question.toLowerCase().includes('sdt')
+                );
+                if (phoneQuestion) {
+                  phone = phoneQuestion.answer;
+                }
+              }
+
               const result = {
                 event_name: event.name,
                 start_time: event.start_time,
                 end_time: event.end_time,
                 status: event.status,
                 invitee_name: invitees.length > 0 ? invitees[0].name : 'Unknown',
-                invitee_email: invitees.length > 0 ? invitees[0].email : ''
+                invitee_email: invitees.length > 0 ? invitees[0].email : '',
+                invitee_phone: phone
               };
               console.log('Event result:', result);
               return result;

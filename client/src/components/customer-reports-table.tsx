@@ -70,7 +70,6 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
   const [newCustomerName, setNewCustomerName] = useState("");
   const [newCustomerEmail, setNewCustomerEmail] = useState("");
   const [newCustomerPhone, setNewCustomerPhone] = useState("");
-  const [isUpdatingContacts, setIsUpdatingContacts] = useState(false);
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["/api/customer-reports", tableId],
@@ -143,42 +142,7 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
     setNewCustomerPhone("");
   };
 
-  const handleAutoUpdateContacts = async () => {
-    setIsUpdatingContacts(true);
-    try {
-      const response = await apiRequest("POST", "/api/auto-update-contacts-calendly");
-      const result = await response.json();
-      
-      if (result.success) {
-        // Show success notification
-        const notification = document.createElement('div');
-        notification.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-        notification.innerHTML = `
-          <div class="bg-white rounded-lg p-6 max-w-md mx-4 text-center">
-            <div class="text-green-600 text-4xl mb-4">✓</div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Cập nhật thành công!</h3>
-            <p class="text-gray-600">${result.message}</p>
-          </div>
-        `;
-        document.body.appendChild(notification);
-        setTimeout(() => {
-          if (document.body.contains(notification)) {
-            document.body.removeChild(notification);
-          }
-        }, 2000);
-        
-        // Refresh data
-        queryClient.invalidateQueries({ queryKey: ["/api/customer-reports"] });
-      } else {
-        alert("Lỗi: " + result.message);
-      }
-    } catch (error) {
-      console.error("Error updating contacts:", error);
-      alert("Lỗi khi cập nhật thông tin liên lạc từ Calendly");
-    } finally {
-      setIsUpdatingContacts(false);
-    }
-  };
+
 
   const handleGoogleCalendarImport = () => {
     // Show instruction dialog for manual copy-paste from Google Calendar
@@ -459,6 +423,8 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
             console.log('Creating customer with tableId:', tableId);
             await createMutation.mutateAsync({
               customerName: event.invitee_name.trim(),
+              customerEmail: event.invitee_email || null,
+              customerPhone: event.invitee_phone || null,
               reportSent: false,
               reportReceivedDate: null,
               customerDate: selectedDate,
@@ -806,23 +772,7 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
               />
 
             </div>
-            <Button 
-              onClick={handleAutoUpdateContacts}
-              disabled={isUpdatingContacts}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {isUpdatingContacts ? (
-                <>
-                  <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
-                  Đang cập nhật...
-                </>
-              ) : (
-                <>
-                  <Mail className="h-4 w-4 mr-2" />
-                  Cập nhật từ Calendly
-                </>
-              )}
-            </Button>
+
             <Button
               onClick={handleDeleteTable}
               variant="destructive"
