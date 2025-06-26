@@ -22,11 +22,11 @@ export function startScheduler() {
     timezone: "America/New_York" // Eastern Time
   });
 
-  // TEST: Chạy test tạo bảng sau 2 phút
+  // TEST: Chạy test tạo bảng sau 10 giây
   setTimeout(async () => {
     console.log('🧪 TEST: Chạy scheduler test để tạo bảng ngày 26...');
     await runSchedulerTask();
-  }, 120000); // 2 phút = 120000ms
+  }, 10000); // 10 giây
   
   console.log('✅ Scheduler đã được khởi động:');
   console.log('   - 6:00 AM Eastern: Tạo bảng tự động (thứ 2-6)');
