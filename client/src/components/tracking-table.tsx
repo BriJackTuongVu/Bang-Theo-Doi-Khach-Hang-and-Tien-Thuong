@@ -35,7 +35,8 @@ import {
   Gem,
   Minus,
   Save,
-  X
+  X,
+  RefreshCw
 } from "lucide-react";
 
 const iconMap = {
@@ -61,6 +62,7 @@ export function TrackingTable() {
   const [highlightedRow, setHighlightedRow] = useState<number | null>(null);
   const [tableName, setTableName] = useState("Bảng Theo Dõi Chính");
   const [isEditingName, setIsEditingName] = useState(false);
+  const [refreshingStripe, setRefreshingStripe] = useState(false);
   
   const { data: records = [], isLoading } = useQuery<TrackingRecord[]>({
     queryKey: ['/api/tracking-records'],
@@ -131,6 +133,27 @@ export function TrackingTable() {
     },
   });
 
+  const refreshStripeMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/stripe/refresh-all-payments');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tracking-records'] });
+      toast({
+        title: "Cập nhật thành công",
+        description: `Đã cập nhật ${data.updatedCount || 0} bản ghi với dữ liệu Stripe`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Lỗi",
+        description: "Không thể cập nhật dữ liệu Stripe",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleAddRow = () => {
     createMutation.mutate({
       date: getNextDate(records),
@@ -139,6 +162,10 @@ export function TrackingTable() {
       closedCustomers: 0,
       paymentStatus: "chưa pay" as const,
     });
+  };
+
+  const handleRefreshStripe = () => {
+    refreshStripeMutation.mutate();
   };
 
   const handleStartEdit = (
@@ -339,7 +366,19 @@ export function TrackingTable() {
                     Tiền Thưởng
                   </th>
                   <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                    Tưởng Closed
+                    <div className="flex items-center justify-center gap-1">
+                      <span>Tưởng Closed</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleRefreshStripe}
+                        disabled={refreshStripeMutation.isPending}
+                        className="p-0 h-4 w-4 hover:bg-blue-100 text-blue-600"
+                        title="Refresh dữ liệu Stripe"
+                      >
+                        <RefreshCw className={`h-3 w-3 ${refreshStripeMutation.isPending ? 'animate-spin' : ''}`} />
+                      </Button>
+                    </div>
                   </th>
                   <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                     Trạng Thái

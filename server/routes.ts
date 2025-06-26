@@ -1208,45 +1208,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test endpoint để tìm payments đơn giản  
-  app.get("/api/stripe/test-find/:startDate/:endDate", async (req, res) => {
+  // Endpoint để refresh tất cả Stripe payments cho tracking records
+  app.post("/api/stripe/refresh-all-payments", async (req, res) => {
     try {
-      const { startDate, endDate } = req.params;
+      console.log('🔄 Starting Stripe refresh for all tracking records...');
+      
+      if (!process.env.STRIPE_SECRET_KEY) {
+        throw new Error('Missing Stripe secret key');
+      }
+
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
       
-      const start = new Date(startDate + "T00:00:00.000Z");
-      const end = new Date(endDate + "T23:59:59.999Z");
+      // Lấy tất cả tracking records
+      const trackingRecords = await storage.getTrackingRecords();
+      console.log(`📊 Found ${trackingRecords.length} tracking records to check`);
       
-      console.log(`🔍 Testing Stripe API from ${startDate} to ${endDate}...`);
+      let updatedCount = 0;
       
-      const charges = await stripe.charges.list({
-        created: {
-          gte: Math.floor(start.getTime() / 1000),
-          lte: Math.floor(end.getTime() / 1000),
-        },
-        limit: 10, // Limit to 10 for testing
-      });
+      for (const record of trackingRecords) {
+        try {
+          console.log(`🔍 Checking payments for date: ${record.date}`);
+          
+          const startDate = new Date(record.date + "T00:00:00.000Z");
+          const endDate = new Date(record.date + "T23:59:59.999Z");
+          
+          // Lấy tất cả charges cho ngày này
+          const charges = await stripe.charges.list({
+            created: {
+              gte: Math.floor(startDate.getTime() / 1000),
+              lte: Math.floor(endDate.getTime() / 1000),
+            },
+            limit: 100,
+          });
 
-      console.log(`📊 Found ${charges.data.length} charges`);
+          console.log(`📈 Found ${charges.data.length} charges for ${record.date}`);
+          
+          // Đếm first-time payments (bất kể số tiền)
+          // Lấy tất cả payments từ trước đó để check first-time
+          const allCharges = await stripe.charges.list({
+            created: {
+              lte: Math.floor(endDate.getTime() / 1000),
+            },
+            limit: 1000, // Lấy nhiều để check history
+          });
+
+          // Tạo set emails đã từng thanh toán trước ngày này
+          const previousPaymentEmails = new Set();
+          for (const charge of allCharges.data) {
+            if (charge.status === 'succeeded' && charge.receipt_email) {
+              const chargeDate = new Date(charge.created * 1000).toISOString().split('T')[0];
+              if (chargeDate < record.date) {
+                previousPaymentEmails.add(charge.receipt_email.toLowerCase());
+              }
+            }
+          }
+
+          // Đếm first-time payments cho ngày này
+          let firstTimePayments = 0;
+          const todayUniqueEmails = new Set();
+          
+          for (const charge of charges.data) {
+            if (charge.status === 'succeeded' && charge.receipt_email) {
+              const email = charge.receipt_email.toLowerCase();
+              
+              // Nếu email này chưa thanh toán trước đó và chưa đếm trong ngày hôm nay
+              if (!previousPaymentEmails.has(email) && !todayUniqueEmails.has(email)) {
+                todayUniqueEmails.add(email);
+                firstTimePayments++;
+              }
+            }
+          }
+          
+          console.log(`💰 Found ${firstTimePayments} first-time payments for ${record.date}`);
+          
+          // Cập nhật tracking record nếu số liệu khác
+          if (record.closedCustomers !== firstTimePayments) {
+            await storage.updateTrackingRecord(record.id, {
+              closedCustomers: firstTimePayments
+            });
+            updatedCount++;
+            console.log(`✅ Updated ${record.date}: ${record.closedCustomers} → ${firstTimePayments}`);
+          }
+          
+        } catch (dateError) {
+          console.error(`❌ Error processing ${record.date}:`, dateError);
+        }
+      }
       
-      const result = {
-        success: true,
-        chargesFound: charges.data.length,
-        sampleCharges: charges.data.map(charge => ({
-          id: charge.id,
-          amount: charge.amount / 100,
-          email: charge.receipt_email,
-          status: charge.status,
-          date: new Date(charge.created * 1000).toISOString().split('T')[0]
-        }))
-      };
+      console.log(`🎉 Refresh completed. Updated ${updatedCount} records.`);
       
-      console.log('Result:', JSON.stringify(result, null, 2));
-      res.json(result);
+      res.json({ 
+        success: true, 
+        updatedCount,
+        totalRecords: trackingRecords.length,
+        message: `Updated ${updatedCount} out of ${trackingRecords.length} records`
+      });
       
     } catch (error) {
-      console.error("❌ Test error:", error);
-      res.status(500).json({ error: error.message });
+      console.error("❌ Stripe refresh error:", error);
+      res.status(500).json({ success: false, error: error.message });
     }
   });
 
