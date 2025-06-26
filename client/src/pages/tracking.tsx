@@ -178,8 +178,42 @@ export default function TrackingPage() {
     }
 
     try {
-      // First create the tracking record
-      await fetch('/api/tracking-records', {
+      // First check if a tracking record already exists for this date
+      const existingRecordsResponse = await fetch('/api/tracking-records');
+      const existingRecords = await existingRecordsResponse.json();
+      const existingRecord = existingRecords.find((r: any) => r.date === selectedAddTableDate);
+      
+      if (existingRecord) {
+        // Show warning notification
+        const notification = document.createElement('div');
+        notification.innerHTML = `
+          <div style="
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #F59E0B;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            z-index: 9999;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+          ">
+            ⚠️ Đã có bảng cho ngày ${selectedAddTableDate}! Mỗi ngày chỉ được tạo 1 bảng duy nhất.
+          </div>
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 2000);
+        setShowAddTableModal(false);
+        return;
+      }
+
+      // Create the tracking record if it doesn't exist
+      const createResponse = await fetch('/api/tracking-records', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -190,6 +224,39 @@ export default function TrackingPage() {
           paymentStatus: 'chưa pay'
         })
       });
+
+      if (createResponse.status === 409) {
+        // Backend detected duplicate - show warning
+        const notification = document.createElement('div');
+        notification.innerHTML = `
+          <div style="
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #F59E0B;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            z-index: 9999;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+          ">
+            ⚠️ Đã có bảng cho ngày ${selectedAddTableDate}! Mỗi ngày chỉ được tạo 1 bảng duy nhất.
+          </div>
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 2000);
+        setShowAddTableModal(false);
+        return;
+      }
+
+      if (!createResponse.ok) {
+        throw new Error('Failed to create tracking record');
+      }
 
       // Then automatically check Stripe payments for this date
       await fetch('/api/stripe/check-first-time-payments', {

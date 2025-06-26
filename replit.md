@@ -130,6 +130,8 @@ Changelog:
 - June 26, 2025. Completed Stripe payment quantity display: "TƯƠNG ONLY" column now shows exact count of all successful payments per date (e.g., "3" for 3 payments)
 - June 26, 2025. Added automatic Stripe payment checking when creating new customer detail tables - system now auto-updates "TƯƠNG ONLY" column with payment count for the selected date
 - June 26, 2025. Implemented automatic customer import from Calendly when creating new tables - system now auto-imports customers with email and phone information during table creation without manual intervention
+- June 26, 2025. Fixed table deletion functionality: resolved foreign key constraint issues by implementing cascading deletes in DatabaseStorage
+- June 26, 2025. Implemented date uniqueness validation: system now prevents creating multiple customer detail tables for the same date with frontend and backend validation
 ```
 
 ## User Preferences

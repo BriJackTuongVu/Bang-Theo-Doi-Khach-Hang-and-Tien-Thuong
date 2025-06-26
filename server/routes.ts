@@ -56,6 +56,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/tracking-records", async (req, res) => {
     try {
       const validatedData = insertTrackingRecordSchema.parse(req.body);
+      
+      // Check if a tracking record already exists for this date
+      const existingRecords = await storage.getTrackingRecords();
+      const existingRecord = existingRecords.find(r => r.date === validatedData.date);
+      
+      if (existingRecord) {
+        return res.status(409).json({ 
+          message: "A tracking record already exists for this date",
+          conflict: true,
+          existingDate: validatedData.date
+        });
+      }
+      
       const record = await storage.createTrackingRecord(validatedData);
       res.status(201).json(record);
     } catch (error) {
