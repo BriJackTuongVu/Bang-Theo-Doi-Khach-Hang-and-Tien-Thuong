@@ -483,7 +483,7 @@ export function TrackingTable() {
                         <div className="text-xs text-gray-500">
                           {totalBonus > 0 
                             ? `${formatCurrency(bonusRate)} × ${record.reportedCustomers}`
-                            : "Chưa đạt mức tối thiểu"
+                            : "❌"
                           }
                         </div>
                       </div>
@@ -531,8 +531,8 @@ export function TrackingTable() {
                               onChange={(e) => handleInputChange(e.target.value)}
                               className="px-1 py-1 border border-blue-300 rounded text-xs"
                             >
-                              <option value="chưa pay">chưa pay</option>
-                              <option value="đã pay">đã pay</option>
+                              <option value="👎">👎</option>
+                              <option value="👍">👍</option>
                             </select>
                             <Button
                               size="sm"
@@ -545,14 +545,14 @@ export function TrackingTable() {
                           </>
                         ) : (
                           <span 
-                            onClick={() => handleStartEdit(record.id, 'paymentStatus', record.paymentStatus || "chưa pay")}
-                            className={`cursor-pointer px-2 py-1 rounded-full text-xs font-medium hover:opacity-80 ${
-                              (record.paymentStatus || "chưa pay") === "đã pay" 
+                            onClick={() => handleStartEdit(record.id, 'paymentStatus', record.paymentStatus || "👎")}
+                            className={`cursor-pointer px-2 py-1 rounded-full text-lg font-medium hover:opacity-80 ${
+                              (record.paymentStatus || "👎") === "👍" 
                                 ? "bg-green-100 text-green-800" 
                                 : "bg-red-100 text-red-800"
                             }`}
                           >
-                            {record.paymentStatus || "chưa pay"}
+                            {record.paymentStatus || "👎"}
                           </span>
                         )}
                       </div>
