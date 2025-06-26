@@ -789,7 +789,7 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
               {(reports as CustomerReport[]).filter((report: CustomerReport) => 
                 report.customerDate === selectedDate && 
                 (report.trackingRecordId === tableId || (!report.trackingRecordId && tableId === 1))
-              ).map((report: CustomerReport) => (
+              ).map((report: CustomerReport, index: number) => (
                 <tr key={report.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     {editingCell?.id === report.id && editingCell.field === "customerName" ? (
