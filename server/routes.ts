@@ -634,7 +634,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const dateReports = reportsByDate.get(record.date) || [];
         const scheduledCount = dateReports.length;
         const reportedCount = dateReports.filter(r => r.reportReceivedDate !== null && r.reportReceivedDate !== undefined).length;
-        const closedCount = 0; // Keep closed customers as 0 for now
+        const closedCount = record.closedCustomers; // Preserve existing closed customers count from Stripe updates
         
         console.log(`=== Processing record for date ${record.date} ===`);
         console.log(`Date reports:`, dateReports.map(r => ({ name: r.customerName, received: r.reportReceivedDate })));
@@ -719,9 +719,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const records = await storage.getTrackingRecords();
       const trackingRecord = records.find(r => r.date === date);
       
-      if (trackingRecord && firstTimePaymentCount > 0) {
+      if (trackingRecord) {
         await storage.updateTrackingRecord(trackingRecord.id, {
-          paymentStatus: "đã pay"
+          closedCustomers: firstTimePaymentCount,
+          paymentStatus: firstTimePaymentCount > 0 ? "đã pay" : "chưa pay"
         });
       }
 
