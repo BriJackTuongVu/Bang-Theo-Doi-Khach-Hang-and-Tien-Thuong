@@ -199,9 +199,81 @@ export default function TrackingPage() {
           date: selectedAddTableDate
         })
       });
+
+      // Auto-import customers from Calendly for this date
+      try {
+        const calendlyStatusResponse = await fetch('/api/calendly/status');
+        const calendlyStatus = await calendlyStatusResponse.json();
+        
+        if (calendlyStatus.connected) {
+          // Get Calendly events for this date
+          const calendlyResponse = await fetch(`/api/calendly/events?date=${selectedAddTableDate}`);
+          const calendlyResult = await calendlyResponse.json();
+          
+          if (calendlyResponse.ok && calendlyResult.events && calendlyResult.events.length > 0) {
+            // Get the newly created tracking record ID
+            const newRecordsResponse = await fetch('/api/tracking-records');
+            const newRecords = await newRecordsResponse.json();
+            const newRecord = newRecords.find((r: any) => r.date === selectedAddTableDate);
+            
+            if (newRecord) {
+              // Create customer reports for each Calendly event
+              let importedCount = 0;
+              for (const event of calendlyResult.events) {
+                if (event.invitee_name && event.invitee_name.trim() !== '' && event.invitee_name !== 'Unknown') {
+                  await fetch('/api/customer-reports', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      customerName: event.invitee_name.trim(),
+                      customerEmail: event.invitee_email || null,
+                      customerPhone: event.invitee_phone || null,
+                      reportSent: false,
+                      reportReceivedDate: null,
+                      customerDate: selectedAddTableDate,
+                      trackingRecordId: newRecord.id,
+                    })
+                  });
+                  importedCount++;
+                }
+              }
+              
+              if (importedCount > 0) {
+                console.log(`Auto-imported ${importedCount} customers from Calendly for ${selectedAddTableDate}`);
+              }
+            }
+          }
+        }
+      } catch (calendlyError) {
+        console.log('Calendly auto-import failed, continuing without it:', calendlyError);
+      }
       
       // Show success notification in center of screen for 1 second
       const notification = document.createElement('div');
+      let successMessage = `✓ Đã tạo bảng cho ngày ${selectedAddTableDate}`;
+      
+      // Check if we imported customers from Calendly
+      try {
+        const calendlyStatusResponse = await fetch('/api/calendly/status');
+        const calendlyStatus = await calendlyStatusResponse.json();
+        
+        if (calendlyStatus.connected) {
+          const calendlyResponse = await fetch(`/api/calendly/events?date=${selectedAddTableDate}`);
+          const calendlyResult = await calendlyResponse.json();
+          
+          if (calendlyResponse.ok && calendlyResult.events && calendlyResult.events.length > 0) {
+            const validEvents = calendlyResult.events.filter((event: any) => 
+              event.invitee_name && event.invitee_name.trim() !== '' && event.invitee_name !== 'Unknown'
+            );
+            if (validEvents.length > 0) {
+              successMessage += ` và tự động import ${validEvents.length} khách hàng từ Calendly`;
+            }
+          }
+        }
+      } catch (e) {
+        // Keep original message if Calendly check fails
+      }
+      
       notification.innerHTML = `
         <div style="
           position: fixed;
@@ -217,7 +289,7 @@ export default function TrackingPage() {
           z-index: 9999;
           box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         ">
-          ✓ Đã tạo bảng cho ngày ${selectedAddTableDate}
+          ${successMessage}
         </div>
       `;
       document.body.appendChild(notification);
