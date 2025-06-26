@@ -55,7 +55,7 @@ export default function TrackingPage() {
     }
   };
 
-  const addNewCustomerTable = () => {
+  const addNewCustomerTable = async () => {
     const newTableId = Math.max(...customerTables.map(t => t.id)) + 1;
     // Get the latest date from existing tables and find next working day
     const latestDate = customerTables.reduce((latest, table) => 
@@ -66,6 +66,36 @@ export default function TrackingPage() {
     // Add new table to the beginning of the array (newest first)
     const newTables = [{ id: newTableId, date: nextWorkingDate }, ...customerTables];
     setCustomerTables(newTables);
+    
+    // Auto-create tracking record for this date if it doesn't exist
+    try {
+      const response = await fetch('/api/tracking-records');
+      const existingRecords = await response.json();
+      const recordExists = existingRecords.some((record: any) => record.date === nextWorkingDate);
+      
+      if (!recordExists) {
+        await fetch('/api/tracking-records', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            date: nextWorkingDate,
+            scheduledCustomers: 0,
+            reportedCustomers: 0,
+            closedCustomers: 0,
+            paymentStatus: 'chưa pay'
+          })
+        });
+        
+        // Show notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        notification.textContent = `Đã tạo dòng tracking cho ngày ${nextWorkingDate}`;
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+      }
+    } catch (error) {
+      console.error('Error creating tracking record:', error);
+    }
   };
 
   return (
