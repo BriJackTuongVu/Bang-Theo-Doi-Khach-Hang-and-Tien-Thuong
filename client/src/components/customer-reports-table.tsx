@@ -807,14 +807,26 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              <Input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-40 cursor-not-allowed"
-                disabled
-              />
-
+              <div className="relative">
+                <Input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-40 pr-8"
+                  placeholder="mm/dd/yyyy"
+                />
+                {selectedDate && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100"
+                    onClick={() => setSelectedDate("")}
+                  >
+                    ✕
+                  </Button>
+                )}
+              </div>
             </div>
 
             <Button
