@@ -127,6 +127,7 @@ Changelog:
 - June 26, 2025. Completed sequential numbering removal: eliminated all remaining numbers from interface including table titles
 - June 26, 2025. Successfully implemented Stripe API integration with live keys for automatic first-time payment tracking
 - June 26, 2025. Added customizable date selector for Stripe payment checking with automatic "TƯƠNG ONLY" column updates
+- June 26, 2025. Completed Stripe payment quantity display: "TƯƠNG ONLY" column now shows exact count of first-time payments per date (e.g., "3" for 3 payments)
 ```
 
 ## User Preferences
