@@ -98,6 +98,23 @@ export default function TrackingPage() {
     }
   };
 
+  const handleSyncTrackingRecords = async () => {
+    try {
+      const result = await syncTrackingWithCustomerTables();
+      
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      notification.textContent = `Đã xóa ${result.deleted} dòng tracking không có bảng khách hàng tương ứng`;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 3000);
+      
+      // Reload page to refresh data
+      window.location.reload();
+    } catch (error) {
+      alert('Lỗi khi đồng bộ dữ liệu');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
