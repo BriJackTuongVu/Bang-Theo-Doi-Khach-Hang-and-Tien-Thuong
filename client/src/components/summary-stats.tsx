@@ -223,8 +223,30 @@ export function SummaryStats({ records }: SummaryStatsProps) {
   };
 
   const formatWeekName = (weekKey: string) => {
-    const [year, week] = weekKey.split('-W');
-    return `Tuần ${week}, ${year}`;
+    const [year, weekNum] = weekKey.split('-W');
+    const yearNum = parseInt(year);
+    const weekNumber = parseInt(weekNum);
+    
+    // Tính ngày đầu tuần (Thứ 2)
+    const jan1 = new Date(yearNum, 0, 1);
+    const daysToFirstMonday = (8 - jan1.getDay()) % 7;
+    const firstMonday = new Date(yearNum, 0, 1 + daysToFirstMonday);
+    
+    const weekStart = new Date(firstMonday);
+    weekStart.setDate(firstMonday.getDate() + (weekNumber - 1) * 7);
+    
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    
+    // Format MM/dd/yy
+    const formatDate = (date: Date) => {
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      const year = date.getFullYear().toString().slice(-2);
+      return `${month}/${day}/${year}`;
+    };
+    
+    return `${formatDate(weekStart)}-${formatDate(weekEnd)}`;
   };
 
   const weeklyData = groupRecordsByWeek(records);
