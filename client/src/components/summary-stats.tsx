@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, FileText, Percent, DollarSign, Calendar, ChevronDown, ChevronUp, Check, X, RefreshCw, UserCheck } from "lucide-react";
+import { Users, FileText, Percent, DollarSign, Calendar, ChevronDown, ChevronUp, Check, X, RefreshCw, UserCheck, TrendingUp, Clock, CalendarDays } from "lucide-react";
 import { formatCurrency, formatNumber, formatPercentage, groupRecordsByMonth } from "@/lib/utils";
 import { TrackingRecord, CustomerReport, calculateBonus } from "@shared/schema";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { toast } from "@/hooks/use-toast";
@@ -156,12 +157,167 @@ function useAutoSync() {
 
 export function SummaryStats({ records }: SummaryStatsProps) {
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState("total");
   const queryClient = useQueryClient();
   
   // Enable auto-sync
   useAutoSync();
   
   const monthlyData = groupRecordsByMonth(records);
+
+  // Function to group records by week
+  const groupRecordsByWeek = (records: TrackingRecord[]) => {
+    const weeks: { [key: string]: TrackingRecord[] } = {};
+    
+    records.forEach(record => {
+      const date = new Date(record.date);
+      const year = date.getFullYear();
+      const week = getWeekNumber(date);
+      const weekKey = `${year}-W${week.toString().padStart(2, '0')}`;
+      
+      if (!weeks[weekKey]) {
+        weeks[weekKey] = [];
+      }
+      weeks[weekKey].push(record);
+    });
+
+    return Object.entries(weeks)
+      .map(([weekKey, weekRecords]) => ({
+        weekKey,
+        weekName: formatWeekName(weekKey),
+        records: weekRecords.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      }))
+      .sort((a, b) => b.weekKey.localeCompare(a.weekKey));
+  };
+
+  // Function to group records by year
+  const groupRecordsByYear = (records: TrackingRecord[]) => {
+    const years: { [key: string]: TrackingRecord[] } = {};
+    
+    records.forEach(record => {
+      const year = new Date(record.date).getFullYear().toString();
+      if (!years[year]) {
+        years[year] = [];
+      }
+      years[year].push(record);
+    });
+
+    return Object.entries(years)
+      .map(([year, yearRecords]) => ({
+        year,
+        yearName: `Năm ${year}`,
+        records: yearRecords.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      }))
+      .sort((a, b) => b.year.localeCompare(a.year));
+  };
+
+  // Helper functions
+  const getWeekNumber = (date: Date) => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  };
+
+  const formatWeekName = (weekKey: string) => {
+    const [year, week] = weekKey.split('-W');
+    return `Tuần ${week}, ${year}`;
+  };
+
+  const weeklyData = groupRecordsByWeek(records);
+  const yearlyData = groupRecordsByYear(records);
+
+  // Reusable stats box component
+  const StatsSummaryBox = ({ data, title, icon }: { 
+    data: { totalScheduled: number; totalReported: number; totalClosed: number; totalBonus: number }, 
+    title: string,
+    icon: React.ReactNode 
+  }) => {
+    const reportRate = data.totalScheduled > 0 ? (data.totalReported / data.totalScheduled) * 100 : 0;
+    const closureRate = data.totalReported > 0 ? (data.totalClosed / data.totalReported) * 100 : 0;
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            {icon}
+            {title}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+            <div className="bg-blue-50 rounded-lg p-3">
+              <div className="flex items-center">
+                <Users className="text-blue-600 mr-2 h-5 w-5" />
+                <div>
+                  <p className="text-xs text-gray-600">Tổng Khách Hẹn</p>
+                  <p className="text-xl font-bold text-blue-600">
+                    {formatNumber(data.totalScheduled)}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-green-50 rounded-lg p-3">
+              <div className="flex items-center">
+                <FileText className="text-green-600 mr-2 h-5 w-5" />
+                <div>
+                  <p className="text-xs text-gray-600">Tổng Report</p>
+                  <p className="text-xl font-bold text-green-600">
+                    {formatNumber(data.totalReported)}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-orange-50 rounded-lg p-3">
+              <div className="flex items-center">
+                <UserCheck className="text-orange-600 mr-2 h-5 w-5" />
+                <div>
+                  <p className="text-xs text-gray-600">Tổng Chốt</p>
+                  <p className="text-xl font-bold text-orange-600">
+                    {formatNumber(data.totalClosed)}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-yellow-50 rounded-lg p-3">
+              <div className="flex items-center">
+                <Percent className="text-yellow-600 mr-2 h-5 w-5" />
+                <div>
+                  <p className="text-xs text-gray-600">Tỉ Lệ Report</p>
+                  <p className="text-xl font-bold text-yellow-600">
+                    {formatPercentage(reportRate)}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-pink-50 rounded-lg p-3">
+              <div className="flex items-center">
+                <Percent className="text-pink-600 mr-2 h-5 w-5" />
+                <div>
+                  <p className="text-xs text-gray-600">Tỉ Lệ Chốt</p>
+                  <p className="text-xl font-bold text-pink-600">
+                    {formatPercentage(closureRate)}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-purple-50 rounded-lg p-3">
+              <div className="flex items-center">
+                <DollarSign className="text-purple-600 mr-2 h-5 w-5" />
+                <div>
+                  <p className="text-xs text-gray-600">Tổng Thưởng</p>
+                  <p className="text-xl font-bold text-purple-600">
+                    {formatCurrency(data.totalBonus)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
   
   const updateMutation = useMutation({
     mutationFn: async (data: { id: number; field: string; value: number }) => {
@@ -239,178 +395,87 @@ export function SummaryStats({ records }: SummaryStatsProps) {
 
   return (
     <div className="space-y-4">
-      {/* Overall Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Calendar className="mr-2 h-5 w-5" />
-            Tổng Kết Chung
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-            <div className="bg-blue-50 rounded-lg p-3">
-              <div className="flex items-center">
-                <Users className="text-blue-600 mr-2 h-5 w-5" />
-                <div>
-                  <p className="text-xs text-gray-600">Tổng Khách Hẹn</p>
-                  <p className="text-xl font-bold text-blue-600">
-                    {formatNumber(overallTotals.totalScheduled)}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-green-50 rounded-lg p-3">
-              <div className="flex items-center">
-                <FileText className="text-green-600 mr-2 h-5 w-5" />
-                <div>
-                  <p className="text-xs text-gray-600">Tổng Report</p>
-                  <p className="text-xl font-bold text-green-600">
-                    {formatNumber(overallTotals.totalReported)}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-orange-50 rounded-lg p-3">
-              <div className="flex items-center">
-                <Users className="text-orange-600 mr-2 h-5 w-5" />
-                <div>
-                  <p className="text-xs text-gray-600">Tổng Chốt</p>
-                  <p className="text-xl font-bold text-orange-600">
-                    {formatNumber(overallTotals.totalClosed)}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-yellow-50 rounded-lg p-3">
-              <div className="flex items-center">
-                <Percent className="text-yellow-600 mr-2 h-5 w-5" />
-                <div>
-                  <p className="text-xs text-gray-600">Tỉ Lệ Report</p>
-                  <p className="text-xl font-bold text-yellow-600">
-                    {formatPercentage(overallAveragePercentage)}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-pink-50 rounded-lg p-3">
-              <div className="flex items-center">
-                <Percent className="text-pink-600 mr-2 h-5 w-5" />
-                <div>
-                  <p className="text-xs text-gray-600">Tỉ Lệ Chốt</p>
-                  <p className="text-xl font-bold text-pink-600">
-                    {formatPercentage(overallClosureRate)}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-purple-50 rounded-lg p-3">
-              <div className="flex items-center">
-                <DollarSign className="text-purple-600 mr-2 h-5 w-5" />
-                <div>
-                  <p className="text-xs text-gray-600">Tổng Thưởng</p>
-                  <p className="text-xl font-bold text-purple-600">
-                    {formatCurrency(overallTotals.totalBonus)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Monthly breakdown within general summary */}
-          {monthlyData.length > 0 && (
-            <div className="mt-6 space-y-2">
-              <h4 className="text-sm font-medium text-gray-700 mb-3">Chi tiết theo tháng:</h4>
-              {monthlyData.map((month) => {
-                const monthStats = calculateMonthStats(month.records);
-                const monthPercentage = monthStats.totalScheduled > 0 
-                  ? (monthStats.totalReported / monthStats.totalScheduled) * 100 
-                  : 0;
-                const isExpanded = expandedMonths.has(month.monthKey);
+      {/* Multi-level Statistics with Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="total" className="flex items-center space-x-2">
+            <TrendingUp className="h-4 w-4" />
+            <span>Total</span>
+          </TabsTrigger>
+          <TabsTrigger value="weekly" className="flex items-center space-x-2">
+            <Clock className="h-4 w-4" />
+            <span>Tuần</span>
+          </TabsTrigger>
+          <TabsTrigger value="monthly" className="flex items-center space-x-2">
+            <Calendar className="h-4 w-4" />
+            <span>Tháng</span>
+          </TabsTrigger>
+          <TabsTrigger value="yearly" className="flex items-center space-x-2">
+            <CalendarDays className="h-4 w-4" />
+            <span>Năm</span>
+          </TabsTrigger>
+        </TabsList>
 
-                return (
-                  <Collapsible key={month.monthKey}>
-                    <CollapsibleTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-between p-3 h-auto hover:bg-gray-50 text-sm"
-                        onClick={() => toggleMonth(month.monthKey)}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="text-left">
-                            <p className="font-medium text-sm">{month.monthName}</p>
-                            <p className="text-xs text-gray-500">{month.records.length} ngày</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {/* Compact stats boxes */}
-                          <div className="flex items-center space-x-1">
-                            <div className="bg-blue-50 rounded px-2 py-1 flex items-center space-x-1">
-                              <Users className="text-blue-600 h-3 w-3" />
-                              <span className="text-xs font-semibold text-blue-600">{formatNumber(monthStats.totalScheduled)}</span>
-                            </div>
-                            <div className="bg-green-50 rounded px-2 py-1 flex items-center space-x-1">
-                              <FileText className="text-green-600 h-3 w-3" />
-                              <span className="text-xs font-semibold text-green-600">{formatNumber(monthStats.totalReported)}</span>
-                            </div>
-                            <div className="bg-orange-50 rounded px-2 py-1 flex items-center space-x-1">
-                              <UserCheck className="text-orange-600 h-3 w-3" />
-                              <span className="text-xs font-semibold text-orange-600">{formatNumber(monthStats.totalClosed)}</span>
-                            </div>
-                            <div className="bg-yellow-50 rounded px-2 py-1 flex items-center space-x-1">
-                              <Percent className="text-yellow-600 h-3 w-3" />
-                              <span className="text-xs font-semibold text-yellow-600">{formatPercentage(monthPercentage)}</span>
-                            </div>
-                            <div className="bg-pink-50 rounded px-2 py-1 flex items-center space-x-1">
-                              <Percent className="text-pink-600 h-3 w-3" />
-                              <span className="text-xs font-semibold text-pink-600">
-                                {formatPercentage(monthStats.totalReported > 0 ? (monthStats.totalClosed / monthStats.totalReported) * 100 : 0)}
-                              </span>
-                            </div>
-                            <div className="bg-purple-50 rounded px-2 py-1 flex items-center space-x-1">
-                              <DollarSign className="text-purple-600 h-3 w-3" />
-                              <span className="text-xs font-semibold text-purple-600">{formatCurrency(monthStats.totalBonus)}</span>
-                            </div>
-                          </div>
-                          {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                        </div>
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <div className="px-3 pb-3">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
-                          <div className="bg-blue-50 rounded p-2">
-                            <p className="text-xs text-gray-600">Tỉ lệ report</p>
-                            <p className="text-sm font-bold text-yellow-600">{formatPercentage(monthPercentage)}</p>
-                          </div>
-                          <div className="bg-pink-50 rounded p-2">
-                            <p className="text-xs text-gray-600">Tỉ lệ chốt</p>
-                            <p className="text-sm font-bold text-pink-600">
-                              {formatPercentage(monthStats.totalReported > 0 ? (monthStats.totalClosed / monthStats.totalReported) * 100 : 0)}
-                            </p>
-                          </div>
-                          <div className="bg-gray-50 rounded p-2">
-                            <p className="text-xs text-gray-600">Trung bình/ngày</p>
-                            <p className="text-sm font-bold text-gray-600">
-                              {formatNumber(Math.round(monthStats.totalScheduled / month.records.length))} hẹn
-                            </p>
-                          </div>
-                          <div className="bg-purple-50 rounded p-2">
-                            <p className="text-xs text-gray-600">Thưởng TB/ngày</p>
-                            <p className="text-sm font-bold text-purple-600">
-                              {formatCurrency(Math.round(monthStats.totalBonus / month.records.length))}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        {/* Total Tab */}
+        <TabsContent value="total">
+          <StatsSummaryBox 
+            data={overallTotals}
+            title="Tổng Kết Chung"
+            icon={<TrendingUp className="mr-2 h-5 w-5" />}
+          />
+        </TabsContent>
+
+        {/* Weekly Tab */}
+        <TabsContent value="weekly">
+          <div className="space-y-4">
+            {weeklyData.map((week) => {
+              const weekStats = calculateMonthStats(week.records);
+              return (
+                <StatsSummaryBox 
+                  key={week.weekKey}
+                  data={weekStats}
+                  title={week.weekName}
+                  icon={<Clock className="mr-2 h-5 w-5" />}
+                />
+              );
+            })}
+          </div>
+        </TabsContent>
+
+        {/* Monthly Tab */}
+        <TabsContent value="monthly">
+          <div className="space-y-4">
+            {monthlyData.map((month) => {
+              const monthStats = calculateMonthStats(month.records);
+              return (
+                <StatsSummaryBox 
+                  key={month.monthKey}
+                  data={monthStats}
+                  title={month.monthName}
+                  icon={<Calendar className="mr-2 h-5 w-5" />}
+                />
+              );
+            })}
+          </div>
+        </TabsContent>
+
+        {/* Yearly Tab */}
+        <TabsContent value="yearly">
+          <div className="space-y-4">
+            {yearlyData.map((year) => {
+              const yearStats = calculateMonthStats(year.records);
+              return (
+                <StatsSummaryBox 
+                  key={year.year}
+                  data={yearStats}
+                  title={year.yearName}
+                  icon={<CalendarDays className="mr-2 h-5 w-5" />}
+                />
+              );
+            })}
+          </div>
+        </TabsContent>
+      </Tabs>
 
 
     </div>
