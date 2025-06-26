@@ -402,21 +402,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Organization Events URL:', organizationEventsUrl);
       console.log('User Events URL:', userEventsUrl);
       
-      const eventsResponse = await fetch(eventsUrl, {
+      // Try organization events first
+      let eventsResponse = await fetch(organizationEventsUrl, {
         headers: {
           'Authorization': `Bearer ${calendlyToken}`,
           'Content-Type': 'application/json'
         }
       });
 
-      if (!eventsResponse.ok) {
-        console.error('Failed to fetch events:', eventsResponse.status, eventsResponse.statusText);
-        const errorText = await eventsResponse.text();
-        console.error('Error response:', errorText);
-        return res.status(500).json({ error: 'Failed to fetch Calendly events' });
-      }
+      let eventsData;
+      if (eventsResponse.ok) {
+        eventsData = await eventsResponse.json();
+        console.log('Found organization events:', eventsData.collection?.length || 0);
+      } else {
+        console.log('Organization events failed, trying user events...');
+        // If organization fails, try user events
+        eventsResponse = await fetch(userEventsUrl, {
+          headers: {
+            'Authorization': `Bearer ${calendlyToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
 
-      const eventsData = await eventsResponse.json();
+        if (!eventsResponse.ok) {
+          console.error('Failed to fetch events:', eventsResponse.status, eventsResponse.statusText);
+          const errorText = await eventsResponse.text();
+          console.error('Error response:', errorText);
+          return res.status(500).json({ error: 'Failed to fetch Calendly events' });
+        }
+
+        eventsData = await eventsResponse.json();
+        console.log('Found user events:', eventsData.collection?.length || 0);
+      }
+      
       const events = eventsData.collection || [];
 
       // Get invitee information for each event
