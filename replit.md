@@ -135,6 +135,7 @@ Changelog:
 - June 26, 2025. Enhanced Stripe payment logic: now distinguishes first-time customers from recurring payments - only first-time payments are counted in "TƯƠNG ONLY" column
 - June 26, 2025. Successfully resolved phone number import from Calendly API: phone numbers are extracted from event.location.location field
 - June 26, 2025. Added colorful animated loading bar: multi-color gradient loading indicator with width animation for better UX during table creation
+- June 26, 2025. Implemented automated daily table creation: system now automatically creates customer detail tables at 6AM Eastern Time (weekdays only) with full Calendly import and Stripe payment checking
 ```
 
 ## User Preferences

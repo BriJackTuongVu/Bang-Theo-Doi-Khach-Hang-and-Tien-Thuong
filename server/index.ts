@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { startScheduler } from "./scheduler";
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));
@@ -66,5 +67,8 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Khởi động scheduler cho việc tạo bảng tự động
+    startScheduler();
   });
 })();
