@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { TrackingRecord } from "@shared/schema";
 import { useState, useEffect } from "react";
 import { Plus, Clock, CheckCircle, XCircle, Settings, Database, CreditCard } from "lucide-react";
-import { getNextWorkingDay, getTodayDate, formatDateWithDay } from "@/lib/utils";
+import { getNextWorkingDay, getTodayDate, formatDateWithDay, formatDate } from "@/lib/utils";
 
 export default function TrackingPage() {
   const { data: records = [] } = useQuery<TrackingRecord[]>({
@@ -20,6 +20,8 @@ export default function TrackingPage() {
   const [showCalendlyModal, setShowCalendlyModal] = useState(false);
   const [stripeLoading, setStripeLoading] = useState(false);
   const [selectedPaymentDate, setSelectedPaymentDate] = useState('2025-06-25');
+  const [showAddTableModal, setShowAddTableModal] = useState(false);
+  const [selectedAddTableDate, setSelectedAddTableDate] = useState(getTodayDate());
 
   // Check Calendly connection status on load
   useEffect(() => {
@@ -140,45 +142,110 @@ export default function TrackingPage() {
   };
 
   const addNewCustomerTable = async () => {
-    // Get the latest date from existing records and find next working day
-    const latestDate = records.length > 0 
-      ? records.reduce((latest, record) => record.date > latest ? record.date : latest, records[0].date)
-      : getTodayDate();
-    const nextWorkingDate = getNextWorkingDay(latestDate);
-    
-    // Auto-create tracking record for this date if it doesn't exist
+    setShowAddTableModal(true);
+  };
+
+  const handleConfirmAddTable = async () => {
+    // Check if table already exists for this date
+    const existingTable = records?.find(record => record.date === selectedAddTableDate);
+    if (existingTable) {
+      // Show notification in center of screen for 1 second
+      const notification = document.createElement('div');
+      notification.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: #EF4444;
+          color: white;
+          padding: 16px 32px;
+          border-radius: 8px;
+          font-size: 16px;
+          font-weight: 600;
+          z-index: 9999;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        ">
+          ⚠ Bảng cho ngày ${selectedAddTableDate} đã tồn tại
+        </div>
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 1000);
+      setShowAddTableModal(false);
+      return;
+    }
+
     try {
-      const response = await fetch('/api/tracking-records');
-      const existingRecords = await response.json();
-      const recordExists = existingRecords.some((record: any) => record.date === nextWorkingDate);
+      await fetch('/api/tracking-records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: selectedAddTableDate,
+          scheduledCustomers: 0,
+          reportedCustomers: 0,
+          closedCustomers: 0,
+          paymentStatus: 'chưa pay'
+        })
+      });
       
-      if (!recordExists) {
-        await fetch('/api/tracking-records', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            date: nextWorkingDate,
-            scheduledCustomers: 0,
-            reportedCustomers: 0,
-            closedCustomers: 0,
-            paymentStatus: 'chưa pay'
-          })
-        });
-        
-        // Show notification
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-        notification.textContent = `Đã tạo dòng tracking cho ngày ${nextWorkingDate}`;
-        document.body.appendChild(notification);
-        setTimeout(() => notification.remove(), 3000);
-        
-        // Reload page to show new tracking record
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      }
+      // Show success notification in center of screen for 1 second
+      const notification = document.createElement('div');
+      notification.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: #10B981;
+          color: white;
+          padding: 16px 32px;
+          border-radius: 8px;
+          font-size: 16px;
+          font-weight: 600;
+          z-index: 9999;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        ">
+          ✓ Đã tạo bảng cho ngày ${selectedAddTableDate}
+        </div>
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 1000);
+      
+      setShowAddTableModal(false);
+      
+      // Reload page to show new tracking record
+      setTimeout(() => {
+        window.location.reload();
+      }, 1200);
     } catch (error) {
       console.error('Error creating tracking record:', error);
+      const notification = document.createElement('div');
+      notification.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: #EF4444;
+          color: white;
+          padding: 16px 32px;
+          border-radius: 8px;
+          font-size: 16px;
+          font-weight: 600;
+          z-index: 9999;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        ">
+          ✗ Lỗi khi tạo bảng
+        </div>
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 1000);
     }
   };
 
@@ -396,6 +463,43 @@ export default function TrackingPage() {
                 className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
               >
                 Lưu & Kết nối
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Table Modal */}
+      {showAddTableModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Thêm Bảng Chi Tiết Khách Hàng
+            </h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Chọn ngày:
+              </label>
+              <Input
+                type="date"
+                value={selectedAddTableDate}
+                onChange={(e) => setSelectedAddTableDate(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setShowAddTableModal(false)}
+                variant="outline"
+                className="flex-1"
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleConfirmAddTable}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Tạo Bảng
               </Button>
             </div>
           </div>
