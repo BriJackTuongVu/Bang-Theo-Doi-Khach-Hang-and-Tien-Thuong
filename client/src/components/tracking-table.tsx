@@ -318,42 +318,41 @@ export function TrackingTable() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <Calendar className="inline mr-2 h-4 w-4" />
-                  Ngày Tháng
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
-                  <Users className="inline mr-1 h-3 w-3" />
-                  Khách Hẹn
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
-                  <FileText className="inline mr-1 h-3 w-3" />
-                  Report
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <Percent className="inline mr-2 h-4 w-4" />
-                  Tỉ Lệ %
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <DollarSign className="inline mr-2 h-4 w-4" />
-                  Tiền Thưởng
-                </th>
-
-
-
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tưởng Closed
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Trạng Thái
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+          {/* Container with max height for 7 rows and scroll */}
+          <div className="max-h-96 overflow-y-auto">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <Calendar className="inline mr-2 h-4 w-4" />
+                      Ngày Tháng
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                      <Users className="inline mr-1 h-3 w-3" />
+                      Khách Hẹn
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                      <FileText className="inline mr-1 h-3 w-3" />
+                      Report
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <Percent className="inline mr-2 h-4 w-4" />
+                      Tỉ Lệ %
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <DollarSign className="inline mr-2 h-4 w-4" />
+                      Tiền Thưởng
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Tưởng Closed
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Trạng Thái
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
               {records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((record) => {
                 const { percentage, totalBonus, bonusRate } = calculateBonus(
                   record.scheduledCustomers,
@@ -566,9 +565,10 @@ export function TrackingTable() {
                   </tr>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
+                </tbody>
+              </table>
+            </div>
+          </div>
         
         {/* Hidden: Add row button per user request */}
         <div className="px-6 py-4 border-t border-gray-200" style={{ display: 'none' }}>
