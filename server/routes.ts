@@ -4,6 +4,9 @@ import { storage } from "./storage";
 import { insertTrackingRecordSchema, insertCustomerReportSchema } from "@shared/schema";
 import { z } from "zod";
 import { google } from 'googleapis';
+import { db } from "./db";
+import { trackingRecords, customerReports, settings } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 // Google OAuth2 setup - using dynamic callback URL
 let oauth2Client: any;
@@ -338,45 +341,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Calendly API integration
   app.get("/api/calendly/events", async (req, res) => {
+    const { date } = req.query;
+    
     try {
-      const { date } = req.query;
+      const [setting] = await db.select().from(settings).where(eq(settings.key, 'calendly_token'));
       
-      if (!process.env.CALENDLY_API_TOKEN) {
-        return res.status(400).json({ 
-          error: 'Calendly API token not configured',
-          setup_instructions: 'Please add CALENDLY_API_TOKEN to environment variables',
-          setup_url: 'https://calendly.com/integrations/api_webhooks'
-        });
+      if (!setting?.value) {
+        return res.status(401).json({ error: "No Calendly token found" });
+      }
+      
+      const calendlyToken = setting.value;
+
+      if (!date) {
+        return res.status(400).json({ error: "Date parameter is required" });
       }
 
-      // Get user info first
+      console.log(`Fetching Calendly events for date: ${date}`);
+      
+      // Format date for API call
+      const startDate = new Date(date as string);
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 1);
+      
+      const startTime = startDate.toISOString();
+      const endTime = endDate.toISOString();
+      
+      console.log(`Date range: ${startTime} to ${endTime}`);
+      
+      // First, get user info to find the organization
       const userResponse = await fetch('https://api.calendly.com/users/me', {
         headers: {
-          'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+          'Authorization': `Bearer ${calendlyToken}`,
           'Content-Type': 'application/json'
         }
       });
 
       if (!userResponse.ok) {
-        throw new Error(`Calendly user API error: ${userResponse.status}`);
+        console.error('Failed to get user info:', userResponse.status, userResponse.statusText);
+        return res.status(401).json({ error: 'Invalid Calendly token or expired' });
       }
 
       const userData = await userResponse.json();
-      const userUri = userData.resource.uri;
+      const organizationUri = userData.resource.current_organization;
+      console.log('Organization URI:', organizationUri);
 
-      // Get scheduled events for the specific date
-      const startTime = new Date(`${date}T00:00:00.000Z`).toISOString();
-      const endTime = new Date(`${date}T23:59:59.999Z`).toISOString();
-
-      const eventsResponse = await fetch(`https://api.calendly.com/scheduled_events?user=${encodeURIComponent(userUri)}&min_start_time=${startTime}&max_start_time=${endTime}`, {
+      // Get scheduled events
+      const eventsUrl = `https://api.calendly.com/scheduled_events?organization=${encodeURIComponent(organizationUri)}&min_start_time=${encodeURIComponent(startTime)}&max_start_time=${encodeURIComponent(endTime)}`;
+      console.log('Events URL:', eventsUrl);
+      
+      const eventsResponse = await fetch(eventsUrl, {
         headers: {
-          'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+          'Authorization': `Bearer ${calendlyToken}`,
           'Content-Type': 'application/json'
         }
       });
 
       if (!eventsResponse.ok) {
-        throw new Error(`Calendly events API error: ${eventsResponse.status}`);
+        console.error('Failed to fetch events:', eventsResponse.status, eventsResponse.statusText);
+        const errorText = await eventsResponse.text();
+        console.error('Error response:', errorText);
+        return res.status(500).json({ error: 'Failed to fetch Calendly events' });
       }
 
       const eventsData = await eventsResponse.json();
