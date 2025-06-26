@@ -726,7 +726,7 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            Chi Tiết Khách Hàng #{tableId}
+            Chi Tiết Khách Hàng
             {initialDate && (
               <span className="text-sm font-normal text-gray-500">
                 ({getDayOfWeek(selectedDate)})
