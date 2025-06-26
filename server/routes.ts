@@ -689,29 +689,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         limit: 100,
       });
 
-      let firstTimePaymentCount = 0;
+      let totalPaymentCount = 0;
       const paymentDetails = [];
 
       for (const charge of charges.data) {
-        if (charge.status === 'succeeded' && charge.customer) {
-          // Check if this is customer's first payment
-          const customerCharges = await stripe.charges.list({
-            customer: charge.customer as string,
-            limit: 100,
+        if (charge.status === 'succeeded') {
+          totalPaymentCount++;
+          paymentDetails.push({
+            amount: charge.amount / 100,
+            currency: charge.currency,
+            customer_email: charge.receipt_email,
+            customer_name: charge.billing_details?.name || 'Unknown',
+            created: new Date(charge.created * 1000).toISOString(),
+            charge_id: charge.id,
           });
-
-          const isFirstTime = customerCharges.data.filter(c => c.status === 'succeeded').length === 1;
-          
-          if (isFirstTime) {
-            firstTimePaymentCount++;
-            paymentDetails.push({
-              amount: charge.amount / 100,
-              currency: charge.currency,
-              customer_email: charge.receipt_email,
-              customer_name: charge.billing_details?.name,
-              created: new Date(charge.created * 1000).toISOString(),
-            });
-          }
         }
       }
 
@@ -721,18 +712,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (trackingRecord) {
         await storage.updateTrackingRecord(trackingRecord.id, {
-          closedCustomers: firstTimePaymentCount,
-          paymentStatus: firstTimePaymentCount > 0 ? "đã pay" : "chưa pay"
+          closedCustomers: totalPaymentCount,
+          paymentStatus: totalPaymentCount > 0 ? "đã pay" : "chưa pay"
         });
       }
 
       res.json({
         success: true,
         date,
-        firstTimePaymentCount,
+        totalPaymentCount,
         paymentDetails,
         trackingRecordUpdated: !!trackingRecord,
-        message: `Tìm thấy ${firstTimePaymentCount} thanh toán lần đầu tiên vào ngày ${date}`
+        message: `Tìm thấy ${totalPaymentCount} thanh toán thành công vào ngày ${date}`
       });
 
     } catch (error: any) {
