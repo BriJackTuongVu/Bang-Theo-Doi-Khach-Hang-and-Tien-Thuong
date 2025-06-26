@@ -242,6 +242,7 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
       
       // Check if this is an error response (no API token or other error)
       if (!response.ok || result.error) {
+        console.error('Error importing from Calendly:', result);
         // Show setup instructions
         const modal = document.createElement('div');
         modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
