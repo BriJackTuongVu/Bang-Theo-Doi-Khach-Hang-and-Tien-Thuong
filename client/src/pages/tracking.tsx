@@ -178,6 +178,7 @@ export default function TrackingPage() {
     }
 
     try {
+      // First create the tracking record
       await fetch('/api/tracking-records', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -187,6 +188,15 @@ export default function TrackingPage() {
           reportedCustomers: 0,
           closedCustomers: 0,
           paymentStatus: 'chưa pay'
+        })
+      });
+
+      // Then automatically check Stripe payments for this date
+      await fetch('/api/stripe/check-first-time-payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: selectedAddTableDate
         })
       });
       
