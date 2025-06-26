@@ -999,34 +999,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Direct scheduler test - manual trigger
-  app.post("/api/run-scheduler-now", async (req, res) => {
+  // Test end-of-day Stripe check
+  app.post("/api/test-stripe-endday", async (req, res) => {
     try {
       const { date } = req.body;
       const testDate = date || new Date().toISOString().split('T')[0];
       
-      console.log(`🚀 RUNNING SCHEDULER TEST for ${testDate}`);
+      console.log(`🕚 TESTING END-OF-DAY STRIPE CHECK for ${testDate}`);
       
       // Import scheduler function directly
-      const { runSchedulerTask } = require('./scheduler');
+      const { runEndOfDayStripeCheck } = require('./scheduler');
       
-      // Run the actual scheduler task
-      await runSchedulerTask();
+      // Run the end-of-day Stripe check
+      await runEndOfDayStripeCheck();
       
-      console.log(`✅ Scheduler task completed for ${testDate}`);
+      console.log(`✅ End-of-day Stripe check completed for ${testDate}`);
       
       res.json({
         success: true,
-        message: `Scheduler executed successfully for ${testDate}`,
+        message: `End-of-day Stripe check completed for ${testDate}`,
         date: testDate
       });
       
     } catch (error) {
-      console.error('❌ Scheduler execution error:', error);
+      console.error('❌ End-of-day Stripe check error:', error);
       res.status(500).json({
         success: false,
         error: error.message,
-        message: `Scheduler failed: ${error.message}`
+        message: `Stripe check failed: ${error.message}`
       });
     }
   });

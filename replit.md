@@ -137,6 +137,8 @@ Changelog:
 - June 26, 2025. Added colorful animated loading bar: multi-color gradient loading indicator with width animation for better UX during table creation
 - June 26, 2025. Implemented automated daily table creation: system now automatically creates customer detail tables at 6AM Eastern Time (weekdays only) with full Calendly import and Stripe payment checking
 - June 26, 2025. Successfully tested scheduler demo: auto-created tracking record ID 21 for 2025-06-25 with complete automation pipeline including table creation, Calendly integration, and Stripe payment verification
+- June 26, 2025. Added end-of-day Stripe payment checker: system now automatically runs at 11:59 PM Eastern Time daily to check Stripe payments and update closed customer counts for the current day
+- June 26, 2025. Completed dual scheduler system: 6AM for table creation (weekdays) and 11:59 PM for payment verification (daily) with live Stripe API integration for first-time customer detection
 ```
 
 ## User Preferences

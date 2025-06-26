@@ -7,14 +7,24 @@ export function startScheduler() {
   console.log('🕒 Khởi động scheduler cho việc tạo bảng tự động...');
   
   // Production: 6:00 AM Eastern Time, Monday to Friday
-  const job = cron.schedule('0 6 * * 1-5', async () => {
+  cron.schedule('0 6 * * 1-5', async () => {
     await runSchedulerTask();
   }, {
     scheduled: true,
     timezone: "America/New_York" // Eastern Time
   });
   
-  console.log('✅ Scheduler đã được khởi động - sẽ tạo bảng tự động lúc 6AM Eastern Time (thứ 2-6)');
+  // End-of-day Stripe check: 11:59 PM Eastern Time, every day
+  cron.schedule('59 23 * * *', async () => {
+    await runEndOfDayStripeCheck();
+  }, {
+    scheduled: true,
+    timezone: "America/New_York" // Eastern Time
+  });
+  
+  console.log('✅ Scheduler đã được khởi động:');
+  console.log('   - 6:00 AM Eastern: Tạo bảng tự động (thứ 2-6)');
+  console.log('   - 11:59 PM Eastern: Kiểm tra Stripe payments (hàng ngày)');
 }
 
 // Hàm chạy scheduler task
@@ -213,5 +223,36 @@ async function autoCheckStripePayments(date: string) {
   }
 }
 
+// Hàm kiểm tra Stripe cuối ngày
+async function runEndOfDayStripeCheck() {
+  console.log('🕚 Bắt đầu kiểm tra Stripe payments cuối ngày...');
+  
+  try {
+    // Lấy ngày hiện tại theo Eastern Time
+    const now = new Date();
+    const easternTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
+    const todayDate = easternTime.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    
+    console.log(`💳 Kiểm tra Stripe payments cho ngày: ${todayDate}`);
+    
+    // Tìm tracking record cho ngày hôm nay
+    const allRecords = await storage.getTrackingRecords();
+    const todayRecord = allRecords.find(r => r.date === todayDate);
+    
+    if (!todayRecord) {
+      console.log(`⚠️ Không tìm thấy tracking record cho ngày ${todayDate}`);
+      return;
+    }
+    
+    // Gọi hàm kiểm tra Stripe payments có sẵn
+    await autoCheckStripePayments(todayDate);
+    
+    console.log(`✅ Hoàn thành kiểm tra Stripe payments cuối ngày cho ${todayDate}`);
+    
+  } catch (error) {
+    console.error('❌ Lỗi khi kiểm tra Stripe cuối ngày:', error);
+  }
+}
+
 // Export để dùng ở nơi khác
-export { autoImportFromCalendly, autoCheckStripePayments };
+export { autoImportFromCalendly, autoCheckStripePayments, runEndOfDayStripeCheck, runSchedulerTask };
