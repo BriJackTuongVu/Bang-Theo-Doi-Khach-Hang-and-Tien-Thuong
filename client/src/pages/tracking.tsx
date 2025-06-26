@@ -237,9 +237,6 @@ export default function TrackingPage() {
         {/* Customer Reports Tables - One for each tracking record */}
         {records.map((record) => (
           <div key={record.id} className="space-y-4">
-            <h2 className="text-2xl font-bold text-blue-600 border-b-2 border-blue-200 pb-2">
-              Bảng Chi Tiết Khách Hàng - {formatDateWithDay(record.date)}
-            </h2>
             <CustomerReportsTable 
               key={`customer-table-${record.id}`}
               tableId={record.id} 
