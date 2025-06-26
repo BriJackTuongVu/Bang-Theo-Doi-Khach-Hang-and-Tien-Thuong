@@ -235,7 +235,7 @@ export default function TrackingPage() {
         </div>
         
         {/* Customer Reports Tables - One for each tracking record (newest first) */}
-        {records.slice().reverse().map((record) => (
+        {records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((record) => (
           <div key={record.id} className="space-y-4">
             <CustomerReportsTable 
               key={`customer-table-${record.id}`}
