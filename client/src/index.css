@@ -57,3 +57,21 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* Compact tracking table styling */
+.tracking-table-compact {
+  font-size: 0.75rem;
+}
+
+.tracking-table-compact td,
+.tracking-table-compact th {
+  padding: 0.25rem 0.5rem !important;
+}
+
+.tracking-table-compact .text-sm {
+  font-size: 0.65rem !important;
+}
+
+.tracking-table-compact .text-xs {
+  font-size: 0.6rem !important;
+}

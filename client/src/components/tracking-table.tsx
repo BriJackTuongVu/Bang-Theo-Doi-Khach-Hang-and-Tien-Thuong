@@ -321,7 +321,7 @@ export function TrackingTable() {
           {/* Container with max height for 7 rows and scroll */}
           <div className="max-h-48 overflow-y-auto">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-full divide-y divide-gray-200 tracking-table-compact">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
                     <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
