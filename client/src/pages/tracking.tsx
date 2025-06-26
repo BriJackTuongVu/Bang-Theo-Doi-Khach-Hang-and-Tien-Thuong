@@ -17,15 +17,32 @@ export default function TrackingPage() {
 
   // Remove customerTables state as we'll use tracking records directly
   const [calendlyConnected, setCalendlyConnected] = useState(false);
+  const [stripeEnabled, setStripeEnabled] = useState(false);
+  const [dataRetentionEnabled, setDataRetentionEnabled] = useState(false);
   const [showCalendlyModal, setShowCalendlyModal] = useState(false);
   const [stripeLoading, setStripeLoading] = useState(false);
   const [selectedPaymentDate, setSelectedPaymentDate] = useState('2025-06-25');
   const [showAddTableModal, setShowAddTableModal] = useState(false);
   const [selectedAddTableDate, setSelectedAddTableDate] = useState(getTodayDate());
 
+  const checkInitialStates = async () => {
+    // Check Stripe status (assume enabled if STRIPE_SECRET_KEY exists)
+    setStripeEnabled(true); // Since we have live Stripe keys
+    
+    // Check data retention setting from database
+    try {
+      const response = await fetch('/api/settings/data-retention');
+      const result = await response.json();
+      setDataRetentionEnabled(result.enabled || false);
+    } catch (error) {
+      setDataRetentionEnabled(false);
+    }
+  };
+
   // Check Calendly connection status on load
   useEffect(() => {
     checkCalendlyConnection();
+    checkInitialStates();
     
     // Add event listener for table deletion - just reload the page
     const handleTableDeleted = (event: CustomEvent) => {
@@ -49,6 +66,63 @@ export default function TrackingPage() {
       setCalendlyConnected(result.connected || false);
     } catch (error) {
       setCalendlyConnected(false);
+    }
+  };
+
+  const validatePIN = (): boolean => {
+    const pin = prompt('Nhập mã PIN để kích hoạt:');
+    return pin === '1995';
+  };
+
+  const handleToggleCalendly = async () => {
+    if (!calendlyConnected) {
+      if (!validatePIN()) {
+        alert('Mã PIN không đúng!');
+        return;
+      }
+      setShowCalendlyModal(true);
+    } else {
+      if (confirm('Bạn có chắc chắn muốn ngắt kết nối Calendly?')) {
+        try {
+          await fetch('/api/calendly/disconnect', { method: 'POST' });
+          setCalendlyConnected(false);
+        } catch (error) {
+          console.error('Error disconnecting Calendly:', error);
+        }
+      }
+    }
+  };
+
+  const handleToggleStripe = () => {
+    if (!stripeEnabled) {
+      if (!validatePIN()) {
+        alert('Mã PIN không đúng!');
+        return;
+      }
+    }
+    setStripeEnabled(!stripeEnabled);
+  };
+
+  const handleToggleDataRetention = async () => {
+    if (!dataRetentionEnabled) {
+      if (!validatePIN()) {
+        alert('Mã PIN không đúng!');
+        return;
+      }
+    }
+    
+    try {
+      const response = await fetch('/api/settings/data-retention', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: !dataRetentionEnabled })
+      });
+      
+      if (response.ok) {
+        setDataRetentionEnabled(!dataRetentionEnabled);
+      }
+    } catch (error) {
+      console.error('Error updating data retention setting:', error);
     }
   };
 
@@ -487,54 +561,61 @@ export default function TrackingPage() {
               </p>
             </div>
             
-            {/* Calendly Connection Status */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
+            {/* Status Toggle Switches */}
+            <div className="flex items-center gap-6">
+              {/* Calendly Toggle */}
+              <div className="flex items-center gap-3">
                 <Clock className="h-5 w-5 text-orange-600" />
                 <span className="text-sm font-medium text-gray-700">Calendly:</span>
-                {calendlyConnected ? (
-                  <div className="flex items-center gap-1">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="text-sm text-green-600 font-medium">Đã kết nối</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1">
-                    <XCircle className="h-4 w-4 text-red-600" />
-                    <span className="text-sm text-red-600 font-medium">Chưa kết nối</span>
-                  </div>
-                )}
+                <button
+                  onClick={handleToggleCalendly}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    calendlyConnected ? 'bg-green-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      calendlyConnected ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
               </div>
-              
-              {calendlyConnected ? (
-                <Button
-                  onClick={handleCalendlyDisconnect}
-                  variant="outline"
-                  size="sm"
-                  className="border-red-200 text-red-700 hover:bg-red-50"
+
+              {/* Stripe Toggle */}
+              <div className="flex items-center gap-3">
+                <CreditCard className="h-5 w-5 text-blue-600" />
+                <span className="text-sm font-medium text-gray-700">Stripe:</span>
+                <button
+                  onClick={handleToggleStripe}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    stripeEnabled ? 'bg-green-600' : 'bg-gray-300'
+                  }`}
                 >
-                  <Settings className="h-4 w-4 mr-1" />
-                  Ngắt kết nối
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleCalendlyConnect}
-                  className="bg-orange-600 hover:bg-orange-700 text-white"
-                  size="sm"
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      stripeEnabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Data Retention Toggle */}
+              <div className="flex items-center gap-3">
+                <Database className="h-5 w-5 text-purple-600" />
+                <span className="text-sm font-medium text-gray-700">Lưu dữ liệu vĩnh viễn:</span>
+                <button
+                  onClick={handleToggleDataRetention}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    dataRetentionEnabled ? 'bg-green-600' : 'bg-gray-300'
+                  }`}
                 >
-                  <Clock className="h-4 w-4 mr-1" />
-                  Kết nối Calendly
-                </Button>
-              )}
-              
-              {/* Memory Save Button */}
-              <Button
-                onClick={handleSaveMemoryForever}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-                size="sm"
-              >
-                <Database className="h-4 w-4 mr-1" />
-                Lưu Memory Vĩnh Viễn
-              </Button>
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      dataRetentionEnabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
               
               {/* Hidden: Stripe Payment Check Section per user request */}
               <div className="flex items-center gap-2" style={{ display: 'none' }}>
