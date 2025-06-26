@@ -228,7 +228,7 @@ export function SummaryStats({ records }: SummaryStatsProps) {
   const weeklyData = groupRecordsByWeek(records);
   const yearlyData = groupRecordsByYear(records);
 
-  // Reusable stats box component
+  // Compact stats box component
   const StatsSummaryBox = ({ data, title, icon }: { 
     data: { totalScheduled: number; totalReported: number; totalClosed: number; totalBonus: number }, 
     title: string,
@@ -238,76 +238,76 @@ export function SummaryStats({ records }: SummaryStatsProps) {
     const closureRate = data.totalReported > 0 ? (data.totalClosed / data.totalReported) * 100 : 0;
 
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
+      <Card className="border-l-4 border-l-blue-500">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center text-sm">
             {icon}
             {title}
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-            <div className="bg-blue-50 rounded-lg p-3">
-              <div className="flex items-center">
-                <Users className="text-blue-600 mr-2 h-5 w-5" />
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+            <div className="bg-blue-50 rounded p-2">
+              <div className="flex items-center space-x-1">
+                <Users className="text-blue-600 h-3 w-3" />
                 <div>
-                  <p className="text-xs text-gray-600">Tổng Khách Hẹn</p>
-                  <p className="text-xl font-bold text-blue-600">
+                  <p className="text-xs text-gray-600">Hẹn</p>
+                  <p className="text-sm font-bold text-blue-600">
                     {formatNumber(data.totalScheduled)}
                   </p>
                 </div>
               </div>
             </div>
-            <div className="bg-green-50 rounded-lg p-3">
-              <div className="flex items-center">
-                <FileText className="text-green-600 mr-2 h-5 w-5" />
+            <div className="bg-green-50 rounded p-2">
+              <div className="flex items-center space-x-1">
+                <FileText className="text-green-600 h-3 w-3" />
                 <div>
-                  <p className="text-xs text-gray-600">Tổng Report</p>
-                  <p className="text-xl font-bold text-green-600">
+                  <p className="text-xs text-gray-600">Report</p>
+                  <p className="text-sm font-bold text-green-600">
                     {formatNumber(data.totalReported)}
                   </p>
                 </div>
               </div>
             </div>
-            <div className="bg-orange-50 rounded-lg p-3">
-              <div className="flex items-center">
-                <UserCheck className="text-orange-600 mr-2 h-5 w-5" />
+            <div className="bg-orange-50 rounded p-2">
+              <div className="flex items-center space-x-1">
+                <UserCheck className="text-orange-600 h-3 w-3" />
                 <div>
-                  <p className="text-xs text-gray-600">Tổng Chốt</p>
-                  <p className="text-xl font-bold text-orange-600">
+                  <p className="text-xs text-gray-600">Chốt</p>
+                  <p className="text-sm font-bold text-orange-600">
                     {formatNumber(data.totalClosed)}
                   </p>
                 </div>
               </div>
             </div>
-            <div className="bg-yellow-50 rounded-lg p-3">
-              <div className="flex items-center">
-                <Percent className="text-yellow-600 mr-2 h-5 w-5" />
+            <div className="bg-yellow-50 rounded p-2">
+              <div className="flex items-center space-x-1">
+                <Percent className="text-yellow-600 h-3 w-3" />
                 <div>
-                  <p className="text-xs text-gray-600">Tỉ Lệ Report</p>
-                  <p className="text-xl font-bold text-yellow-600">
+                  <p className="text-xs text-gray-600">%Report</p>
+                  <p className="text-sm font-bold text-yellow-600">
                     {formatPercentage(reportRate)}
                   </p>
                 </div>
               </div>
             </div>
-            <div className="bg-pink-50 rounded-lg p-3">
-              <div className="flex items-center">
-                <Percent className="text-pink-600 mr-2 h-5 w-5" />
+            <div className="bg-pink-50 rounded p-2">
+              <div className="flex items-center space-x-1">
+                <Percent className="text-pink-600 h-3 w-3" />
                 <div>
-                  <p className="text-xs text-gray-600">Tỉ Lệ Chốt</p>
-                  <p className="text-xl font-bold text-pink-600">
+                  <p className="text-xs text-gray-600">%Chốt</p>
+                  <p className="text-sm font-bold text-pink-600">
                     {formatPercentage(closureRate)}
                   </p>
                 </div>
               </div>
             </div>
-            <div className="bg-purple-50 rounded-lg p-3">
-              <div className="flex items-center">
-                <DollarSign className="text-purple-600 mr-2 h-5 w-5" />
+            <div className="bg-purple-50 rounded p-2">
+              <div className="flex items-center space-x-1">
+                <DollarSign className="text-purple-600 h-3 w-3" />
                 <div>
-                  <p className="text-xs text-gray-600">Tổng Thưởng</p>
-                  <p className="text-xl font-bold text-purple-600">
+                  <p className="text-xs text-gray-600">Thưởng</p>
+                  <p className="text-sm font-bold text-purple-600">
                     {formatCurrency(data.totalBonus)}
                   </p>
                 </div>
@@ -394,88 +394,76 @@ export function SummaryStats({ records }: SummaryStatsProps) {
     : 0;
 
   return (
-    <div className="space-y-4">
-      {/* Multi-level Statistics with Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="total" className="flex items-center space-x-2">
-            <TrendingUp className="h-4 w-4" />
-            <span>Total</span>
-          </TabsTrigger>
-          <TabsTrigger value="weekly" className="flex items-center space-x-2">
-            <Clock className="h-4 w-4" />
-            <span>Tuần</span>
-          </TabsTrigger>
-          <TabsTrigger value="monthly" className="flex items-center space-x-2">
-            <Calendar className="h-4 w-4" />
-            <span>Tháng</span>
-          </TabsTrigger>
-          <TabsTrigger value="yearly" className="flex items-center space-x-2">
-            <CalendarDays className="h-4 w-4" />
-            <span>Năm</span>
-          </TabsTrigger>
-        </TabsList>
+    <div className="space-y-3">
+      {/* Tổng Kết Chung */}
+      <StatsSummaryBox 
+        data={overallTotals}
+        title="Tổng Kết Chung"
+        icon={<TrendingUp className="mr-2 h-4 w-4" />}
+      />
 
-        {/* Total Tab */}
-        <TabsContent value="total">
-          <StatsSummaryBox 
-            data={overallTotals}
-            title="Tổng Kết Chung"
-            icon={<TrendingUp className="mr-2 h-5 w-5" />}
-          />
-        </TabsContent>
+      {/* Thống Kê Theo Tuần */}
+      {weeklyData.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium text-gray-700 flex items-center px-1">
+            <Clock className="mr-1 h-4 w-4" />
+            Tuần
+          </h3>
+          {weeklyData.map((week) => {
+            const weekStats = calculateMonthStats(week.records);
+            return (
+              <StatsSummaryBox 
+                key={week.weekKey}
+                data={weekStats}
+                title={week.weekName}
+                icon={<Clock className="mr-2 h-4 w-4" />}
+              />
+            );
+          })}
+        </div>
+      )}
 
-        {/* Weekly Tab */}
-        <TabsContent value="weekly">
-          <div className="space-y-4">
-            {weeklyData.map((week) => {
-              const weekStats = calculateMonthStats(week.records);
-              return (
-                <StatsSummaryBox 
-                  key={week.weekKey}
-                  data={weekStats}
-                  title={week.weekName}
-                  icon={<Clock className="mr-2 h-5 w-5" />}
-                />
-              );
-            })}
-          </div>
-        </TabsContent>
+      {/* Thống Kê Theo Tháng */}
+      {monthlyData.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium text-gray-700 flex items-center px-1">
+            <Calendar className="mr-1 h-4 w-4" />
+            Tháng
+          </h3>
+          {monthlyData.map((month) => {
+            const monthStats = calculateMonthStats(month.records);
+            return (
+              <StatsSummaryBox 
+                key={month.monthKey}
+                data={monthStats}
+                title={month.monthName}
+                icon={<Calendar className="mr-2 h-4 w-4" />}
+              />
+            );
+          })}
+        </div>
+      )}
 
-        {/* Monthly Tab */}
-        <TabsContent value="monthly">
-          <div className="space-y-4">
-            {monthlyData.map((month) => {
-              const monthStats = calculateMonthStats(month.records);
-              return (
-                <StatsSummaryBox 
-                  key={month.monthKey}
-                  data={monthStats}
-                  title={month.monthName}
-                  icon={<Calendar className="mr-2 h-5 w-5" />}
-                />
-              );
-            })}
-          </div>
-        </TabsContent>
-
-        {/* Yearly Tab */}
-        <TabsContent value="yearly">
-          <div className="space-y-4">
-            {yearlyData.map((year) => {
-              const yearStats = calculateMonthStats(year.records);
-              return (
-                <StatsSummaryBox 
-                  key={year.year}
-                  data={yearStats}
-                  title={year.yearName}
-                  icon={<CalendarDays className="mr-2 h-5 w-5" />}
-                />
-              );
-            })}
-          </div>
-        </TabsContent>
-      </Tabs>
+      {/* Thống Kê Theo Năm */}
+      {yearlyData.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium text-gray-700 flex items-center px-1">
+            <CalendarDays className="mr-1 h-4 w-4" />
+            Năm
+          </h3>
+          {yearlyData.map((year) => {
+            const yearStats = calculateMonthStats(year.records);
+            return (
+              <StatsSummaryBox 
+                key={year.year}
+                data={yearStats}
+                title={year.yearName}
+                icon={<CalendarDays className="mr-2 h-4 w-4" />}
+              />
+            );
+          })}
+        </div>
+      )}
 
 
     </div>
