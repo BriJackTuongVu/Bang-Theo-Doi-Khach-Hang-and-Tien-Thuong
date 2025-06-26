@@ -999,39 +999,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test end-of-day Stripe check for specific date
-  app.post("/api/test-stripe-endday", async (req, res) => {
+  // Test Stripe end-of-day check
+  app.get("/api/test-stripe-endday/:date", async (req, res) => {
     try {
-      const { date } = req.body;
-      const testDate = date || new Date().toISOString().split('T')[0];
+      const testDate = req.params.date;
       
-      console.log(`🕚 TESTING END-OF-DAY STRIPE CHECK for ${testDate}`);
+      console.log(`🕚 TESTING STRIPE END-OF-DAY CHECK for ${testDate}`);
       
-      // Import scheduler function directly
+      // Import scheduler function
       const { autoCheckStripePayments } = require('./scheduler');
       
-      // Run Stripe check for specific date
+      // Run the actual Stripe check
       await autoCheckStripePayments(testDate);
       
-      console.log(`✅ End-of-day Stripe check completed for ${testDate}`);
+      console.log(`✅ Stripe check completed for ${testDate}`);
       
-      // Get updated tracking record to show result
+      // Return updated record
       const records = await storage.getTrackingRecords();
       const updatedRecord = records.find(r => r.date === testDate);
       
       res.json({
         success: true,
-        message: `Stripe check completed for ${testDate}`,
+        message: `Stripe payments checked for ${testDate}`,
         date: testDate,
-        updatedRecord: updatedRecord
+        record: updatedRecord
       });
       
     } catch (error) {
-      console.error('❌ End-of-day Stripe check error:', error);
+      console.error('❌ Stripe check error:', error);
       res.status(500).json({
         success: false,
-        error: error.message,
-        message: `Stripe check failed: ${error.message}`
+        error: error.message
       });
     }
   });
