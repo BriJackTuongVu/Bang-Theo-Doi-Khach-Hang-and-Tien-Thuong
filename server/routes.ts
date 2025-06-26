@@ -456,10 +456,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid token or API access denied' });
       }
       
-      // Store token in environment (in production, this would be stored securely)
-      process.env.CALENDLY_API_TOKEN = token;
+      // Check if setting exists
+      const [existing] = await db.select().from(settings).where(eq(settings.key, 'calendly_token'));
       
-      res.json({ success: true, message: 'Token saved successfully' });
+      if (existing) {
+        // Update existing
+        await db.update(settings)
+          .set({ value: token, updatedAt: new Date() })
+          .where(eq(settings.key, 'calendly_token'));
+      } else {
+        // Insert new
+        await db.insert(settings).values({
+          key: 'calendly_token',
+          value: token
+        });
+      }
+      
+      res.json({ success: true, message: 'Token saved permanently' });
     } catch (error) {
       console.error('Error saving Calendly token:', error);
       res.status(500).json({ error: 'Failed to save token' });
@@ -469,28 +482,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Check Calendly connection status
   app.get("/api/calendly/status", async (req, res) => {
     try {
-      if (!process.env.CALENDLY_API_TOKEN) {
-        return res.json({ connected: false });
-      }
-
-      // Test the token by making a simple API call
-      const testResponse = await fetch('https://api.calendly.com/users/me', {
-        headers: {
-          'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      res.json({ connected: testResponse.ok });
+      const [setting] = await db.select().from(settings).where(eq(settings.key, 'calendly_token'));
+      res.json({ connected: !!setting?.value });
     } catch (error) {
       res.json({ connected: false });
     }
   });
 
   // Disconnect Calendly
-  app.post("/api/calendly/disconnect", (req, res) => {
+  app.post("/api/calendly/disconnect", async (req, res) => {
     try {
-      delete process.env.CALENDLY_API_TOKEN;
+      await db.delete(settings).where(eq(settings.key, 'calendly_token'));
       res.json({ success: true, message: 'Calendly disconnected successfully' });
     } catch (error) {
       res.status(500).json({ error: 'Failed to disconnect' });

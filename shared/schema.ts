@@ -21,6 +21,14 @@ export const customerReports = pgTable("customer_reports", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertTrackingRecordSchema = createInsertSchema(trackingRecords).omit({
   id: true,
 });
@@ -30,10 +38,18 @@ export const insertCustomerReportSchema = createInsertSchema(customerReports).om
   createdAt: true,
 });
 
+export const insertSettingSchema = createInsertSchema(settings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertTrackingRecord = z.infer<typeof insertTrackingRecordSchema>;
 export type TrackingRecord = typeof trackingRecords.$inferSelect;
 export type InsertCustomerReport = z.infer<typeof insertCustomerReportSchema>;
 export type CustomerReport = typeof customerReports.$inferSelect;
+export type InsertSetting = z.infer<typeof insertSettingSchema>;
+export type Setting = typeof settings.$inferSelect;
 
 // Bonus calculation utilities
 export const BONUS_TIERS = {
