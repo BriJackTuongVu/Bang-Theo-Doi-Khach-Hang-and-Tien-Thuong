@@ -122,6 +122,9 @@ Changelog:
 - June 26, 2025. Successfully implemented Calendly API integration with full event import functionality
 - June 26, 2025. Added database setting to prevent automatic deletion of old data per user request
 - June 26, 2025. Implemented bidirectional sync: deleting customer table also deletes corresponding tracking record
+- June 26, 2025. Fixed customer ordering issue: customers now maintain original positions when report dates are updated
+- June 26, 2025. Resolved table deletion bug: can now delete the last remaining customer table
+- June 26, 2025. Completed sequential numbering removal: eliminated all remaining numbers from interface including table titles
 ```
 
 ## User Preferences

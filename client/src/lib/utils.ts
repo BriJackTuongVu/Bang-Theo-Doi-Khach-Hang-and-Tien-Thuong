@@ -137,9 +137,8 @@ export function getDayOfWeek(date: string): string {
 }
 
 export function formatDateWithDay(date: string): string {
-  const dayOfWeek = getDayOfWeek(date);
   const formattedDate = formatDate(date);
-  return `${formattedDate} (${dayOfWeek})`;
+  return formattedDate;
 }
 
 export function getNextWorkingDay(date: string): string {
