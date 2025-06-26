@@ -736,6 +736,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Auto-update customer contact information from Calendly
+  app.post("/api/auto-update-contacts-calendly", async (req, res) => {
+    try {
+      const reports = await storage.getCustomerReports();
+      let updatedCount = 0;
+
+      // Get unique dates from customer reports
+      const uniqueDates = [...new Set(reports.map(r => r.customerDate))];
+
+      for (const date of uniqueDates) {
+        try {
+          // Format date for Calendly API (YYYY-MM-DD)
+          const formattedDate = date;
+          const nextDay = new Date(date);
+          nextDay.setDate(nextDay.getDate() + 1);
+          const endDate = nextDay.toISOString().split('T')[0];
+
+          // Get events from Calendly for this date
+          const calendlyResponse = await fetch(`https://api.calendly.com/scheduled_events?user=${process.env.CALENDLY_USER_URI}&min_start_time=${formattedDate}T00:00:00.000000Z&max_start_time=${endDate}T00:00:00.000000Z&status=active`, {
+            headers: {
+              'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (calendlyResponse.ok) {
+            const calendlyData = await calendlyResponse.json();
+            const events = calendlyData.collection || [];
+
+            // For each event, get invitee information
+            for (const event of events) {
+              try {
+                const inviteesResponse = await fetch(`https://api.calendly.com/scheduled_events/${event.uuid}/invitees`, {
+                  headers: {
+                    'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+                    'Content-Type': 'application/json'
+                  }
+                });
+
+                if (inviteesResponse.ok) {
+                  const inviteesData = await inviteesResponse.json();
+                  const invitees = inviteesData.collection || [];
+
+                  for (const invitee of invitees) {
+                    const inviteeName = invitee.name;
+                    const inviteeEmail = invitee.email;
+
+                    // Find matching customer report
+                    const matchingReport = reports.find(r => 
+                      r.customerDate === date &&
+                      r.customerName.toLowerCase().includes(inviteeName.toLowerCase()) ||
+                      inviteeName.toLowerCase().includes(r.customerName.toLowerCase())
+                    );
+
+                    if (matchingReport && (!matchingReport.customerEmail || !matchingReport.customerPhone)) {
+                      // Extract phone from questions if available
+                      let phone = null;
+                      if (invitee.questions_and_answers) {
+                        const phoneQuestion = invitee.questions_and_answers.find(qa => 
+                          qa.question.toLowerCase().includes('phone') || 
+                          qa.question.toLowerCase().includes('số điện thoại') ||
+                          qa.question.toLowerCase().includes('contact')
+                        );
+                        if (phoneQuestion) {
+                          phone = phoneQuestion.answer;
+                        }
+                      }
+
+                      await storage.updateCustomerReport(matchingReport.id, {
+                        customerEmail: matchingReport.customerEmail || inviteeEmail,
+                        customerPhone: matchingReport.customerPhone || phone
+                      });
+                      updatedCount++;
+                    }
+                  }
+                }
+              } catch (inviteeError) {
+                console.error("Error fetching invitee data:", inviteeError);
+              }
+            }
+          }
+        } catch (dateError) {
+          console.error(`Error processing date ${date}:`, dateError);
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        message: `Đã cập nhật thông tin liên lạc từ Calendly cho ${updatedCount} khách hàng`,
+        updatedCount,
+        processedDates: uniqueDates.length
+      });
+    } catch (error: any) {
+      console.error("Error auto-updating contacts from Calendly:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Lỗi khi cập nhật thông tin liên lạc từ Calendly: " + error.message 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
