@@ -470,10 +470,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const invitees = inviteesData.collection || [];
               console.log('Found invitees for event:', invitees.length);
               
-              // Debug: log full event and invitee data structure
-              console.log('Event data structure:', JSON.stringify(event, null, 2));
+              // Debug: simplified logging
+              console.log('Event location info:', event.location);
               if (invitees.length > 0) {
-                console.log('Full invitee data structure:', JSON.stringify(invitees[0], null, 2));
+                console.log('Invitee info:', {name: invitees[0].name, email: invitees[0].email});
               }
               
               // Extract phone from location field or questions if available
