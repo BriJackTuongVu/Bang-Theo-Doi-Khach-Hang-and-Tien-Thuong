@@ -798,20 +798,20 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Chi Tiết Khách Hàng - {formatDateWithDay(selectedDate)}
+      <CardHeader className="py-2">
+        <CardTitle className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-1">
+            <User className="h-3 w-3" />
+            <span className="text-xs">Chi Tiết Khách Hàng - {formatDateWithDay(selectedDate)}</span>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
               <Input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-40 cursor-not-allowed"
+                className="w-32 h-6 text-xs cursor-not-allowed"
                 disabled
               />
             </div>
