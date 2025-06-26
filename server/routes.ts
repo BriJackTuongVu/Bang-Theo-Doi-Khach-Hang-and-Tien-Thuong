@@ -669,6 +669,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint to check first-time payments from Stripe
+  app.post("/api/stripe/check-first-time-payments", async (req, res) => {
+    try {
+      const { date } = req.body; // Format: YYYY-MM-DD
+      
+      // Use the provided Stripe secret key
+      const stripe = new Stripe("sk_live_7BtDEiVp53rwPhYmp8XF3bp600MR0Ksi0h");
+      
+      // Get payments for the specified date
+      const startOfDay = new Date(date + "T00:00:00.000Z");
+      const endOfDay = new Date(date + "T23:59:59.999Z");
+      
+      const charges = await stripe.charges.list({
+        created: {
+          gte: Math.floor(startOfDay.getTime() / 1000),
+          lte: Math.floor(endOfDay.getTime() / 1000),
+        },
+        limit: 100,
+      });
+
+      let firstTimePaymentCount = 0;
+      const paymentDetails = [];
+
+      for (const charge of charges.data) {
+        if (charge.status === 'succeeded' && charge.customer) {
+          // Check if this is customer's first payment
+          const customerCharges = await stripe.charges.list({
+            customer: charge.customer as string,
+            limit: 100,
+          });
+
+          const isFirstTime = customerCharges.data.filter(c => c.status === 'succeeded').length === 1;
+          
+          if (isFirstTime) {
+            firstTimePaymentCount++;
+            paymentDetails.push({
+              amount: charge.amount / 100,
+              currency: charge.currency,
+              customer_email: charge.receipt_email,
+              customer_name: charge.billing_details?.name,
+              created: new Date(charge.created * 1000).toISOString(),
+            });
+          }
+        }
+      }
+
+      // Update tracking record if exists
+      const records = await storage.getTrackingRecords();
+      const trackingRecord = records.find(r => r.date === date);
+      
+      if (trackingRecord && firstTimePaymentCount > 0) {
+        await storage.updateTrackingRecord(trackingRecord.id, {
+          paymentStatus: "đã pay"
+        });
+      }
+
+      res.json({
+        success: true,
+        date,
+        firstTimePaymentCount,
+        paymentDetails,
+        trackingRecordUpdated: !!trackingRecord,
+        message: `Tìm thấy ${firstTimePaymentCount} thanh toán lần đầu tiên vào ngày ${date}`
+      });
+
+    } catch (error: any) {
+      console.error("Error checking first-time payments:", error);
+      res.status(500).json({
+        success: false,
+        message: "Lỗi khi kiểm tra thanh toán lần đầu",
+        error: error.message
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { TrackingRecord } from "@shared/schema";
 import { useState, useEffect } from "react";
-import { Plus, Clock, CheckCircle, XCircle, Settings, Database } from "lucide-react";
+import { Plus, Clock, CheckCircle, XCircle, Settings, Database, CreditCard } from "lucide-react";
 import { getNextWorkingDay, getTodayDate, formatDateWithDay } from "@/lib/utils";
 
 export default function TrackingPage() {
@@ -18,6 +18,7 @@ export default function TrackingPage() {
   // Remove customerTables state as we'll use tracking records directly
   const [calendlyConnected, setCalendlyConnected] = useState(false);
   const [showCalendlyModal, setShowCalendlyModal] = useState(false);
+  const [stripeLoading, setStripeLoading] = useState(false);
 
   // Check Calendly connection status on load
   useEffect(() => {
@@ -45,6 +46,44 @@ export default function TrackingPage() {
       setCalendlyConnected(result.connected || false);
     } catch (error) {
       setCalendlyConnected(false);
+    }
+  };
+
+  const checkStripePayments = async (date: string) => {
+    setStripeLoading(true);
+    try {
+      const response = await fetch('/api/stripe/check-first-time-payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-green-500 text-white px-8 py-4 rounded-lg shadow-lg z-50 text-center';
+        notification.innerHTML = `
+          <div class="font-semibold mb-2">${result.message}</div>
+          <div class="text-sm">${result.firstTimePaymentCount} khách hàng thanh toán lần đầu</div>
+          ${result.trackingRecordUpdated ? '<div class="text-xs mt-1">Đã cập nhật cột TƯƠNG ONLY</div>' : ''}
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 2000);
+        
+        // Refresh page to see updated data
+        setTimeout(() => window.location.reload(), 2000);
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error: any) {
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-500 text-white px-8 py-4 rounded-lg shadow-lg z-50 text-center';
+      notification.textContent = `Lỗi: ${error.message}`;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 3000);
+    } finally {
+      setStripeLoading(false);
     }
   };
 
@@ -206,6 +245,17 @@ export default function TrackingPage() {
               >
                 <Database className="h-4 w-4 mr-1" />
                 Lưu Memory Vĩnh Viễn
+              </Button>
+              
+              {/* Stripe Payment Check Button */}
+              <Button
+                onClick={() => checkStripePayments('2025-06-25')}
+                disabled={stripeLoading}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                size="sm"
+              >
+                <CreditCard className="h-4 w-4 mr-1" />
+                {stripeLoading ? 'Đang kiểm tra...' : 'Kiểm tra Pay 25/6'}
               </Button>
             </div>
           </div>
