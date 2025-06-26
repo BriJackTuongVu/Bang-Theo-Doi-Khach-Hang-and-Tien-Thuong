@@ -75,3 +75,9 @@
 .tracking-table-compact .text-xs {
   font-size: 0.6rem !important;
 }
+
+/* Extra small text size */
+.text-2xs {
+  font-size: 0.625rem !important;
+  line-height: 0.75rem !important;
+}
