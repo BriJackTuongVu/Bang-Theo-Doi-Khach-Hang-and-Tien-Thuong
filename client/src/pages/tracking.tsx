@@ -8,14 +8,14 @@ import { useQuery } from "@tanstack/react-query";
 import { TrackingRecord } from "@shared/schema";
 import { useState, useEffect } from "react";
 import { Plus, Clock, CheckCircle, XCircle, Settings, Database } from "lucide-react";
-import { getNextWorkingDay, getTodayDate } from "@/lib/utils";
+import { getNextWorkingDay, getTodayDate, formatDateWithDay } from "@/lib/utils";
 
 export default function TrackingPage() {
   const { data: records = [] } = useQuery<TrackingRecord[]>({
     queryKey: ['/api/tracking-records'],
   });
 
-  const [customerTables, setCustomerTables] = useState([{ id: 1, date: getTodayDate() }]); // Start with one table
+  // Remove customerTables state as we'll use tracking records directly
   const [calendlyConnected, setCalendlyConnected] = useState(false);
   const [showCalendlyModal, setShowCalendlyModal] = useState(false);
 
@@ -208,21 +208,20 @@ export default function TrackingPage() {
         {/* Tracking Table */}
         <TrackingTable />
         
-        {/* Add New Customer Table Button - Between tables */}
-        <div className="flex justify-center py-4">
-          <Button
-            onClick={addNewCustomerTable}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3"
-            size="lg"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Thêm Bảng Chi Tiết Khách Hàng Mới
-          </Button>
-        </div>
+        {/* Remove add button - customer tables are auto-created from tracking records */}
         
-        {/* Customer Reports Tables */}
-        {customerTables.map((table) => (
-          <CustomerReportsTable key={table.id} tableId={table.id} initialDate={table.date} />
+        {/* Customer Reports Tables - One for each tracking record */}
+        {records.map((record) => (
+          <div key={record.id} className="space-y-4">
+            <h2 className="text-2xl font-bold text-blue-600 border-b-2 border-blue-200 pb-2">
+              Bảng Chi Tiết Khách Hàng - {formatDateWithDay(record.date)}
+            </h2>
+            <CustomerReportsTable 
+              key={`customer-table-${record.id}`}
+              tableId={record.id} 
+              initialDate={record.date} 
+            />
+          </div>
         ))}
       </div>
       
