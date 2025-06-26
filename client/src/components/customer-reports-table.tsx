@@ -40,7 +40,8 @@ interface CustomerReportsTableProps {
   initialDate?: string;
 }
 
-export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerReportsTableProps) {
+export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTableProps) {
+  console.log('CustomerReportsTable received tableId:', tableId);
   const queryClient = useQueryClient();
 
   const [editingCell, setEditingCell] = useState<{
@@ -389,6 +390,7 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
           );
           
           if (!exists) {
+            console.log('Creating customer with tableId:', tableId);
             await createMutation.mutateAsync({
               customerName: event.invitee_name.trim(),
               reportSent: false,
