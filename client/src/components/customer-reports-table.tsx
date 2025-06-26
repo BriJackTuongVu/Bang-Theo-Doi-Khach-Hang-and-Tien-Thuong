@@ -882,10 +882,10 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
                 (report.trackingRecordId === tableId || (!report.trackingRecordId && tableId === 1))
               ).sort((a, b) => a.id - b.id).map((report: CustomerReport, index: number) => (
                 <tr key={report.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-center font-medium text-gray-900">
+                  <td className="px-6 py-1 whitespace-nowrap text-center font-medium text-gray-900">
                     {index + 1}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-1 whitespace-nowrap">
                     {editingCell?.id === report.id && editingCell.field === "customerName" ? (
                       <div className="flex items-center gap-2">
                         <Input
@@ -918,7 +918,7 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-1 whitespace-nowrap">
                     {editingCell?.id === report.id && editingCell.field === "customerEmail" ? (
                       <div className="flex items-center gap-2">
                         <Input
@@ -952,7 +952,7 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-1 whitespace-nowrap">
                     {editingCell?.id === report.id && editingCell.field === "customerPhone" ? (
                       <div className="flex items-center gap-2">
                         <Input
@@ -991,7 +991,7 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-1 whitespace-nowrap">
                     <div className="flex items-center">
                       <Checkbox
                         checked={report.reportSent}
@@ -1007,7 +1007,7 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-1 whitespace-nowrap">
                     {editingCell?.id === report.id && editingCell.field === "reportReceivedDate" ? (
                       <div className="flex items-center gap-2">
                         <Input
@@ -1060,7 +1060,7 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-1 whitespace-nowrap">
                     <Button
                       variant="destructive"
                       size="sm"
