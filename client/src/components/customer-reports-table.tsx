@@ -742,9 +742,7 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="w-40"
               />
-              <span className="text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                {getDayOfWeek(selectedDate)}
-              </span>
+
             </div>
             <Button
               onClick={handleDeleteTable}
