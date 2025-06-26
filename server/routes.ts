@@ -1208,6 +1208,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint để test một ngày cụ thể với logs chi tiết
+  app.post("/api/stripe/test-date", async (req, res) => {
+    try {
+      const { date } = req.body;
+      if (!date) {
+        return res.status(400).json({ error: "Date is required" });
+      }
+
+      if (!process.env.STRIPE_SECRET_KEY) {
+        throw new Error('Missing Stripe secret key');
+      }
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+      
+      const startDate = new Date(date + "T00:00:00.000Z");
+      const endDate = new Date(date + "T23:59:59.999Z");
+      
+      console.log(`🔍 Testing date: ${date}`);
+      
+      // Lấy charges cho ngày này
+      const charges = await stripe.charges.list({
+        created: {
+          gte: Math.floor(startDate.getTime() / 1000),
+          lte: Math.floor(endDate.getTime() / 1000),
+        },
+        limit: 20,
+      });
+
+      console.log(`📈 Found ${charges.data.length} charges for ${date}`);
+      
+      const results = [];
+      let firstTimeCount = 0;
+      const todayUniqueEmails = new Set();
+      
+      for (const charge of charges.data) {
+        if (charge.status === 'succeeded' && charge.receipt_email) {
+          const email = charge.receipt_email.toLowerCase();
+          
+          if (!todayUniqueEmails.has(email)) {
+            todayUniqueEmails.add(email);
+            
+            // Kiểm tra payments trước ngày này
+            const previousPayments = await stripe.charges.list({
+              created: {
+                lt: Math.floor(startDate.getTime() / 1000),
+              },
+              limit: 100,
+            });
+            
+            const hasPaymentBefore = previousPayments.data.some(prevCharge => 
+              prevCharge.status === 'succeeded' && 
+              prevCharge.receipt_email && 
+              prevCharge.receipt_email.toLowerCase() === email
+            );
+            
+            const isFirstTime = !hasPaymentBefore;
+            if (isFirstTime) firstTimeCount++;
+            
+            const result = {
+              email,
+              amount: charge.amount / 100,
+              currency: charge.currency.toUpperCase(),
+              isFirstTime,
+              created: new Date(charge.created * 1000).toISOString()
+            };
+            
+            results.push(result);
+            console.log(`${isFirstTime ? '✅ First-time' : '❌ Returning'} customer: ${email} (${result.amount} ${result.currency})`);
+          }
+        }
+      }
+      
+      console.log(`💰 Total first-time payments: ${firstTimeCount}/${results.length}`);
+      
+      res.json({ 
+        success: true, 
+        date,
+        totalCharges: charges.data.length,
+        validPayments: results.length,
+        firstTimePayments: firstTimeCount,
+        details: results
+      });
+      
+    } catch (error) {
+      console.error("❌ Stripe test error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   // Simple test endpoint để check Stripe connection  
   app.get("/api/stripe/test-connection", async (req, res) => {
     try {
@@ -1283,7 +1372,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           console.log(`📈 Found ${charges.data.length} charges for ${record.date}`);
           
-          // Đếm first-time payments cho ngày này (simplified)
+          // Thực sự kiểm tra first-time payments
           let firstTimePayments = 0;
           const todayUniqueEmails = new Set();
           
@@ -1294,7 +1383,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Chỉ đếm mỗi email một lần trong ngày
               if (!todayUniqueEmails.has(email)) {
                 todayUniqueEmails.add(email);
-                firstTimePayments++;
+                
+                // Kiểm tra xem email này có từng thanh toán trước ngày này không
+                const previousPayments = await stripe.charges.list({
+                  created: {
+                    lt: Math.floor(startDate.getTime() / 1000), // Trước ngày này
+                  },
+                  limit: 100,
+                });
+                
+                // Tìm xem email này có trong payments trước đó không
+                const hasPaymentBefore = previousPayments.data.some(prevCharge => 
+                  prevCharge.status === 'succeeded' && 
+                  prevCharge.receipt_email && 
+                  prevCharge.receipt_email.toLowerCase() === email
+                );
+                
+                // Nếu không có payment trước đó thì đây là first-time customer
+                if (!hasPaymentBefore) {
+                  firstTimePayments++;
+                  console.log(`✅ First-time customer: ${email} (${charge.amount/100} ${charge.currency.toUpperCase()})`);
+                } else {
+                  console.log(`❌ Returning customer: ${email} (${charge.amount/100} ${charge.currency.toUpperCase()})`);
+                }
               }
             }
           }
