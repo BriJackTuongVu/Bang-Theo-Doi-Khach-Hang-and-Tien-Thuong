@@ -241,67 +241,64 @@ export function SummaryStats({ records }: SummaryStatsProps) {
 
     return (
       <div className="bg-white border border-gray-200 rounded-lg p-2 shadow-sm">
-        <div className="flex items-start gap-3">
-          {/* Tiêu đề */}
-          <div className="flex items-center min-w-0 flex-shrink-0">
+        <div className="grid grid-cols-7 gap-1 items-center">
+          {/* Tiêu đề - cột đầu tiên */}
+          <div className="flex items-center min-w-[120px]">
             {icon}
             <h4 className="text-sm font-medium text-gray-700 whitespace-nowrap">{title}</h4>
           </div>
           
-          {/* 6 ô thống kê theo dọc */}
-          <div className="grid grid-cols-6 gap-1 flex-1">
-            {/* Hẹn */}
-            <div className="bg-blue-50 rounded px-1 py-1 text-center">
-              <div className="flex flex-col items-center">
-                <Users className="h-3 w-3 text-blue-600 mb-1" />
-                <span className="text-xs text-blue-700 font-medium mb-1">Hẹn</span>
-                <div className="text-sm font-bold text-blue-800">{formatNumber(data.totalScheduled)}</div>
-              </div>
+          {/* Hẹn */}
+          <div className="bg-blue-50 rounded px-1 py-1 text-center">
+            <div className="flex flex-col items-center">
+              <Users className="h-3 w-3 text-blue-600 mb-1" />
+              <span className="text-xs text-blue-700 font-medium mb-1">Hẹn</span>
+              <div className="text-sm font-bold text-blue-800">{formatNumber(data.totalScheduled)}</div>
             </div>
+          </div>
 
-            {/* Report */}
-            <div className="bg-green-50 rounded px-1 py-1 text-center">
-              <div className="flex flex-col items-center">
-                <FileText className="h-3 w-3 text-green-600 mb-1" />
-                <span className="text-xs text-green-700 font-medium mb-1">Report</span>
-                <div className="text-sm font-bold text-green-800">{formatNumber(data.totalReported)}</div>
-              </div>
+          {/* Report */}
+          <div className="bg-green-50 rounded px-1 py-1 text-center">
+            <div className="flex flex-col items-center">
+              <FileText className="h-3 w-3 text-green-600 mb-1" />
+              <span className="text-xs text-green-700 font-medium mb-1">Report</span>
+              <div className="text-sm font-bold text-green-800">{formatNumber(data.totalReported)}</div>
             </div>
+          </div>
 
-            {/* Chốt */}
-            <div className="bg-orange-50 rounded px-1 py-1 text-center">
-              <div className="flex flex-col items-center">
-                <UserCheck className="h-3 w-3 text-orange-600 mb-1" />
-                <span className="text-xs text-orange-700 font-medium mb-1">Chốt</span>
-                <div className="text-sm font-bold text-orange-800">{formatNumber(data.totalClosed)}</div>
-              </div>
+          {/* Chốt */}
+          <div className="bg-orange-50 rounded px-1 py-1 text-center">
+            <div className="flex flex-col items-center">
+              <UserCheck className="h-3 w-3 text-orange-600 mb-1" />
+              <span className="text-xs text-orange-700 font-medium mb-1">Chốt</span>
+              <div className="text-sm font-bold text-orange-800">{formatNumber(data.totalClosed)}</div>
             </div>
+          </div>
 
-            {/* %Report */}
-            <div className="bg-yellow-50 rounded px-1 py-1 text-center">
-              <div className="flex flex-col items-center">
-                <Percent className="h-3 w-3 text-yellow-600 mb-1" />
-                <span className="text-xs text-yellow-700 font-medium mb-1">%Report</span>
-                <div className="text-sm font-bold text-yellow-800">{formatPercentage(reportRate)}</div>
-              </div>
+          {/* %Report */}
+          <div className="bg-yellow-50 rounded px-1 py-1 text-center">
+            <div className="flex flex-col items-center">
+              <Percent className="h-3 w-3 text-yellow-600 mb-1" />
+              <span className="text-xs text-yellow-700 font-medium mb-1">%Report</span>
+              <div className="text-sm font-bold text-yellow-800">{formatPercentage(reportRate)}</div>
             </div>
+          </div>
 
-            {/* %Chốt */}
-            <div className="bg-pink-50 rounded px-1 py-1 text-center">
-              <div className="flex flex-col items-center">
-                <Percent className="h-3 w-3 text-pink-600 mb-1" />
-                <span className="text-xs text-pink-700 font-medium mb-1">%Chốt</span>
-                <div className="text-sm font-bold text-pink-800">{formatPercentage(closureRate)}</div>
-              </div>
+          {/* %Chốt */}
+          <div className="bg-pink-50 rounded px-1 py-1 text-center">
+            <div className="flex flex-col items-center">
+              <Percent className="h-3 w-3 text-pink-600 mb-1" />
+              <span className="text-xs text-pink-700 font-medium mb-1">%Chốt</span>
+              <div className="text-sm font-bold text-pink-800">{formatPercentage(closureRate)}</div>
             </div>
+          </div>
 
-            {/* Thưởng */}
-            <div className="bg-purple-50 rounded px-1 py-1 text-center">
-              <div className="flex flex-col items-center">
-                <DollarSign className="h-3 w-3 text-purple-600 mb-1" />
-                <span className="text-xs text-purple-700 font-medium mb-1">Thưởng</span>
-                <div className="text-sm font-bold text-purple-800">{formatCurrency(data.totalBonus)}</div>
-              </div>
+          {/* Thưởng */}
+          <div className="bg-purple-50 rounded px-1 py-1 text-center">
+            <div className="flex flex-col items-center">
+              <DollarSign className="h-3 w-3 text-purple-600 mb-1" />
+              <span className="text-xs text-purple-700 font-medium mb-1">Thưởng</span>
+              <div className="text-sm font-bold text-purple-800">{formatCurrency(data.totalBonus)}</div>
             </div>
           </div>
         </div>
