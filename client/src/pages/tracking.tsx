@@ -98,7 +98,7 @@ export default function TrackingPage() {
     }
   };
 
-  const handleSyncTrackingRecords = async () => {
+  const autoSyncTrackingRecords = async () => {
     try {
       // Get all tracking records
       const trackingResponse = await fetch('/api/tracking-records');
@@ -123,18 +123,24 @@ export default function TrackingPage() {
         });
       }
       
-      const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-      notification.textContent = `Đã xóa ${recordsToDelete.length} dòng tracking không có bảng khách hàng tương ứng`;
-      document.body.appendChild(notification);
-      setTimeout(() => notification.remove(), 3000);
-      
-      // Reload page to refresh data
-      window.location.reload();
+      if (recordsToDelete.length > 0) {
+        console.log(`Auto-sync: Đã xóa ${recordsToDelete.length} dòng tracking không có bảng khách hàng tương ứng`);
+        // Refresh tracking data
+        window.location.reload();
+      }
     } catch (error) {
-      alert('Lỗi khi đồng bộ dữ liệu');
+      console.error('Lỗi auto-sync:', error);
     }
   };
+
+  // Auto-sync on component mount and when customer tables change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      autoSyncTrackingRecords();
+    }, 2000); // Delay to ensure data is loaded
+    
+    return () => clearTimeout(timer);
+  }, [customerTables]);
 
   return (
     <div className="min-h-screen bg-gray-50">
