@@ -470,11 +470,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const invitees = inviteesData.collection || [];
               console.log('Found invitees for event:', invitees.length);
               
-              // Extract phone from questions if available
+              // Debug: log full invitee data structure
+              if (invitees.length > 0) {
+                console.log('Full invitee data structure:', JSON.stringify(invitees[0], null, 2));
+              }
+              
+              // Extract phone from location field or questions if available
               let phone = null;
-              if (invitees.length > 0 && invitees[0].questions_and_answers) {
+              
+              // First try to get from location field
+              if (invitees.length > 0 && invitees[0].text_reminder_number) {
+                phone = invitees[0].text_reminder_number;
+                console.log('Found phone from text_reminder_number:', phone);
+              }
+              
+              // If not found, try questions and answers for location
+              if (!phone && invitees.length > 0 && invitees[0].questions_and_answers) {
                 console.log('Questions and answers:', JSON.stringify(invitees[0].questions_and_answers, null, 2));
-                const phoneQuestion = invitees[0].questions_and_answers.find((qa: any) => 
+                const locationQuestion = invitees[0].questions_and_answers.find((qa: any) => 
+                  qa.question.toLowerCase().includes('location') || 
+                  qa.question.toLowerCase().includes('địa chỉ') ||
                   qa.question.toLowerCase().includes('phone') || 
                   qa.question.toLowerCase().includes('số điện thoại') ||
                   qa.question.toLowerCase().includes('contact') ||
@@ -482,14 +497,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   qa.question.toLowerCase().includes('mobile') ||
                   qa.question.toLowerCase().includes('cell')
                 );
-                if (phoneQuestion) {
-                  phone = phoneQuestion.answer;
-                  console.log('Found phone number:', phone);
+                if (locationQuestion) {
+                  phone = locationQuestion.answer;
+                  console.log('Found phone from questions:', phone);
                 } else {
-                  console.log('No phone question found in questions_and_answers');
+                  console.log('No phone/location question found in questions_and_answers');
                 }
-              } else {
-                console.log('No questions_and_answers available for invitee');
+              } 
+              
+              if (!phone) {
+                console.log('No phone information available for invitee');
               }
 
               const result = {
