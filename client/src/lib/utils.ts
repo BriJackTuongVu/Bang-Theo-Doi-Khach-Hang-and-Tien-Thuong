@@ -22,11 +22,12 @@ export function formatPercentage(percentage: number): string {
 }
 
 export function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString('vi-VN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  });
+  // Parse date with Vietnam timezone to avoid timezone issues
+  const vietnamDate = new Date(date + 'T12:00:00+07:00');
+  const day = vietnamDate.getDate().toString().padStart(2, '0');
+  const month = (vietnamDate.getMonth() + 1).toString().padStart(2, '0');
+  const year = vietnamDate.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 export function getTodayDate(): string {
