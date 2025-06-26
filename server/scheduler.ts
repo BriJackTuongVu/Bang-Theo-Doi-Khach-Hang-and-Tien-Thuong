@@ -6,57 +6,60 @@ import { storage } from './storage';
 export function startScheduler() {
   console.log('🕒 Khởi động scheduler cho việc tạo bảng tự động...');
   
-  // Demo test: Chạy vào lúc 11:34 PM Eastern Time để test
-  // Production: '0 6 * * 1-5' = 6:00 AM Eastern Time, Monday to Friday
-  
-  const job = cron.schedule('34 23 * * *', async () => {
-    console.log('🚀 Bắt đầu tạo bảng tự động - DEMO TEST lúc 11:34PM Eastern Time...');
-    
-    try {
-      // Lấy ngày hiện tại theo Eastern Time
-      const now = new Date();
-      const easternTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
-      const todayDate = easternTime.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-      
-      console.log(`📅 Tạo bảng cho ngày: ${todayDate}`);
-      
-      // Kiểm tra xem bảng đã tồn tại chưa
-      const existingRecords = await storage.getTrackingRecords();
-      const existingRecord = existingRecords.find(r => r.date === todayDate);
-      
-      if (existingRecord) {
-        console.log(`⚠️ Bảng cho ngày ${todayDate} đã tồn tại, bỏ qua việc tạo mới.`);
-        return;
-      }
-      
-      // Tạo tracking record mới
-      const newRecord = await storage.createTrackingRecord({
-        date: todayDate,
-        scheduledCustomers: 0,
-        reportedCustomers: 0,
-        closedCustomers: 0,
-        paymentStatus: "chưa pay"
-      });
-      
-      console.log(`✅ Đã tạo tracking record ID: ${newRecord.id} cho ngày ${todayDate}`);
-      
-      // Tự động import khách hàng từ Calendly nếu có
-      await autoImportFromCalendly(todayDate, newRecord.id);
-      
-      // Tự động kiểm tra Stripe payments
-      await autoCheckStripePayments(todayDate);
-      
-      console.log(`🎉 Hoàn thành tạo bảng tự động cho ngày ${todayDate}`);
-      
-    } catch (error) {
-      console.error('❌ Lỗi khi tạo bảng tự động:', error);
-    }
+  // Production: 6:00 AM Eastern Time, Monday to Friday
+  const job = cron.schedule('0 6 * * 1-5', async () => {
+    await runSchedulerTask();
   }, {
     scheduled: true,
     timezone: "America/New_York" // Eastern Time
   });
   
   console.log('✅ Scheduler đã được khởi động - sẽ tạo bảng tự động lúc 6AM Eastern Time (thứ 2-6)');
+}
+
+// Hàm chạy scheduler task
+async function runSchedulerTask() {
+  console.log('🚀 Bắt đầu tạo bảng tự động lúc 6AM Eastern Time...');
+  
+  try {
+    // Lấy ngày hiện tại theo Eastern Time
+    const now = new Date();
+    const easternTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
+    const todayDate = easternTime.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    
+    console.log(`📅 Tạo bảng cho ngày: ${todayDate}`);
+    
+    // Kiểm tra xem bảng đã tồn tại chưa
+    const existingRecords = await storage.getTrackingRecords();
+    const existingRecord = existingRecords.find(r => r.date === todayDate);
+    
+    if (existingRecord) {
+      console.log(`⚠️ Bảng cho ngày ${todayDate} đã tồn tại, bỏ qua việc tạo mới.`);
+      return;
+    }
+    
+    // Tạo tracking record mới
+    const newRecord = await storage.createTrackingRecord({
+      date: todayDate,
+      scheduledCustomers: 0,
+      reportedCustomers: 0,
+      closedCustomers: 0,
+      paymentStatus: "chưa pay"
+    });
+    
+    console.log(`✅ Đã tạo tracking record ID: ${newRecord.id} cho ngày ${todayDate}`);
+    
+    // Tự động import khách hàng từ Calendly nếu có
+    await autoImportFromCalendly(todayDate, newRecord.id);
+    
+    // Tự động kiểm tra Stripe payments
+    await autoCheckStripePayments(todayDate);
+    
+    console.log(`🎉 Hoàn thành tạo bảng tự động cho ngày ${todayDate}`);
+    
+  } catch (error) {
+    console.error('❌ Lỗi khi tạo bảng tự động:', error);
+  }
 }
 
 // Hàm import tự động từ Calendly
@@ -159,7 +162,7 @@ async function autoCheckStripePayments(date: string) {
     console.log(`💳 Kiểm tra Stripe payments cho ngày ${date}...`);
     
     // Import Stripe
-    const Stripe = require('stripe');
+    const { default: Stripe } = await import('stripe');
     
     if (!process.env.STRIPE_SECRET_KEY) {
       console.log('⚠️ Thiếu Stripe secret key, bỏ qua auto-check');
