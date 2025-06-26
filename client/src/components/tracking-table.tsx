@@ -324,25 +324,25 @@ export function TrackingTable() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                       Ngày Tháng
                     </th>
-                    <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                    <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                       Khách Hẹn
                     </th>
-                    <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                    <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                       Report
                     </th>
-                    <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                       Tỉ Lệ %
                     </th>
-                    <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                       Tiền Thưởng
                     </th>
-                    <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                       Tưởng Closed
                     </th>
-                    <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                       Trạng Thái
                     </th>
                   </tr>
