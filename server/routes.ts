@@ -1034,6 +1034,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Settings endpoints for data retention
+  app.get('/api/settings/data-retention', async (req, res) => {
+    try {
+      const [setting] = await db.select().from(settings).where(eq(settings.key, 'data_retention'));
+      res.json({ enabled: setting ? setting.value === 'true' : false });
+    } catch (error) {
+      console.error('Error getting data retention setting:', error);
+      res.json({ enabled: false });
+    }
+  });
+
+  app.post('/api/settings/data-retention', async (req, res) => {
+    try {
+      const { enabled } = req.body;
+      
+      // Check if setting exists
+      const [existingSetting] = await db.select().from(settings).where(eq(settings.key, 'data_retention'));
+      
+      if (existingSetting) {
+        await db.update(settings)
+          .set({ value: enabled.toString() })
+          .where(eq(settings.key, 'data_retention'));
+      } else {
+        await db.insert(settings).values({
+          key: 'data_retention',
+          value: enabled.toString()
+        });
+      }
+      
+      res.json({ success: true, enabled });
+    } catch (error) {
+      console.error('Error updating data retention setting:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
