@@ -817,7 +817,7 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
             className="bg-orange-600 hover:bg-orange-700 text-white"
           >
             <Clock className="h-4 w-4 mr-2" />
-            Import từ Calendly
+            Cập Nhật Khách Hàng
           </Button>
         </div>
 
