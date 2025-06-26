@@ -819,16 +819,10 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
             <Button
               onClick={handleDeleteTable}
               variant="destructive"
-              className="bg-red-600 hover:bg-red-700 text-white font-medium whitespace-nowrap flex items-center gap-2"
-              style={{ 
-                fontFamily: 'system-ui, -apple-system, sans-serif',
-                fontSize: '14px',
-                lineHeight: '1.4',
-                textRendering: 'optimizeLegibility'
-              }}
+              size="sm"
+              className="bg-red-600 hover:bg-red-700 text-white font-medium px-3 py-1"
             >
-              <Trash2 className="h-4 w-4" />
-              <span>Xóa Toàn Bộ Bảng</span>
+              <Trash2 className="h-3 w-3" />
             </Button>
           </div>
         </CardTitle>
