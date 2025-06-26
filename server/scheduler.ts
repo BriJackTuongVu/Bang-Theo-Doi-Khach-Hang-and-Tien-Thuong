@@ -67,24 +67,8 @@ async function autoImportFromCalendly(date: string, trackingRecordId: number) {
   try {
     console.log(`📞 Bắt đầu import khách hàng từ Calendly cho ngày ${date}...`);
     
-    if (!process.env.CALENDLY_API_TOKEN || !process.env.CALENDLY_USER_URI) {
-      console.log('⚠️ Thiếu Calendly API credentials, bỏ qua auto-import');
-      return;
-    }
-
-    // Format date cho Calendly API
-    const startDate = `${date}T00:00:00.000000Z`;
-    const nextDay = new Date(date);
-    nextDay.setDate(nextDay.getDate() + 1);
-    const endDate = `${nextDay.toISOString().split('T')[0]}T00:00:00.000000Z`;
-
-    // Gọi Calendly API
-    const response = await fetch(`https://api.calendly.com/scheduled_events?user=${process.env.CALENDLY_USER_URI}&min_start_time=${startDate}&max_start_time=${endDate}&status=active`, {
-      headers: {
-        'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
-        'Content-Type': 'application/json'
-      }
-    });
+    // Gọi API internal để lấy events thay vì trực tiếp gọi Calendly
+    const response = await fetch(`http://localhost:5000/api/calendly/events?date=${date}`);
 
     if (!response.ok) {
       console.log('⚠️ Không thể kết nối Calendly API');
