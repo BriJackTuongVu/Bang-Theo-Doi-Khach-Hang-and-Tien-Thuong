@@ -240,84 +240,72 @@ export function SummaryStats({ records }: SummaryStatsProps) {
     const closureRate = data.totalReported > 0 ? (data.totalClosed / data.totalReported) * 100 : 0;
 
     return (
-      <Card className="border-l-4 border-l-blue-500">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center text-sm">
+      <div className="bg-white border border-gray-200 rounded-lg p-2 shadow-sm">
+        <div className="flex items-center gap-3">
+          {/* Tiêu đề */}
+          <div className="flex items-center min-w-0 flex-shrink-0">
             {icon}
-            {title}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
-            <div className="bg-blue-50 rounded p-2">
-              <div className="flex items-center space-x-1">
-                <Users className="text-blue-600 h-3 w-3" />
-                <div>
-                  <p className="text-xs text-gray-600">Hẹn</p>
-                  <p className="text-sm font-bold text-blue-600">
-                    {formatNumber(data.totalScheduled)}
-                  </p>
-                </div>
+            <h4 className="text-sm font-medium text-gray-700 whitespace-nowrap">{title}</h4>
+          </div>
+          
+          {/* 6 ô thống kê */}
+          <div className="flex gap-1 flex-1">
+            {/* Hẹn */}
+            <div className="bg-blue-50 rounded px-1 py-1 text-center min-w-0 flex-1">
+              <div className="flex items-center justify-center mb-1">
+                <Users className="h-3 w-3 text-blue-600 mr-1" />
+                <span className="text-xs text-blue-700 font-medium">Hẹn</span>
               </div>
+              <div className="text-sm font-bold text-blue-800">{formatNumber(data.totalScheduled)}</div>
             </div>
-            <div className="bg-green-50 rounded p-2">
-              <div className="flex items-center space-x-1">
-                <FileText className="text-green-600 h-3 w-3" />
-                <div>
-                  <p className="text-xs text-gray-600">Report</p>
-                  <p className="text-sm font-bold text-green-600">
-                    {formatNumber(data.totalReported)}
-                  </p>
-                </div>
+
+            {/* Report */}
+            <div className="bg-green-50 rounded px-1 py-1 text-center min-w-0 flex-1">
+              <div className="flex items-center justify-center mb-1">
+                <FileText className="h-3 w-3 text-green-600 mr-1" />
+                <span className="text-xs text-green-700 font-medium">Report</span>
               </div>
+              <div className="text-sm font-bold text-green-800">{formatNumber(data.totalReported)}</div>
             </div>
-            <div className="bg-orange-50 rounded p-2">
-              <div className="flex items-center space-x-1">
-                <UserCheck className="text-orange-600 h-3 w-3" />
-                <div>
-                  <p className="text-xs text-gray-600">Chốt</p>
-                  <p className="text-sm font-bold text-orange-600">
-                    {formatNumber(data.totalClosed)}
-                  </p>
-                </div>
+
+            {/* Chốt */}
+            <div className="bg-orange-50 rounded px-1 py-1 text-center min-w-0 flex-1">
+              <div className="flex items-center justify-center mb-1">
+                <UserCheck className="h-3 w-3 text-orange-600 mr-1" />
+                <span className="text-xs text-orange-700 font-medium">Chốt</span>
               </div>
+              <div className="text-sm font-bold text-orange-800">{formatNumber(data.totalClosed)}</div>
             </div>
-            <div className="bg-yellow-50 rounded p-2">
-              <div className="flex items-center space-x-1">
-                <Percent className="text-yellow-600 h-3 w-3" />
-                <div>
-                  <p className="text-xs text-gray-600">%Report</p>
-                  <p className="text-sm font-bold text-yellow-600">
-                    {formatPercentage(reportRate)}
-                  </p>
-                </div>
+
+            {/* %Report */}
+            <div className="bg-yellow-50 rounded px-1 py-1 text-center min-w-0 flex-1">
+              <div className="flex items-center justify-center mb-1">
+                <Percent className="h-3 w-3 text-yellow-600 mr-1" />
+                <span className="text-xs text-yellow-700 font-medium">%Report</span>
               </div>
+              <div className="text-sm font-bold text-yellow-800">{formatPercentage(reportRate)}</div>
             </div>
-            <div className="bg-pink-50 rounded p-2">
-              <div className="flex items-center space-x-1">
-                <Percent className="text-pink-600 h-3 w-3" />
-                <div>
-                  <p className="text-xs text-gray-600">%Chốt</p>
-                  <p className="text-sm font-bold text-pink-600">
-                    {formatPercentage(closureRate)}
-                  </p>
-                </div>
+
+            {/* %Chốt */}
+            <div className="bg-pink-50 rounded px-1 py-1 text-center min-w-0 flex-1">
+              <div className="flex items-center justify-center mb-1">
+                <Percent className="h-3 w-3 text-pink-600 mr-1" />
+                <span className="text-xs text-pink-700 font-medium">%Chốt</span>
               </div>
+              <div className="text-sm font-bold text-pink-800">{formatPercentage(closureRate)}</div>
             </div>
-            <div className="bg-purple-50 rounded p-2">
-              <div className="flex items-center space-x-1">
-                <DollarSign className="text-purple-600 h-3 w-3" />
-                <div>
-                  <p className="text-xs text-gray-600">Thưởng</p>
-                  <p className="text-sm font-bold text-purple-600">
-                    {formatCurrency(data.totalBonus)}
-                  </p>
-                </div>
+
+            {/* Thưởng */}
+            <div className="bg-purple-50 rounded px-1 py-1 text-center min-w-0 flex-1">
+              <div className="flex items-center justify-center mb-1">
+                <DollarSign className="h-3 w-3 text-purple-600 mr-1" />
+                <span className="text-xs text-purple-700 font-medium">Thưởng</span>
               </div>
+              <div className="text-sm font-bold text-purple-800">{formatCurrency(data.totalBonus)}</div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   };
   

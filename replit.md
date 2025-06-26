@@ -146,6 +146,7 @@ Changelog:
 - June 26, 2025. Optimized statistics interface for compact display: reduced card sizes, smaller icons and text, decreased spacing between sections, and shortened labels to save screen space while maintaining full functionality
 - June 26, 2025. Limited statistics display to prevent interface overflow: show only 4 most recent weeks and 3 most recent months while displaying all years, keeping interface clean and focused on relevant recent data
 - June 26, 2025. Implemented collapsible statistics with dropdown buttons: show only 1 week and 1 month by default with "Xem thêm" buttons to expand and view additional periods, making interface more compact
+- June 26, 2025. Redesigned statistics layout: moved titles inline with stat boxes and reduced box padding for more compact horizontal display, saving significant screen space
 - June 26, 2025. Hidden all management buttons per user request: "Thêm Bảng Chi Tiết Khách Hàng", "Kiểm tra Pay", "Thêm Khách Hàng", "Cập Nhật Khách Hàng" - interface now clean with automation running in background
 - June 26, 2025. Added light background styling to main tracking table: light slate background and header styling to visually distinguish from customer detail tables
 - June 26, 2025. Added red border to main tracking table: changed border to red color (border-2 border-red-400) for better visual prominence per user request
