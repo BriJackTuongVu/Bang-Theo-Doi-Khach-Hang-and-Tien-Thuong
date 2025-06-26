@@ -358,17 +358,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Fetching Calendly events for date: ${date}`);
       
-      // Format date for API call
-      const startDate = new Date(date as string);
-      const endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + 1);
+      // Format date for API call - use Vietnam timezone (UTC+7)
+      const inputDate = new Date(date as string);
+      
+      // Create start and end times for the day in Vietnam timezone
+      const vietnamOffset = 7 * 60; // UTC+7 in minutes
+      const utcOffset = inputDate.getTimezoneOffset(); // Local offset from UTC
+      
+      const startDate = new Date(inputDate);
+      startDate.setHours(0, 0, 0, 0);
+      
+      const endDate = new Date(inputDate);
+      endDate.setHours(23, 59, 59, 999);
       
       const startTime = startDate.toISOString();
       const endTime = endDate.toISOString();
       
       console.log(`Date range: ${startTime} to ${endTime}`);
       
-      // First, get user info to find the organization
+      // First, get user info
       const userResponse = await fetch('https://api.calendly.com/users/me', {
         headers: {
           'Authorization': `Bearer ${calendlyToken}`,
@@ -382,12 +390,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userData = await userResponse.json();
+      const userUri = userData.resource.uri;
       const organizationUri = userData.resource.current_organization;
+      console.log('User URI:', userUri);
       console.log('Organization URI:', organizationUri);
 
-      // Get scheduled events
-      const eventsUrl = `https://api.calendly.com/scheduled_events?organization=${encodeURIComponent(organizationUri)}&min_start_time=${encodeURIComponent(startTime)}&max_start_time=${encodeURIComponent(endTime)}`;
-      console.log('Events URL:', eventsUrl);
+      // Try both organization and user filters to get all events
+      const organizationEventsUrl = `https://api.calendly.com/scheduled_events?organization=${encodeURIComponent(organizationUri)}&min_start_time=${encodeURIComponent(startTime)}&max_start_time=${encodeURIComponent(endTime)}&status=active`;
+      const userEventsUrl = `https://api.calendly.com/scheduled_events?user=${encodeURIComponent(userUri)}&min_start_time=${encodeURIComponent(startTime)}&max_start_time=${encodeURIComponent(endTime)}&status=active`;
+      
+      console.log('Organization Events URL:', organizationEventsUrl);
+      console.log('User Events URL:', userEventsUrl);
       
       const eventsResponse = await fetch(eventsUrl, {
         headers: {
