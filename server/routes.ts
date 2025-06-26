@@ -1335,11 +1335,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
       
-      // Lấy tracking records và giới hạn chỉ 5 records gần nhất
+      // Lấy tất cả tracking records cho tháng 6/2025
       const allRecords = await storage.getTrackingRecords();
       const trackingRecords = allRecords
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        .slice(0, 5);
+        .filter(record => record.date.startsWith('2025-06'))
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         
       console.log(`📊 Processing ${trackingRecords.length} most recent records (limited for performance)...`);
       

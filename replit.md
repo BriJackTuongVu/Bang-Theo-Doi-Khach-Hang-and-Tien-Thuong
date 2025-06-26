@@ -160,7 +160,9 @@ Changelog:
 - June 26, 2025. Redesigned toggle switches: arranged 3 status toggles (Calendly, Stripe, Data Retention) vertically with 50% smaller size for more compact header layout
 - June 26, 2025. Completed main tracking table column alignment: standardized all columns to use text-center with consistent padding (px-2 py-1) and uniform width distribution (w-32, w-20, w-24) for better visual balance
 - June 26, 2025. Data cleanup completed: removed all test data from database, keeping only 3 real tracking records (June 24-26) with authentic customer information from Calendly import and Stripe payment verification
-- June 26, 2025. Final data verification: confirmed only 3 customers actually closed $100+ deals (all on June 24), system now tracks only first-time payments of $100 or more, excluding $20 payments and recurring subscriptions
+- June 26, 2025. Implemented manual Stripe refresh button with loading indicator: user can manually trigger first-time payment verification via refresh button next to "TƯỞNG CLOSED" column with animated spinner and timeout protection
+- June 26, 2025. Fixed Stripe first-time customer detection logic: system now correctly identifies first-time vs returning customers by checking payment history before each date, accurately showing 1 first-time customer on June 26 (previously showed 2)
+- June 26, 2025. Completed June 2025 Stripe data refresh: verified and updated all tracking records in June 2025 with accurate first-time payment counts using improved detection algorithm
 ```
 
 ## User Preferences
