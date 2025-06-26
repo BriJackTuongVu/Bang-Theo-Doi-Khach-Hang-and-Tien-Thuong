@@ -347,13 +347,102 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
         return;
       }
 
+      console.log('Calendly API response:', result);
+      
+      const events = result.events || [];
+      console.log('Found events:', events);
+      
+      if (events.length === 0) {
+        // Show notification that no events were found for the selected date
+        const notification = document.createElement('div');
+        notification.className = 'fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50';
+        notification.innerHTML = `
+          <div class="bg-orange-500 text-white px-8 py-6 rounded-lg shadow-lg max-w-md mx-4 text-center">
+            <div class="flex items-center justify-center gap-3 mb-3">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <div class="text-xl font-medium">Không có lịch hẹn</div>
+            </div>
+            <div class="text-sm opacity-90">Không tìm thấy lịch hẹn nào cho ngày ${selectedDate}</div>
+          </div>
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 1000);
+        return;
+      }
+
+      // Process events if found
+      let addedCount = 0;
+      
+      for (const event of events) {
+        if (event.invitee_name && event.invitee_name.trim() !== '' && event.invitee_name !== 'Unknown') {
+          // Check if customer already exists
+          const existingReports = reports as CustomerReport[];
+          const exists = existingReports.some(report => 
+            report.customerName.toLowerCase().trim() === event.invitee_name.toLowerCase().trim() &&
+            report.customerDate === selectedDate
+          );
+          
+          if (!exists) {
+            await createMutation.mutateAsync({
+              customerName: event.invitee_name.trim(),
+              reportSent: false,
+              reportReceivedDate: null,
+              customerDate: selectedDate,
+              trackingRecordId: tableId,
+            });
+            addedCount++;
+          }
+        }
+      }
+      
+      // Show success notification
+      const notification = document.createElement('div');
+      notification.className = 'fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50';
+      notification.innerHTML = `
+        <div class="bg-green-500 text-white px-8 py-6 rounded-lg shadow-lg max-w-md mx-4 text-center">
+          <div class="flex items-center justify-center gap-3 mb-3">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <div class="text-xl font-medium">Thành công!</div>
+          </div>
+          <div class="text-sm opacity-90">Đã thêm ${addedCount} khách hàng từ Calendly</div>
+        </div>
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 1000);
+
     } catch (error) {
       console.error('Error importing from Calendly:', error);
       const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-      notification.textContent = 'Lỗi khi kết nối Calendly. Vui lòng kiểm tra API token.';
+      notification.className = 'fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50';
+      notification.innerHTML = `
+        <div class="bg-red-500 text-white px-8 py-6 rounded-lg shadow-lg max-w-md mx-4 text-center">
+          <div class="flex items-center justify-center gap-3 mb-3">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div class="text-xl font-medium">Lỗi kết nối</div>
+          </div>
+          <div class="text-sm opacity-90">Lỗi khi kết nối với Calendly</div>
+        </div>
+      `;
       document.body.appendChild(notification);
-      setTimeout(() => document.body.removeChild(notification), 3000);
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 1000);
     }
   };
 
