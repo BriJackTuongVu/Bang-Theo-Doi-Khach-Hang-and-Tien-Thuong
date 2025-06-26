@@ -222,7 +222,17 @@ export default function TrackingPage() {
         {/* Tracking Table */}
         <TrackingTable />
         
-        {/* Remove add button - customer tables are auto-created from tracking records */}
+        {/* Add Customer Table Button */}
+        <div className="flex justify-center">
+          <Button
+            onClick={addNewCustomerTable}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3"
+            size="lg"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Thêm Bảng Chi Tiết Khách Hàng
+          </Button>
+        </div>
         
         {/* Customer Reports Tables - One for each tracking record */}
         {records.map((record) => (
