@@ -1024,7 +1024,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🕚 TESTING STRIPE END-OF-DAY CHECK for ${testDate}`);
       
       // Import scheduler function
-      const { autoCheckStripePayments } = require('./scheduler');
+      const { autoCheckStripePayments } = await import('./scheduler');
       
       // Run the actual Stripe check
       await autoCheckStripePayments(testDate);
@@ -1205,6 +1205,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error updating data retention setting:', error);
       res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // Test endpoint để tìm payments đơn giản  
+  app.get("/api/stripe/test-find/:startDate/:endDate", async (req, res) => {
+    try {
+      const { startDate, endDate } = req.params;
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+      
+      const start = new Date(startDate + "T00:00:00.000Z");
+      const end = new Date(endDate + "T23:59:59.999Z");
+      
+      console.log(`🔍 Testing Stripe API from ${startDate} to ${endDate}...`);
+      
+      const charges = await stripe.charges.list({
+        created: {
+          gte: Math.floor(start.getTime() / 1000),
+          lte: Math.floor(end.getTime() / 1000),
+        },
+        limit: 10, // Limit to 10 for testing
+      });
+
+      console.log(`📊 Found ${charges.data.length} charges`);
+      
+      const result = {
+        success: true,
+        chargesFound: charges.data.length,
+        sampleCharges: charges.data.map(charge => ({
+          id: charge.id,
+          amount: charge.amount / 100,
+          email: charge.receipt_email,
+          status: charge.status,
+          date: new Date(charge.created * 1000).toISOString().split('T')[0]
+        }))
+      };
+      
+      console.log('Result:', JSON.stringify(result, null, 2));
+      res.json(result);
+      
+    } catch (error) {
+      console.error("❌ Test error:", error);
+      res.status(500).json({ error: error.message });
     }
   });
 
