@@ -480,12 +480,11 @@ export function TrackingTable() {
                         <span className={`text-sm font-bold ${totalBonus > 0 ? 'text-green-600' : 'text-gray-500'}`}>
                           {formatCurrency(totalBonus)}
                         </span>
-                        <div className="text-xs text-gray-500">
-                          {totalBonus > 0 
-                            ? `${formatCurrency(bonusRate)} × ${record.reportedCustomers}`
-                            : "Chưa đạt mức tối thiểu"
-                          }
-                        </div>
+                        {totalBonus > 0 && (
+                          <div className="text-xs text-gray-500">
+                            {formatCurrency(bonusRate)} × {record.reportedCustomers}
+                          </div>
+                        )}
                       </div>
                     </td>
 
