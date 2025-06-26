@@ -125,6 +125,8 @@ Changelog:
 - June 26, 2025. Fixed customer ordering issue: customers now maintain original positions when report dates are updated
 - June 26, 2025. Resolved table deletion bug: can now delete the last remaining customer table
 - June 26, 2025. Completed sequential numbering removal: eliminated all remaining numbers from interface including table titles
+- June 26, 2025. Successfully implemented Stripe API integration with live keys for automatic first-time payment tracking
+- June 26, 2025. Added customizable date selector for Stripe payment checking with automatic "TƯƠNG ONLY" column updates
 ```
 
 ## User Preferences

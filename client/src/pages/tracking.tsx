@@ -19,6 +19,7 @@ export default function TrackingPage() {
   const [calendlyConnected, setCalendlyConnected] = useState(false);
   const [showCalendlyModal, setShowCalendlyModal] = useState(false);
   const [stripeLoading, setStripeLoading] = useState(false);
+  const [selectedPaymentDate, setSelectedPaymentDate] = useState('2025-06-25');
 
   // Check Calendly connection status on load
   useEffect(() => {
@@ -247,16 +248,24 @@ export default function TrackingPage() {
                 Lưu Memory Vĩnh Viễn
               </Button>
               
-              {/* Stripe Payment Check Button */}
-              <Button
-                onClick={() => checkStripePayments('2025-06-25')}
-                disabled={stripeLoading}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-                size="sm"
-              >
-                <CreditCard className="h-4 w-4 mr-1" />
-                {stripeLoading ? 'Đang kiểm tra...' : 'Kiểm tra Pay 25/6'}
-              </Button>
+              {/* Stripe Payment Check Section */}
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={selectedPaymentDate}
+                  onChange={(e) => setSelectedPaymentDate(e.target.value)}
+                  className="w-36 h-8 text-sm"
+                />
+                <Button
+                  onClick={() => checkStripePayments(selectedPaymentDate)}
+                  disabled={stripeLoading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  size="sm"
+                >
+                  <CreditCard className="h-4 w-4 mr-1" />
+                  {stripeLoading ? 'Đang kiểm tra...' : 'Kiểm tra Pay'}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
