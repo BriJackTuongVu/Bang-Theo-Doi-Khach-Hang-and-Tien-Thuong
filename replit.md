@@ -121,6 +121,7 @@ Changelog:
 - June 25, 2025. Added automatic synchronization: tracking records auto-sync with customer tables without manual intervention
 - June 26, 2025. Successfully implemented Calendly API integration with full event import functionality
 - June 26, 2025. Added database setting to prevent automatic deletion of old data per user request
+- June 26, 2025. Implemented bidirectional sync: deleting customer table also deletes corresponding tracking record
 ```
 
 ## User Preferences
