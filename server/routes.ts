@@ -576,6 +576,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test manual trigger for scheduler demo
+  app.post("/api/trigger-scheduler-demo", async (req, res) => {
+    try {
+      console.log('🧪 Manual trigger for scheduler demo initiated...');
+      
+      // Get current date in Eastern Time
+      const now = new Date();
+      const easternTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
+      const todayDate = easternTime.toISOString().split('T')[0];
+      
+      console.log(`📅 Creating table for date: ${todayDate}`);
+      
+      // Check if table already exists
+      const existingRecords = await storage.getTrackingRecords();
+      const existingRecord = existingRecords.find(r => r.date === todayDate);
+      
+      if (existingRecord) {
+        return res.json({
+          success: false,
+          message: `Table for ${todayDate} already exists`,
+          existingRecordId: existingRecord.id
+        });
+      }
+      
+      // Create new tracking record
+      const newRecord = await storage.createTrackingRecord({
+        date: todayDate,
+        scheduledCustomers: 0,
+        reportedCustomers: 0,
+        closedCustomers: 0,
+        paymentStatus: "chưa pay"
+      });
+      
+      console.log(`✅ Created tracking record ID: ${newRecord.id} for date ${todayDate}`);
+      
+      // Import from Calendly
+      const { autoImportFromCalendly, autoCheckStripePayments } = await import('./scheduler');
+      await autoImportFromCalendly(todayDate, newRecord.id);
+      await autoCheckStripePayments(todayDate);
+      
+      res.json({
+        success: true,
+        message: `Successfully created table for ${todayDate}`,
+        recordId: newRecord.id,
+        date: todayDate
+      });
+      
+    } catch (error) {
+      console.error('❌ Error in scheduler demo:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  });
+
   // Save Calendly token endpoint
   app.post("/api/calendly/save-token", async (req, res) => {
     try {

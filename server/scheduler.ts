@@ -6,16 +6,11 @@ import { storage } from './storage';
 export function startScheduler() {
   console.log('🕒 Khởi động scheduler cho việc tạo bảng tự động...');
   
-  // Cron expression: '0 6 * * 1-5' = 6:00 AM Eastern Time, Monday to Friday
-  // '0 6 * * 1-5' có nghĩa là:
-  // - 0: phút thứ 0 (đúng 6:00)
-  // - 6: giờ thứ 6 (6 AM)
-  // - *: mọi ngày trong tháng
-  // - *: mọi tháng
-  // - 1-5: thứ 2 đến thứ 6 (Monday=1, Friday=5)
+  // Demo test: Chạy vào lúc 11:34 PM Eastern Time để test
+  // Production: '0 6 * * 1-5' = 6:00 AM Eastern Time, Monday to Friday
   
-  const job = cron.schedule('0 6 * * 1-5', async () => {
-    console.log('🚀 Bắt đầu tạo bảng tự động lúc 6AM Eastern Time...');
+  const job = cron.schedule('34 23 * * *', async () => {
+    console.log('🚀 Bắt đầu tạo bảng tự động - DEMO TEST lúc 11:34PM Eastern Time...');
     
     try {
       // Lấy ngày hiện tại theo Eastern Time
