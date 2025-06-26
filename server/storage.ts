@@ -176,8 +176,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteTrackingRecord(id: number): Promise<boolean> {
-    const result = await db.delete(trackingRecords).where(eq(trackingRecords.id, id));
-    return (result.rowCount || 0) > 0;
+    try {
+      // First delete all customer reports that reference this tracking record
+      await db.delete(customerReports).where(eq(customerReports.trackingRecordId, id));
+      
+      // Then delete the tracking record
+      const result = await db.delete(trackingRecords).where(eq(trackingRecords.id, id));
+      return (result.rowCount || 0) > 0;
+    } catch (error) {
+      console.error('Error deleting tracking record:', error);
+      return false;
+    }
   }
 
   async getCustomerReports(): Promise<CustomerReport[]> {

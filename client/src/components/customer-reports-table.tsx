@@ -674,61 +674,105 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
     }
 
     try {
-      // Delete all customer reports for this date
-      for (const report of reportsForThisDate) {
-        await fetch(`/api/customer-reports/${report.id}`, {
+      // Delete all customer reports for this date first
+      const deletePromises = reportsForThisDate.map(async (report) => {
+        const response = await fetch(`/api/customer-reports/${report.id}`, {
           method: 'DELETE'
         });
-      }
+        if (!response.ok) {
+          throw new Error(`Failed to delete customer report ${report.id}`);
+        }
+        return response;
+      });
 
-      // Also try to delete the corresponding tracking record
-      try {
-        const trackingResponse = await fetch('/api/tracking-records');
+      await Promise.all(deletePromises);
+      console.log(`Deleted ${reportsForThisDate.length} customer reports`);
+
+      // Then delete the corresponding tracking record
+      const trackingResponse = await fetch('/api/tracking-records');
+      if (trackingResponse.ok) {
         const trackingRecords = await trackingResponse.json();
         const trackingRecord = trackingRecords.find((r: any) => r.date === selectedDate);
         
         if (trackingRecord) {
-          await fetch(`/api/tracking-records/${trackingRecord.id}`, {
+          const deleteTrackingResponse = await fetch(`/api/tracking-records/${trackingRecord.id}`, {
             method: 'DELETE'
           });
+          
+          if (deleteTrackingResponse.ok) {
+            console.log(`Deleted tracking record ${trackingRecord.id}`);
+          } else {
+            console.error('Failed to delete tracking record, but continuing...');
+          }
         }
-      } catch (trackingError) {
-        console.log('Could not delete tracking record:', trackingError);
       }
 
-      // Show success notification at center for 1 second
+      // Show success notification
       const notification = document.createElement('div');
-      notification.className = 'fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50';
-      notification.innerHTML = `
-        <div class="bg-green-500 text-white px-8 py-4 rounded-lg shadow-xl text-center">
-          <div class="text-lg font-semibold">✓ Đã xóa thành công</div>
-          <div class="text-sm mt-1">Bảng ngày ${selectedDate} với ${reportsForThisDate.length} khách hàng</div>
-        </div>
+      notification.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #10B981;
+        color: white;
+        padding: 16px 32px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        z-index: 9999;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
       `;
+      notification.textContent = `✓ Đã xóa thành công bảng ngày ${selectedDate} với ${reportsForThisDate.length} khách hàng`;
       document.body.appendChild(notification);
+      
       setTimeout(() => {
         if (document.body.contains(notification)) {
           document.body.removeChild(notification);
         }
       }, 1000);
 
-      // Notify parent component to remove this table
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/customer-reports'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tracking-records'] });
+
+      // Notify parent component 
       window.dispatchEvent(new CustomEvent('tableDeleted', { 
         detail: { date: selectedDate, tableId } 
       }));
 
-      // Refetch data to update UI
-      queryClient.invalidateQueries({ queryKey: ['/api/customer-reports'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/tracking-records'] });
-      
-      // Reload page to refresh everything
+      // Reload page after a short delay to ensure everything refreshes
       setTimeout(() => {
         window.location.reload();
       }, 1200);
 
     } catch (error) {
       console.error('Error deleting table:', error);
-      alert('Lỗi khi xóa bảng. Vui lòng thử lại.');
+      
+      // Show error notification
+      const errorNotification = document.createElement('div');
+      errorNotification.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #EF4444;
+        color: white;
+        padding: 16px 32px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        z-index: 9999;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      `;
+      errorNotification.textContent = `❌ Lỗi khi xóa bảng: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      document.body.appendChild(errorNotification);
+      
+      setTimeout(() => {
+        if (document.body.contains(errorNotification)) {
+          document.body.removeChild(errorNotification);
+        }
+      }, 3000);
     }
   };
 
