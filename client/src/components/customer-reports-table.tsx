@@ -66,6 +66,10 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
   const [quickAddCount, setQuickAddCount] = useState(5);
   const [isAutoDetecting, setIsAutoDetecting] = useState(false);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [showAddCustomerDialog, setShowAddCustomerDialog] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState("");
+  const [newCustomerEmail, setNewCustomerEmail] = useState("");
+  const [newCustomerPhone, setNewCustomerPhone] = useState("");
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["/api/customer-reports", tableId],
@@ -110,13 +114,32 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
   });
 
   const handleAddCustomer = () => {
+    setNewCustomerName("");
+    setNewCustomerEmail("");
+    setNewCustomerPhone("");
+    setShowAddCustomerDialog(true);
+  };
+
+  const handleCreateCustomer = () => {
+    if (!newCustomerName.trim()) {
+      alert("Vui lòng nhập tên khách hàng");
+      return;
+    }
+
     createMutation.mutate({
-      customerName: `Khách hàng mới - Bảng ${tableId}`,
+      customerName: newCustomerName.trim(),
+      customerEmail: newCustomerEmail.trim() || null,
+      customerPhone: newCustomerPhone.trim() || null,
       reportSent: false,
       reportReceivedDate: null,
       customerDate: selectedDate,
-      trackingRecordId: tableId, // Use tableId to group customers by table
+      trackingRecordId: tableId,
     });
+
+    setShowAddCustomerDialog(false);
+    setNewCustomerName("");
+    setNewCustomerEmail("");
+    setNewCustomerPhone("");
   };
 
   const handleGoogleCalendarImport = () => {
@@ -1185,6 +1208,79 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
                 setShowImportDialog(false);
               }}>
                 Đóng
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Customer Dialog */}
+        <Dialog open={showAddCustomerDialog} onOpenChange={setShowAddCustomerDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Plus className="h-5 w-5" />
+                Thêm Khách Hàng Mới
+              </DialogTitle>
+              <DialogDescription>
+                Nhập thông tin khách hàng cho ngày {formatDate(selectedDate)}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Tên khách hàng *
+                </label>
+                <Input
+                  placeholder="Nhập tên khách hàng"
+                  value={newCustomerName}
+                  onChange={(e) => setNewCustomerName(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Email
+                </label>
+                <Input
+                  placeholder="email@example.com"
+                  type="email"
+                  value={newCustomerEmail}
+                  onChange={(e) => setNewCustomerEmail(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  Số điện thoại
+                </label>
+                <Input
+                  placeholder="0912345678"
+                  type="tel"
+                  value={newCustomerPhone}
+                  onChange={(e) => setNewCustomerPhone(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAddCustomerDialog(false)}
+              >
+                Hủy
+              </Button>
+              <Button 
+                onClick={handleCreateCustomer}
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={!newCustomerName.trim()}
+              >
+                Thêm khách hàng
               </Button>
             </DialogFooter>
           </DialogContent>
