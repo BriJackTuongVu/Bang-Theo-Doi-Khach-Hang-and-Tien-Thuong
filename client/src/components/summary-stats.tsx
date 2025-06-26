@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, FileText, Percent, DollarSign, Calendar, ChevronDown, ChevronUp, Check, X, RefreshCw } from "lucide-react";
+import { Users, FileText, Percent, DollarSign, Calendar, ChevronDown, ChevronUp, Check, X, RefreshCw, UserCheck } from "lucide-react";
 import { formatCurrency, formatNumber, formatPercentage, groupRecordsByMonth } from "@/lib/utils";
 import { TrackingRecord, CustomerReport, calculateBonus } from "@shared/schema";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -342,11 +342,36 @@ export function SummaryStats({ records }: SummaryStatsProps) {
                             <p className="text-xs text-gray-500">{month.records.length} ngày</p>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-4 text-xs">
-                          <span className="text-blue-600">{formatNumber(monthStats.totalScheduled)} hẹn</span>
-                          <span className="text-green-600">{formatNumber(monthStats.totalReported)} reports</span>
-                          <span className="text-orange-600">{formatNumber(monthStats.totalClosed)} chốt</span>
-                          <span className="text-purple-600">{formatCurrency(monthStats.totalBonus)}</span>
+                        <div className="flex items-center space-x-2">
+                          {/* Compact stats boxes */}
+                          <div className="flex items-center space-x-1">
+                            <div className="bg-blue-50 rounded px-2 py-1 flex items-center space-x-1">
+                              <Users className="text-blue-600 h-3 w-3" />
+                              <span className="text-xs font-semibold text-blue-600">{formatNumber(monthStats.totalScheduled)}</span>
+                            </div>
+                            <div className="bg-green-50 rounded px-2 py-1 flex items-center space-x-1">
+                              <FileText className="text-green-600 h-3 w-3" />
+                              <span className="text-xs font-semibold text-green-600">{formatNumber(monthStats.totalReported)}</span>
+                            </div>
+                            <div className="bg-orange-50 rounded px-2 py-1 flex items-center space-x-1">
+                              <UserCheck className="text-orange-600 h-3 w-3" />
+                              <span className="text-xs font-semibold text-orange-600">{formatNumber(monthStats.totalClosed)}</span>
+                            </div>
+                            <div className="bg-yellow-50 rounded px-2 py-1 flex items-center space-x-1">
+                              <Percent className="text-yellow-600 h-3 w-3" />
+                              <span className="text-xs font-semibold text-yellow-600">{formatPercentage(monthPercentage)}</span>
+                            </div>
+                            <div className="bg-pink-50 rounded px-2 py-1 flex items-center space-x-1">
+                              <Percent className="text-pink-600 h-3 w-3" />
+                              <span className="text-xs font-semibold text-pink-600">
+                                {formatPercentage(monthStats.totalReported > 0 ? (monthStats.totalClosed / monthStats.totalReported) * 100 : 0)}
+                              </span>
+                            </div>
+                            <div className="bg-purple-50 rounded px-2 py-1 flex items-center space-x-1">
+                              <DollarSign className="text-purple-600 h-3 w-3" />
+                              <span className="text-xs font-semibold text-purple-600">{formatCurrency(monthStats.totalBonus)}</span>
+                            </div>
+                          </div>
                           {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                         </div>
                       </Button>

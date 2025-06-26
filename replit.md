@@ -141,6 +141,7 @@ Changelog:
 - June 26, 2025. Completed dual scheduler system: 6AM for table creation (weekdays) and 11:59 PM for payment verification (daily) with live Stripe API integration for first-time customer detection
 - June 26, 2025. Successfully tested and validated complete scheduler system: auto-created table for 2025-06-24 with 16 customers from Calendly, 3 closed customers detected, all automation working correctly
 - June 26, 2025. Successfully tested live automation after user deleted table: system auto-created new table for 2025-06-26 with 3 customers imported from Calendly (Duc Nguyen, Thao, Danny) with full contact information and Stripe payment verification - complete automation pipeline working correctly
+- June 26, 2025. Redesigned monthly detail stats: replaced text display with compact colored boxes matching general summary design - 6 small boxes (customers, reports, closed, report rate, closure rate, bonus) with icons for space efficiency
 - June 26, 2025. Hidden all management buttons per user request: "Thêm Bảng Chi Tiết Khách Hàng", "Kiểm tra Pay", "Thêm Khách Hàng", "Cập Nhật Khách Hàng" - interface now clean with automation running in background
 - June 26, 2025. Added light background styling to main tracking table: light slate background and header styling to visually distinguish from customer detail tables
 - June 26, 2025. Added red border to main tracking table: changed border to red color (border-2 border-red-400) for better visual prominence per user request
