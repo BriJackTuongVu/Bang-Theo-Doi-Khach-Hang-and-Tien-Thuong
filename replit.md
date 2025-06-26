@@ -158,6 +158,8 @@ Changelog:
 - June 26, 2025. Removed delete button from date picker in table header: restored original disabled date picker behavior while keeping individual report date deletion functionality in the data rows
 - June 26, 2025. Optimized header layout: moved bonus tier indicator to header for compact display, then removed it per user request for cleaner interface
 - June 26, 2025. Redesigned toggle switches: arranged 3 status toggles (Calendly, Stripe, Data Retention) vertically with 50% smaller size for more compact header layout
+- June 26, 2025. Completed main tracking table column alignment: standardized all columns to use text-center with consistent padding (px-2 py-1) and uniform width distribution (w-32, w-20, w-24) for better visual balance
+- June 26, 2025. Data cleanup completed: removed all test data from database, keeping only 3 real tracking records (June 24-26) with authentic customer information from Calendly import and Stripe payment verification
 ```
 
 ## User Preferences
