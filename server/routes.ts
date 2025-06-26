@@ -999,6 +999,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Simple manual import endpoint for testing
+  app.get("/api/import-test/:date/:recordId", async (req, res) => {
+    try {
+      const { date, recordId } = req.params;
+      
+      console.log(`🔧 Test import for ${date}, record ${recordId}`);
+      
+      // Get Calendly events
+      const eventsUrl = `http://localhost:5000/api/calendly/events?date=${date}`;
+      const eventsResponse = await fetch(eventsUrl);
+      
+      if (!eventsResponse.ok) {
+        throw new Error(`Failed to fetch events: ${eventsResponse.status}`);
+      }
+      
+      const eventsData = await eventsResponse.json();
+      const events = eventsData.events || [];
+      
+      console.log(`📋 Found ${events.length} Calendly events for ${date}`);
+      
+      let imported = 0;
+      
+      // Import each event
+      for (const event of events) {
+        const customerData = {
+          customerName: event.invitee_name,
+          customerEmail: event.invitee_email,
+          customerPhone: event.invitee_phone || '',
+          customerDate: date,
+          trackingRecordId: parseInt(recordId),
+          reportSent: false,
+          reportReceivedDate: null
+        };
+        
+        await storage.createCustomerReport(customerData);
+        imported++;
+        console.log(`✅ Imported customer: ${event.invitee_name}`);
+      }
+      
+      console.log(`🎉 Import completed: ${imported} customers`);
+      
+      res.json({
+        success: true,
+        imported,
+        events: events.length,
+        message: `Imported ${imported} customers for ${date}`
+      });
+      
+    } catch (error) {
+      console.error('❌ Test import error:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
