@@ -820,9 +820,9 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
               onClick={handleDeleteTable}
               variant="destructive"
               size="sm"
-              className="bg-red-600 hover:bg-red-700 text-white p-1 min-w-0"
+              className="bg-red-600 hover:bg-red-700 text-white p-0.5 min-w-0 h-6 w-6"
             >
-              <Trash2 className="h-2.5 w-2.5" />
+              <Trash2 className="h-2 w-2" />
             </Button>
           </div>
         </CardTitle>
