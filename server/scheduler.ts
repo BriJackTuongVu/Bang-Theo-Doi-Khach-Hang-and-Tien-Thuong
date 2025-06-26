@@ -105,6 +105,10 @@ async function autoImportFromCalendly(date: string, trackingRecordId: number) {
 
     if (!response.ok) {
       console.log('⚠️ Không thể kết nối Calendly API:', response.status);
+      if (response.status === 404) {
+        console.log('📝 Lý do: Không tìm thấy events cho ngày này hoặc user URI không đúng');
+        console.log('💡 Có thể không có lịch hẹn nào được đặt cho ngày này');
+      }
       return;
     }
 
