@@ -490,7 +490,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 end_time: event.end_time,
                 status: event.status,
                 invitee_name: 'Unknown',
-                invitee_email: ''
+                invitee_email: '',
+                invitee_phone: null
               };
             }
           } catch (error) {
@@ -501,7 +502,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               end_time: event.end_time,
               status: event.status,
               invitee_name: 'Unknown',
-              invitee_email: ''
+              invitee_email: '',
+              invitee_phone: null
             };
           }
         })
