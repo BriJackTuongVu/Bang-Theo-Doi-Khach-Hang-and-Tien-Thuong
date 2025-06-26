@@ -316,195 +316,78 @@ export function SummaryStats({ records }: SummaryStatsProps) {
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          
+          {/* Monthly breakdown within general summary */}
+          {monthlyData.length > 0 && (
+            <div className="mt-6 space-y-2">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Chi tiết theo tháng:</h4>
+              {monthlyData.map((month) => {
+                const monthStats = calculateMonthStats(month.records);
+                const monthPercentage = monthStats.totalScheduled > 0 
+                  ? (monthStats.totalReported / monthStats.totalScheduled) * 100 
+                  : 0;
+                const isExpanded = expandedMonths.has(month.monthKey);
 
-      {/* Monthly Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Tổng Kết Theo Tháng</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {monthlyData.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">Chưa có dữ liệu theo tháng</p>
-          ) : (
-            monthlyData.map((month) => {
-              const monthStats = calculateMonthStats(month.records);
-              const monthPercentage = monthStats.totalScheduled > 0 
-                ? (monthStats.totalReported / monthStats.totalScheduled) * 100 
-                : 0;
-              const isExpanded = expandedMonths.has(month.monthKey);
-
-              return (
-                <Collapsible key={month.monthKey}>
-                  <CollapsibleTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-between p-4 h-auto hover:bg-gray-50"
-                      onClick={() => toggleMonth(month.monthKey)}
-                    >
-                      <div className="flex items-center space-x-4">
-                        <div className="text-left">
-                          <p className="font-medium">{month.monthName}</p>
-                          <p className="text-sm text-gray-500">{month.records.length} ngày làm việc</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-6">
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-blue-600">
-                            {formatNumber(monthStats.totalScheduled)} khách hẹn
-                          </p>
-                          <p className="text-sm font-medium text-green-600">
-                            {formatNumber(monthStats.totalReported)} reports
-                          </p>
-                          <p className="text-sm font-medium text-orange-600">
-                            {formatNumber(monthStats.totalClosed)} chốt
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-yellow-600">
-                            {formatPercentage(monthPercentage)} report
-                          </p>
-                          <p className="text-sm font-medium text-pink-600">
-                            {formatPercentage(monthStats.totalReported > 0 ? (monthStats.totalClosed / monthStats.totalReported) * 100 : 0)} chốt
-                          </p>
-                          <p className="text-sm font-medium text-purple-600">
-                            {formatCurrency(monthStats.totalBonus)}
-                          </p>
-                        </div>
-                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                      </div>
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="px-4 pb-4">
-                      <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mt-4">
-                        <div className="bg-blue-50 rounded-lg p-3">
-                          <div className="flex items-center">
-                            <Users className="text-blue-600 mr-2 h-4 w-4" />
-                            <div>
-                              <p className="text-xs text-gray-600">Khách Hẹn</p>
-                              <p className="text-lg font-bold text-blue-600">
-                                {formatNumber(monthStats.totalScheduled)}
-                              </p>
-                            </div>
+                return (
+                  <Collapsible key={month.monthKey}>
+                    <CollapsibleTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-between p-3 h-auto hover:bg-gray-50 text-sm"
+                        onClick={() => toggleMonth(month.monthKey)}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="text-left">
+                            <p className="font-medium text-sm">{month.monthName}</p>
+                            <p className="text-xs text-gray-500">{month.records.length} ngày</p>
                           </div>
                         </div>
-                        <div className="bg-green-50 rounded-lg p-3">
-                          <div className="flex items-center">
-                            <FileText className="text-green-600 mr-2 h-4 w-4" />
-                            <div>
-                              <p className="text-xs text-gray-600">Reports</p>
-                              <p className="text-lg font-bold text-green-600">
-                                {formatNumber(monthStats.totalReported)}
-                              </p>
-                            </div>
-                          </div>
+                        <div className="flex items-center space-x-4 text-xs">
+                          <span className="text-blue-600">{formatNumber(monthStats.totalScheduled)} hẹn</span>
+                          <span className="text-green-600">{formatNumber(monthStats.totalReported)} reports</span>
+                          <span className="text-orange-600">{formatNumber(monthStats.totalClosed)} chốt</span>
+                          <span className="text-purple-600">{formatCurrency(monthStats.totalBonus)}</span>
+                          {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                         </div>
-                        <div className="bg-orange-50 rounded-lg p-3">
-                          <div className="flex items-center">
-                            <Users className="text-orange-600 mr-2 h-4 w-4" />
-                            <div>
-                              <p className="text-xs text-gray-600">Chốt</p>
-                              <p className="text-lg font-bold text-orange-600">
-                                {formatNumber(monthStats.totalClosed)}
-                              </p>
-                            </div>
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="px-3 pb-3">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+                          <div className="bg-blue-50 rounded p-2">
+                            <p className="text-xs text-gray-600">Tỉ lệ report</p>
+                            <p className="text-sm font-bold text-yellow-600">{formatPercentage(monthPercentage)}</p>
                           </div>
-                        </div>
-                        <div className="bg-yellow-50 rounded-lg p-3">
-                          <div className="flex items-center">
-                            <Percent className="text-yellow-600 mr-2 h-4 w-4" />
-                            <div>
-                              <p className="text-xs text-gray-600">Tỉ Lệ Report</p>
-                              <p className="text-lg font-bold text-yellow-600">
-                                {formatPercentage(monthPercentage)}
-                              </p>
-                            </div>
+                          <div className="bg-pink-50 rounded p-2">
+                            <p className="text-xs text-gray-600">Tỉ lệ chốt</p>
+                            <p className="text-sm font-bold text-pink-600">
+                              {formatPercentage(monthStats.totalReported > 0 ? (monthStats.totalClosed / monthStats.totalReported) * 100 : 0)}
+                            </p>
                           </div>
-                        </div>
-                        <div className="bg-pink-50 rounded-lg p-3">
-                          <div className="flex items-center">
-                            <Percent className="text-pink-600 mr-2 h-4 w-4" />
-                            <div>
-                              <p className="text-xs text-gray-600">Tỉ Lệ Chốt</p>
-                              <p className="text-lg font-bold text-pink-600">
-                                {formatPercentage(monthStats.totalReported > 0 ? (monthStats.totalClosed / monthStats.totalReported) * 100 : 0)}
-                              </p>
-                            </div>
+                          <div className="bg-gray-50 rounded p-2">
+                            <p className="text-xs text-gray-600">Trung bình/ngày</p>
+                            <p className="text-sm font-bold text-gray-600">
+                              {formatNumber(Math.round(monthStats.totalScheduled / month.records.length))} hẹn
+                            </p>
                           </div>
-                        </div>
-                        <div className="bg-purple-50 rounded-lg p-3">
-                          <div className="flex items-center">
-                            <DollarSign className="text-purple-600 mr-2 h-4 w-4" />
-                            <div>
-                              <p className="text-xs text-gray-600">Thưởng</p>
-                              <p className="text-lg font-bold text-purple-600">
-                                {formatCurrency(monthStats.totalBonus)}
-                              </p>
-                            </div>
+                          <div className="bg-purple-50 rounded p-2">
+                            <p className="text-xs text-gray-600">Thưởng TB/ngày</p>
+                            <p className="text-sm font-bold text-purple-600">
+                              {formatCurrency(Math.round(monthStats.totalBonus / month.records.length))}
+                            </p>
                           </div>
                         </div>
                       </div>
-                      
-                      {/* Daily breakdown */}
-                      <div className="mt-4">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Chi tiết theo ngày:</h4>
-                        <div className="space-y-1 max-h-64 overflow-y-auto">
-                          {month.records.map((record) => {
-                            const dailyBonus = calculateBonus(record.scheduledCustomers, record.reportedCustomers);
-                            const dayName = new Date(record.date).toLocaleDateString('vi-VN', { weekday: 'long' });
-                            
-                            return (
-                              <div key={record.id} className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded text-sm">
-                                <span className="font-medium">
-                                  {dayName} ({new Date(record.date).toLocaleDateString('vi-VN')})
-                                </span>
-                                <div className="flex space-x-4 text-xs items-center">
-                                  <div className="flex items-center space-x-1">
-                                    <EditableCell 
-                                      value={record.scheduledCustomers} 
-                                      recordId={record.id} 
-                                      field="scheduledCustomers"
-                                      onUpdate={handleCellUpdate}
-                                    />
-                                    <span className="text-blue-600">hẹn</span>
-                                  </div>
-                                  <div className="flex items-center space-x-1">
-                                    <EditableCell 
-                                      value={record.reportedCustomers} 
-                                      recordId={record.id} 
-                                      field="reportedCustomers"
-                                      onUpdate={handleCellUpdate}
-                                    />
-                                    <span className="text-green-600">reports</span>
-                                  </div>
-                                  <div className="flex items-center space-x-1">
-                                    <EditableCell 
-                                      value={record.closedCustomers || 0} 
-                                      recordId={record.id} 
-                                      field="closedCustomers"
-                                      onUpdate={handleCellUpdate}
-                                    />
-                                    <span className="text-orange-600">chốt</span>
-                                  </div>
-                                  <span className="text-yellow-600">{formatPercentage(dailyBonus.percentage)}</span>
-                                  <span className="text-pink-600">{formatPercentage(record.reportedCustomers > 0 ? ((record.closedCustomers || 0) / record.reportedCustomers) * 100 : 0)}</span>
-                                  <span className="text-purple-600 font-medium">{formatCurrency(dailyBonus.totalBonus)}</span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              );
-            })
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
+            </div>
           )}
         </CardContent>
       </Card>
+
+
     </div>
   );
 }
