@@ -325,23 +325,18 @@ export function TrackingTable() {
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
                     <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <Calendar className="inline mr-1 h-3 w-3" />
                       Ngày Tháng
                     </th>
                     <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
-                      <Users className="inline mr-1 h-3 w-3" />
                       Khách Hẹn
                     </th>
                     <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
-                      <FileText className="inline mr-1 h-3 w-3" />
                       Report
                     </th>
                     <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <Percent className="inline mr-1 h-3 w-3" />
                       Tỉ Lệ %
                     </th>
                     <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <DollarSign className="inline mr-1 h-3 w-3" />
                       Tiền Thưởng
                     </th>
                     <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
