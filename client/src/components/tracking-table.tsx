@@ -476,16 +476,19 @@ export function TrackingTable() {
                       </div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <div>
-                        <span className={`text-sm font-bold ${totalBonus > 0 ? 'text-green-600' : 'text-gray-500'}`}>
-                          {formatCurrency(totalBonus)}
-                        </span>
-                        <div className="text-xs text-gray-500">
-                          {totalBonus > 0 
-                            ? `${formatCurrency(bonusRate)} × ${record.reportedCustomers}`
-                            : "❌"
-                          }
-                        </div>
+                      <div className="text-center">
+                        {totalBonus > 0 ? (
+                          <>
+                            <span className="text-sm font-bold text-green-600">
+                              {formatCurrency(totalBonus)}
+                            </span>
+                            <div className="text-xs text-gray-500">
+                              {formatCurrency(bonusRate)} × {record.reportedCustomers}
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-2xl">❌</span>
+                        )}
                       </div>
                     </td>
 
