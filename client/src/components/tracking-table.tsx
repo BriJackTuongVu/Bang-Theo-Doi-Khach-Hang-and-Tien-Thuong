@@ -278,8 +278,8 @@ export function TrackingTable() {
 
   return (
     <div className="space-y-4">
-      <Card className="w-full">
-        <CardHeader>
+      <Card className="w-full bg-slate-50/50 border-slate-200">
+        <CardHeader className="bg-slate-100/30">
           <CardTitle className="flex flex-col space-y-3">
             <div className="flex items-center gap-2">
               {isEditingName ? (
