@@ -186,7 +186,7 @@ export function SummaryStats({ records }: SummaryStatsProps) {
     return Object.entries(weeks)
       .map(([weekKey, weekRecords]) => ({
         weekKey,
-        weekName: formatWeekName(weekKey),
+        weekName: formatWeekName(weekKey, weekRecords),
         records: weekRecords.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       }))
       .sort((a, b) => b.weekKey.localeCompare(a.weekKey));
@@ -222,21 +222,43 @@ export function SummaryStats({ records }: SummaryStatsProps) {
     return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
   };
 
-  const formatWeekName = (weekKey: string) => {
-    const [year, weekNum] = weekKey.split('-W');
-    const yearNum = parseInt(year);
-    const weekNumber = parseInt(weekNum);
+  const formatWeekName = (weekKey: string, weekRecords?: TrackingRecord[]) => {
+    if (!weekRecords || weekRecords.length === 0) {
+      // Fallback: parse weekKey để tính ngày
+      const [year, weekNum] = weekKey.split('-W');
+      const yearNum = parseInt(year);
+      const weekNumber = parseInt(weekNum);
+      
+      // Tính ngày đầu tuần theo ISO week
+      const jan4 = new Date(yearNum, 0, 4);
+      const jan4Day = jan4.getDay() || 7; // Chủ nhật = 7
+      const weekStart = new Date(jan4);
+      weekStart.setDate(jan4.getDate() - jan4Day + 1 + (weekNumber - 1) * 7); // Thứ 2
+      
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6); // Chủ nhật
+      
+      const formatDate = (date: Date) => {
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const year = date.getFullYear().toString().slice(-2);
+        return `${month}/${day}/${year}`;
+      };
+      
+      return `${formatDate(weekStart)}-${formatDate(weekEnd)}`;
+    }
     
-    // Tính ngày đầu tuần (Thứ 2)
-    const jan1 = new Date(yearNum, 0, 1);
-    const daysToFirstMonday = (8 - jan1.getDay()) % 7;
-    const firstMonday = new Date(yearNum, 0, 1 + daysToFirstMonday);
+    // Tìm ngày nhỏ nhất và lớn nhất trong tuần từ dữ liệu thực
+    const dates = weekRecords.map(record => new Date(record.date));
+    const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
     
-    const weekStart = new Date(firstMonday);
-    weekStart.setDate(firstMonday.getDate() + (weekNumber - 1) * 7);
+    // Tính ngày đầu tuần (Chủ nhật) và cuối tuần (Thứ 7)
+    const weekStart = new Date(minDate);
+    const dayOfWeek = weekStart.getDay(); // 0 = Chủ nhật, 1 = Thứ 2, ...
+    weekStart.setDate(weekStart.getDate() - dayOfWeek); // Đi về Chủ nhật
     
     const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setDate(weekStart.getDate() + 6); // Thứ 7 của tuần
     
     // Format MM/dd/yy
     const formatDate = (date: Date) => {
