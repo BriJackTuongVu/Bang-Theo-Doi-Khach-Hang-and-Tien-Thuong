@@ -240,65 +240,65 @@ export function SummaryStats({ records }: SummaryStatsProps) {
     const closureRate = data.totalReported > 0 ? (data.totalClosed / data.totalReported) * 100 : 0;
 
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-2 shadow-sm">
-        <div className="grid grid-cols-7 gap-1 items-center">
+      <div className="bg-white border border-gray-200 rounded p-1 shadow-sm">
+        <div className="grid grid-cols-7 gap-0.5 items-center">
           {/* Tiêu đề - cột đầu tiên */}
-          <div className="flex items-center min-w-[120px]">
-            {icon}
-            <h4 className="text-sm font-medium text-gray-700 whitespace-nowrap">{title}</h4>
+          <div className="flex items-center min-w-[80px]">
+            <div className="h-2 w-2 mr-1">{icon}</div>
+            <h4 className="text-xs font-medium text-gray-700 whitespace-nowrap">{title}</h4>
           </div>
           
           {/* Hẹn */}
-          <div className="bg-blue-50 rounded px-1 py-1 text-center">
+          <div className="bg-blue-50 rounded px-0.5 py-0.5 text-center">
             <div className="flex flex-col items-center">
-              <Users className="h-3 w-3 text-blue-600 mb-1" />
-              <span className="text-xs text-blue-700 font-medium mb-1">Hẹn</span>
-              <div className="text-sm font-bold text-blue-800">{formatNumber(data.totalScheduled)}</div>
+              <Users className="h-2 w-2 text-blue-600" />
+              <span className="text-xs text-blue-700 font-medium">Hẹn</span>
+              <div className="text-xs font-bold text-blue-800">{formatNumber(data.totalScheduled)}</div>
             </div>
           </div>
 
           {/* Report */}
-          <div className="bg-green-50 rounded px-1 py-1 text-center">
+          <div className="bg-green-50 rounded px-0.5 py-0.5 text-center">
             <div className="flex flex-col items-center">
-              <FileText className="h-3 w-3 text-green-600 mb-1" />
-              <span className="text-xs text-green-700 font-medium mb-1">Report</span>
-              <div className="text-sm font-bold text-green-800">{formatNumber(data.totalReported)}</div>
+              <FileText className="h-2 w-2 text-green-600" />
+              <span className="text-xs text-green-700 font-medium">Report</span>
+              <div className="text-xs font-bold text-green-800">{formatNumber(data.totalReported)}</div>
             </div>
           </div>
 
           {/* Chốt */}
-          <div className="bg-orange-50 rounded px-1 py-1 text-center">
+          <div className="bg-orange-50 rounded px-0.5 py-0.5 text-center">
             <div className="flex flex-col items-center">
-              <UserCheck className="h-3 w-3 text-orange-600 mb-1" />
-              <span className="text-xs text-orange-700 font-medium mb-1">Chốt</span>
-              <div className="text-sm font-bold text-orange-800">{formatNumber(data.totalClosed)}</div>
+              <UserCheck className="h-2 w-2 text-orange-600" />
+              <span className="text-xs text-orange-700 font-medium">Chốt</span>
+              <div className="text-xs font-bold text-orange-800">{formatNumber(data.totalClosed)}</div>
             </div>
           </div>
 
           {/* %Report */}
-          <div className="bg-yellow-50 rounded px-1 py-1 text-center">
+          <div className="bg-yellow-50 rounded px-0.5 py-0.5 text-center">
             <div className="flex flex-col items-center">
-              <Percent className="h-3 w-3 text-yellow-600 mb-1" />
-              <span className="text-xs text-yellow-700 font-medium mb-1">%Report</span>
-              <div className="text-sm font-bold text-yellow-800">{formatPercentage(reportRate)}</div>
+              <Percent className="h-2 w-2 text-yellow-600" />
+              <span className="text-xs text-yellow-700 font-medium">%Report</span>
+              <div className="text-xs font-bold text-yellow-800">{formatPercentage(reportRate)}</div>
             </div>
           </div>
 
           {/* %Chốt */}
-          <div className="bg-pink-50 rounded px-1 py-1 text-center">
+          <div className="bg-pink-50 rounded px-0.5 py-0.5 text-center">
             <div className="flex flex-col items-center">
-              <Percent className="h-3 w-3 text-pink-600 mb-1" />
-              <span className="text-xs text-pink-700 font-medium mb-1">%Chốt</span>
-              <div className="text-sm font-bold text-pink-800">{formatPercentage(closureRate)}</div>
+              <Percent className="h-2 w-2 text-pink-600" />
+              <span className="text-xs text-pink-700 font-medium">%Chốt</span>
+              <div className="text-xs font-bold text-pink-800">{formatPercentage(closureRate)}</div>
             </div>
           </div>
 
           {/* Thưởng */}
-          <div className="bg-purple-50 rounded px-1 py-1 text-center">
+          <div className="bg-purple-50 rounded px-0.5 py-0.5 text-center">
             <div className="flex flex-col items-center">
-              <DollarSign className="h-3 w-3 text-purple-600 mb-1" />
-              <span className="text-xs text-purple-700 font-medium mb-1">Thưởng</span>
-              <div className="text-sm font-bold text-purple-800">{formatCurrency(data.totalBonus)}</div>
+              <DollarSign className="h-2 w-2 text-purple-600" />
+              <span className="text-xs text-purple-700 font-medium">Thưởng</span>
+              <div className="text-xs font-bold text-purple-800">{formatCurrency(data.totalBonus)}</div>
             </div>
           </div>
         </div>
