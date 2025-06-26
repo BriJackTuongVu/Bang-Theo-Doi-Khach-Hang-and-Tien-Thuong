@@ -231,17 +231,20 @@ export function SummaryStats({ records }: SummaryStatsProps) {
   const yearlyData = groupRecordsByYear(records);
 
   // Compact stats box component
-  const StatsSummaryBox = ({ data, title, icon }: { 
+  const StatsSummaryBox = ({ data, title, icon, showButton = false, buttonLabel = "", onButtonClick }: { 
     data: { totalScheduled: number; totalReported: number; totalClosed: number; totalBonus: number }, 
     title: string,
-    icon: React.ReactNode 
+    icon: React.ReactNode,
+    showButton?: boolean,
+    buttonLabel?: string,
+    onButtonClick?: () => void
   }) => {
     const reportRate = data.totalScheduled > 0 ? (data.totalReported / data.totalScheduled) * 100 : 0;
     const closureRate = data.totalReported > 0 ? (data.totalClosed / data.totalReported) * 100 : 0;
 
     return (
       <div className="bg-white border border-gray-200 rounded p-1 shadow-sm">
-        <div className="grid grid-cols-7 gap-0.5 items-center">
+        <div className="grid grid-cols-8 gap-0.5 items-center">
           {/* Tiêu đề - cột đầu tiên */}
           <div className="flex items-center min-w-[80px]">
             <div className="h-2 w-2 mr-1">{icon}</div>
@@ -250,56 +253,46 @@ export function SummaryStats({ records }: SummaryStatsProps) {
           
           {/* Hẹn */}
           <div className="bg-blue-50 rounded px-0.5 py-0.5 text-center">
-            <div className="flex flex-col items-center">
-              <Users className="h-2 w-2 text-blue-600" />
-              <span className="text-xs text-blue-700 font-medium">Hẹn</span>
-              <div className="text-xs font-bold text-blue-800">{formatNumber(data.totalScheduled)}</div>
-            </div>
+            <div className="text-xs font-bold text-blue-800">{formatNumber(data.totalScheduled)}</div>
           </div>
 
           {/* Report */}
           <div className="bg-green-50 rounded px-0.5 py-0.5 text-center">
-            <div className="flex flex-col items-center">
-              <FileText className="h-2 w-2 text-green-600" />
-              <span className="text-xs text-green-700 font-medium">Report</span>
-              <div className="text-xs font-bold text-green-800">{formatNumber(data.totalReported)}</div>
-            </div>
+            <div className="text-xs font-bold text-green-800">{formatNumber(data.totalReported)}</div>
           </div>
 
           {/* Chốt */}
           <div className="bg-orange-50 rounded px-0.5 py-0.5 text-center">
-            <div className="flex flex-col items-center">
-              <UserCheck className="h-2 w-2 text-orange-600" />
-              <span className="text-xs text-orange-700 font-medium">Chốt</span>
-              <div className="text-xs font-bold text-orange-800">{formatNumber(data.totalClosed)}</div>
-            </div>
+            <div className="text-xs font-bold text-orange-800">{formatNumber(data.totalClosed)}</div>
           </div>
 
           {/* %Report */}
           <div className="bg-yellow-50 rounded px-0.5 py-0.5 text-center">
-            <div className="flex flex-col items-center">
-              <Percent className="h-2 w-2 text-yellow-600" />
-              <span className="text-xs text-yellow-700 font-medium">%Report</span>
-              <div className="text-xs font-bold text-yellow-800">{formatPercentage(reportRate)}</div>
-            </div>
+            <div className="text-xs font-bold text-yellow-800">{formatPercentage(reportRate)}</div>
           </div>
 
           {/* %Chốt */}
           <div className="bg-pink-50 rounded px-0.5 py-0.5 text-center">
-            <div className="flex flex-col items-center">
-              <Percent className="h-2 w-2 text-pink-600" />
-              <span className="text-xs text-pink-700 font-medium">%Chốt</span>
-              <div className="text-xs font-bold text-pink-800">{formatPercentage(closureRate)}</div>
-            </div>
+            <div className="text-xs font-bold text-pink-800">{formatPercentage(closureRate)}</div>
           </div>
 
           {/* Thưởng */}
           <div className="bg-purple-50 rounded px-0.5 py-0.5 text-center">
-            <div className="flex flex-col items-center">
-              <DollarSign className="h-2 w-2 text-purple-600" />
-              <span className="text-xs text-purple-700 font-medium">Thưởng</span>
-              <div className="text-xs font-bold text-purple-800">{formatCurrency(data.totalBonus)}</div>
-            </div>
+            <div className="text-xs font-bold text-purple-800">{formatCurrency(data.totalBonus)}</div>
+          </div>
+
+          {/* Nút Xem thêm */}
+          <div className="text-center">
+            {showButton && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onButtonClick}
+                className="text-xs h-5 px-1"
+              >
+                {buttonLabel}
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -381,51 +374,44 @@ export function SummaryStats({ records }: SummaryStatsProps) {
     : 0;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-1">
+      {/* Header duy nhất */}
+      <div className="bg-gray-50 border border-gray-200 rounded p-1 shadow-sm">
+        <div className="grid grid-cols-8 gap-0.5 items-center text-center">
+          <div></div>
+          <div className="text-xs font-medium text-blue-700">Hẹn</div>
+          <div className="text-xs font-medium text-green-700">Report</div>
+          <div className="text-xs font-medium text-orange-700">Chốt</div>
+          <div className="text-xs font-medium text-yellow-700">%Report</div>
+          <div className="text-xs font-medium text-pink-700">%Chốt</div>
+          <div className="text-xs font-medium text-purple-700">Thưởng</div>
+          <div></div>
+        </div>
+      </div>
+
       {/* Tổng Kết Chung */}
       <StatsSummaryBox 
         data={overallTotals}
         title="Tổng Kết Chung"
-        icon={<TrendingUp className="mr-2 h-4 w-4" />}
+        icon={<TrendingUp className="mr-1 h-3 w-3" />}
       />
 
-      {/* Thống Kê Theo Tuần - Hiển thị 1 tuần với dropdown */}
+      {/* Thống Kê Theo Tuần */}
       {weeklyData.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between px-1">
-            <h3 className="text-sm font-medium text-gray-700 flex items-center">
-              <Clock className="mr-1 h-4 w-4" />
-              Tuần
-            </h3>
-            {weeklyData.length > 1 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowAllWeeks(!showAllWeeks)}
-                className="text-xs h-6 px-2"
-              >
-                {showAllWeeks ? (
-                  <>
-                    <ChevronUp className="h-3 w-3 mr-1" />
-                    Ẩn bớt
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-3 w-3 mr-1" />
-                    Xem thêm ({weeklyData.length - 1})
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
-          {(showAllWeeks ? weeklyData : weeklyData.slice(0, 1)).map((week) => {
+        <div className="space-y-1">
+          {(showAllWeeks ? weeklyData : weeklyData.slice(0, 1)).map((week, index) => {
             const weekStats = calculateMonthStats(week.records);
+            const isFirst = index === 0;
+            const showButton = isFirst && weeklyData.length > 1;
             return (
               <StatsSummaryBox 
                 key={week.weekKey}
                 data={weekStats}
                 title={week.weekName}
-                icon={<Clock className="mr-2 h-4 w-4" />}
+                icon={<Clock className="mr-1 h-3 w-3" />}
+                showButton={showButton}
+                buttonLabel={showAllWeeks ? `Ẩn (${weeklyData.length - 1})` : `+${weeklyData.length - 1}`}
+                onButtonClick={() => setShowAllWeeks(!showAllWeeks)}
               />
             );
           })}
