@@ -318,35 +318,41 @@ export function TrackingTable() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          {/* Container with max height for 7 rows and scroll */}
+          {/* Fixed header outside scroll container */}
+          <div className="overflow-x-auto bg-gray-50 border-b">
+            <table className="min-w-full tracking-table-compact">
+              <thead>
+                <tr>
+                  <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                    Ngày Tháng
+                  </th>
+                  <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                    Khách Hẹn
+                  </th>
+                  <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                    Report
+                  </th>
+                  <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                    Tỉ Lệ %
+                  </th>
+                  <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                    Tiền Thưởng
+                  </th>
+                  <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                    Tưởng Closed
+                  </th>
+                  <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                    Trạng Thái
+                  </th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+          
+          {/* Scrollable body container */}
           <div className="max-h-48 overflow-y-auto">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 tracking-table-compact">
-                <thead className="bg-gray-50 sticky top-0 z-10">
-                  <tr>
-                    <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                      Ngày Tháng
-                    </th>
-                    <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
-                      Khách Hẹn
-                    </th>
-                    <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
-                      Report
-                    </th>
-                    <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
-                      Tỉ Lệ %
-                    </th>
-                    <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                      Tiền Thưởng
-                    </th>
-                    <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                      Tưởng Closed
-                    </th>
-                    <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                      Trạng Thái
-                    </th>
-                  </tr>
-                </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
               {records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((record) => {
                 const { percentage, totalBonus, bonusRate } = calculateBonus(
