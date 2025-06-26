@@ -140,6 +140,7 @@ Changelog:
 - June 26, 2025. Added end-of-day Stripe payment checker: system now automatically runs at 11:59 PM Eastern Time daily to check Stripe payments and update closed customer counts for the current day
 - June 26, 2025. Completed dual scheduler system: 6AM for table creation (weekdays) and 11:59 PM for payment verification (daily) with live Stripe API integration for first-time customer detection
 - June 26, 2025. Successfully tested and validated complete scheduler system: auto-created table for 2025-06-24 with 16 customers from Calendly, 3 closed customers detected, all automation working correctly
+- June 26, 2025. Hidden all management buttons per user request: "Thêm Bảng Chi Tiết Khách Hàng", "Kiểm tra Pay", "Thêm Khách Hàng", "Cập Nhật Khách Hàng" - interface now clean with automation running in background
 ```
 
 ## User Preferences
