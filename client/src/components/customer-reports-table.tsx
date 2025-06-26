@@ -208,6 +208,34 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
 
   const handleCalendlyImport = async () => {
     try {
+      // First check connection status
+      const statusResponse = await fetch('/api/calendly/status');
+      const statusResult = await statusResponse.json();
+      
+      if (!statusResult.connected) {
+        // Show connection notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 max-w-sm';
+        notification.innerHTML = `
+          <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+              <div class="font-medium">Chưa kết nối Calendly</div>
+              <div class="text-sm opacity-90">Vui lòng kết nối với Calendly trước khi cập nhật khách hàng</div>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 4000);
+        return;
+      }
+      
       // Get events from Calendly for the selected date
       const response = await fetch(`/api/calendly/events?date=${selectedDate}`);
       const result = await response.json();
