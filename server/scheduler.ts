@@ -21,10 +21,17 @@ export function startScheduler() {
     scheduled: true,
     timezone: "America/New_York" // Eastern Time
   });
+
+  // TEST: Chạy test tạo bảng sau 2 phút
+  setTimeout(async () => {
+    console.log('🧪 TEST: Chạy scheduler test để tạo bảng ngày 26...');
+    await runSchedulerTask();
+  }, 120000); // 2 phút = 120000ms
   
   console.log('✅ Scheduler đã được khởi động:');
   console.log('   - 6:00 AM Eastern: Tạo bảng tự động (thứ 2-6)');
   console.log('   - 11:59 PM Eastern: Kiểm tra Stripe payments (hàng ngày)');
+  console.log('   - TEST: Chạy test tạo bảng sau 2 phút');
 }
 
 // Hàm chạy scheduler task
