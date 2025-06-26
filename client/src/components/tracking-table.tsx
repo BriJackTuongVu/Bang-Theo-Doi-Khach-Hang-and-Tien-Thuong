@@ -279,7 +279,7 @@ export function TrackingTable() {
   return (
     <div className="space-y-4">
       <Card className="w-full bg-red-50/50 border-2 border-red-400">
-        <CardHeader className="bg-red-100/30">
+        <CardHeader className="bg-red-100/30" style={{ display: 'none' }}>
           <CardTitle className="flex flex-col space-y-3">
             <div className="flex items-center gap-2">
               {isEditingName ? (
