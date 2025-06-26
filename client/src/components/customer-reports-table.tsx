@@ -979,15 +979,11 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
                       </div>
                     ) : (
                       <div
-                        className="text-sm cursor-pointer hover:bg-blue-50 px-2 py-1 rounded border border-dashed border-blue-300 bg-blue-50/30"
+                        className="text-xs text-gray-600 cursor-pointer hover:text-gray-800"
                         onClick={() => handleStartEdit(report.id, "customerPhone", report.customerPhone || "")}
                         title="Click để nhập số điện thoại"
                       >
-                        {report.customerPhone || (
-                          <span className="text-blue-600 font-medium">
-                            📞 Click để nhập số điện thoại
-                          </span>
-                        )}
+                        {report.customerPhone || "Chưa nhập"}
                       </div>
                     )}
                   </td>
