@@ -144,6 +144,7 @@ Changelog:
 - June 26, 2025. Added light background styling to main tracking table: light slate background and header styling to visually distinguish from customer detail tables
 - June 26, 2025. Added red border to main tracking table: changed border to red color (border-2 border-red-400) for better visual prominence per user request
 - June 26, 2025. Updated main tracking table background to light red: changed from gray to light red background (bg-red-50/50 with bg-red-100/30 header) to match red border theme
+- June 26, 2025. Refined PIN authentication logic: PIN 1995 now only required when switching from ON to OFF, not from OFF to ON for better user experience
 ```
 
 ## User Preferences

@@ -76,12 +76,14 @@ export default function TrackingPage() {
 
   const handleToggleCalendly = async () => {
     if (!calendlyConnected) {
+      // Chuyển từ OFF sang ON - không cần mã PIN
+      setShowCalendlyModal(true);
+    } else {
+      // Chuyển từ ON sang OFF - yêu cầu mã PIN
       if (!validatePIN()) {
         alert('Mã PIN không đúng!');
         return;
       }
-      setShowCalendlyModal(true);
-    } else {
       if (confirm('Bạn có chắc chắn muốn ngắt kết nối Calendly?')) {
         try {
           await fetch('/api/calendly/disconnect', { method: 'POST' });
@@ -94,22 +96,26 @@ export default function TrackingPage() {
   };
 
   const handleToggleStripe = () => {
-    if (!stripeEnabled) {
+    if (stripeEnabled) {
+      // Chuyển từ ON sang OFF - yêu cầu mã PIN
       if (!validatePIN()) {
         alert('Mã PIN không đúng!');
         return;
       }
     }
+    // Chuyển từ OFF sang ON - không cần mã PIN
     setStripeEnabled(!stripeEnabled);
   };
 
   const handleToggleDataRetention = async () => {
-    if (!dataRetentionEnabled) {
+    if (dataRetentionEnabled) {
+      // Chuyển từ ON sang OFF - yêu cầu mã PIN
       if (!validatePIN()) {
         alert('Mã PIN không đúng!');
         return;
       }
     }
+    // Chuyển từ OFF sang ON - không cần mã PIN
     
     try {
       const response = await fetch('/api/settings/data-retention', {
