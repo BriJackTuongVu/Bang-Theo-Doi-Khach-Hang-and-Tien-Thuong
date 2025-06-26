@@ -1208,6 +1208,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Simple test endpoint để check Stripe connection  
+  app.get("/api/stripe/test-connection", async (req, res) => {
+    try {
+      if (!process.env.STRIPE_SECRET_KEY) {
+        throw new Error('Missing Stripe secret key');
+      }
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+      
+      // Test với 1 charge để verify connection
+      const charges = await stripe.charges.list({ limit: 1 });
+      
+      res.json({ 
+        success: true, 
+        connected: true,
+        message: `Stripe connected. Found ${charges.data.length} charges.`
+      });
+      
+    } catch (error) {
+      console.error("❌ Stripe test error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   // Endpoint để refresh tất cả Stripe payments cho tracking records
   app.post("/api/stripe/refresh-all-payments", async (req, res) => {
     try {
@@ -1243,27 +1267,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           console.log(`📈 Found ${charges.data.length} charges for ${record.date}`);
           
-          // Đếm first-time payments (bất kể số tiền)
-          // Lấy tất cả payments từ trước đó để check first-time
-          const allCharges = await stripe.charges.list({
-            created: {
-              lte: Math.floor(endDate.getTime() / 1000),
-            },
-            limit: 1000, // Lấy nhiều để check history
-          });
-
-          // Tạo set emails đã từng thanh toán trước ngày này
-          const previousPaymentEmails = new Set();
-          for (const charge of allCharges.data) {
-            if (charge.status === 'succeeded' && charge.receipt_email) {
-              const chargeDate = new Date(charge.created * 1000).toISOString().split('T')[0];
-              if (chargeDate < record.date) {
-                previousPaymentEmails.add(charge.receipt_email.toLowerCase());
-              }
-            }
-          }
-
-          // Đếm first-time payments cho ngày này
+          // Đếm first-time payments cho ngày này (simplified)
+          // Chỉ đếm unique emails trong ngày (tạm thời)
           let firstTimePayments = 0;
           const todayUniqueEmails = new Set();
           
@@ -1271,8 +1276,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (charge.status === 'succeeded' && charge.receipt_email) {
               const email = charge.receipt_email.toLowerCase();
               
-              // Nếu email này chưa thanh toán trước đó và chưa đếm trong ngày hôm nay
-              if (!previousPaymentEmails.has(email) && !todayUniqueEmails.has(email)) {
+              // Chỉ đếm mỗi email một lần trong ngày
+              if (!todayUniqueEmails.has(email)) {
                 todayUniqueEmails.add(email);
                 firstTimePayments++;
               }
