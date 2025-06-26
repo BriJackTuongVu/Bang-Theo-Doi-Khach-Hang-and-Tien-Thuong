@@ -132,6 +132,9 @@ Changelog:
 - June 26, 2025. Implemented automatic customer import from Calendly when creating new tables - system now auto-imports customers with email and phone information during table creation without manual intervention
 - June 26, 2025. Fixed table deletion functionality: resolved foreign key constraint issues by implementing cascading deletes in DatabaseStorage
 - June 26, 2025. Implemented date uniqueness validation: system now prevents creating multiple customer detail tables for the same date with frontend and backend validation
+- June 26, 2025. Enhanced Stripe payment logic: now distinguishes first-time customers from recurring payments - only first-time payments are counted in "TƯƠNG ONLY" column
+- June 26, 2025. Successfully resolved phone number import from Calendly API: phone numbers are extracted from event.location.location field
+- June 26, 2025. Added colorful animated loading bar: multi-color gradient loading indicator with width animation for better UX during table creation
 ```
 
 ## User Preferences

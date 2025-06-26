@@ -166,9 +166,40 @@ export default function TrackingPage() {
         font-weight: 600;
         z-index: 9999;
         box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        text-align: center;
       ">
         ⏳ Đang tạo bảng cho ngày ${selectedAddTableDate}...
+        <div style="
+          width: 100%;
+          height: 3px;
+          background: rgba(255,255,255,0.2);
+          border-radius: 2px;
+          margin-top: 12px;
+          overflow: hidden;
+        ">
+          <div style="
+            height: 100%;
+            background: linear-gradient(90deg, #FF6B6B, #4ECDC4, #45B7D1, #96CEB4, #FECA57, #FF9FF3, #54A0FF);
+            background-size: 200% 100%;
+            border-radius: 2px;
+            animation: colorWave 2s ease-in-out infinite, widthPulse 1.5s ease-in-out infinite;
+          "></div>
+        </div>
       </div>
+      <style>
+        @keyframes colorWave {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes widthPulse {
+          0% { width: 20%; }
+          25% { width: 60%; }
+          50% { width: 90%; }
+          75% { width: 40%; }
+          100% { width: 20%; }
+        }
+      </style>
     `;
     document.body.appendChild(processingNotification);
 
