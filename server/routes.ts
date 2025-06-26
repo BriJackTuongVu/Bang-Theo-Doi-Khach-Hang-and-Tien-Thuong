@@ -1208,6 +1208,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint để tìm tất cả payments $100+ trong khoảng thời gian
+  app.post("/api/stripe/find-all-payments", async (req, res) => {
+    try {
+      const { startDate, endDate } = req.body;
+      
+      if (!startDate || !endDate) {
+        return res.status(400).json({ error: "Start date and end date are required" });
+      }
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+      
+      const start = new Date(startDate + "T00:00:00.000Z");
+      const end = new Date(endDate + "T23:59:59.999Z");
+      
+      console.log(`🔍 Searching Stripe payments from ${startDate} to ${endDate}...`);
+      
+      // Lấy tất cả charges trong khoảng thời gian
+      const allCharges = [];
+      let hasMore = true;
+      let startingAfter = undefined;
+      
+      while (hasMore) {
+        const params = {
+          created: {
+            gte: Math.floor(start.getTime() / 1000),
+            lte: Math.floor(end.getTime() / 1000),
+          },
+          limit: 100,
+          ...(startingAfter && { starting_after: startingAfter })
+        };
+        
+        const charges = await stripe.charges.list(params);
+        allCharges.push(...charges.data);
+        
+        hasMore = charges.has_more;
+        if (hasMore && charges.data.length > 0) {
+          startingAfter = charges.data[charges.data.length - 1].id;
+        }
+      }
+
+      console.log(`📊 Found ${allCharges.length} total charges`);
+
+      // Tìm first-time payments $100+
+      const dailyStats = {};
+      const firstTimePayments = [];
+      let processedCount = 0;
+
+      for (const charge of allCharges) {
+        if (charge.status === 'succeeded' && charge.amount >= 10000) { // $100+
+          const chargeDate = new Date(charge.created * 1000).toISOString().split('T')[0];
+          const customerEmail = charge.receipt_email;
+          
+          processedCount++;
+          console.log(`Processing payment ${processedCount}: $${charge.amount/100} for ${customerEmail} on ${chargeDate}`);
+          
+          if (customerEmail) {
+            // Kiểm tra có phải first-time không
+            const earlierCharges = await stripe.charges.list({
+              created: {
+                lt: charge.created,
+              },
+              limit: 100,
+            });
+            
+            const previousPayments = earlierCharges.data.filter(prevCharge => 
+              prevCharge.receipt_email === customerEmail && 
+              prevCharge.status === 'succeeded' &&
+              prevCharge.amount >= 10000 // Previous payments $100+
+            );
+            
+            if (previousPayments.length === 0) {
+              firstTimePayments.push({
+                email: customerEmail,
+                amount: charge.amount / 100,
+                date: chargeDate,
+                chargeId: charge.id
+              });
+              
+              if (!dailyStats[chargeDate]) {
+                dailyStats[chargeDate] = 0;
+              }
+              dailyStats[chargeDate]++;
+              
+              console.log(`✅ First-time $100+ payment: ${customerEmail} - $${charge.amount/100} on ${chargeDate}`);
+            } else {
+              console.log(`⏭️ Recurring customer: ${customerEmail} (${previousPayments.length} previous payments)`);
+            }
+          }
+        }
+      }
+
+      console.log(`🎯 Total first-time $100+ payments found: ${firstTimePayments.length}`);
+
+      res.json({
+        success: true,
+        totalFirstTimePayments: firstTimePayments.length,
+        totalChargesFound: allCharges.length,
+        dailyStats,
+        payments: firstTimePayments,
+        searchPeriod: { startDate, endDate }
+      });
+      
+    } catch (error) {
+      console.error("❌ Error finding all payments:", error);
+      res.status(500).json({ error: "Failed to find payments: " + error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
