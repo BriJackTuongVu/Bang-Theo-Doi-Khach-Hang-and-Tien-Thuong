@@ -117,6 +117,7 @@ Changelog:
 - June 25, 2025. Implemented working auto-sync: when report received date is entered, REPORT column updates automatically
 - June 25, 2025. Removed "HÀNH ĐỘNG" (delete) column from tracking table per user request
 - June 25, 2025. Added auto-creation of tracking records when new customer tables are created
+- June 25, 2025. Implemented strict relationship: tracking records only exist when corresponding customer detail tables exist
 ```
 
 ## User Preferences
