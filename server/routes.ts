@@ -23,6 +23,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ? 'http://localhost:5000/auth/google/callback'
       : 'https://your-app.replit.app/auth/google/callback'
   );
+  // TEST: Manual trigger scheduler
+  app.post("/api/test-scheduler", async (req, res) => {
+    try {
+      console.log('🧪 TEST: Manual scheduler trigger...');
+      
+      // Import and run scheduler task directly
+      const schedulerModule = await import('./scheduler');
+      const { runSchedulerTask } = schedulerModule;
+      await runSchedulerTask();
+      
+      res.json({ success: true, message: "Scheduler test completed" });
+    } catch (error: any) {
+      console.error('Scheduler test error:', error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
   // Get all tracking records
   app.get("/api/tracking-records", async (req, res) => {
     try {

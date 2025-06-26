@@ -24,6 +24,7 @@ export default function TrackingPage() {
   const [selectedPaymentDate, setSelectedPaymentDate] = useState('2025-06-25');
   const [showAddTableModal, setShowAddTableModal] = useState(false);
   const [selectedAddTableDate, setSelectedAddTableDate] = useState(getTodayDate());
+  const [testLoading, setTestLoading] = useState(false);
 
   const checkInitialStates = async () => {
     // Check Stripe status (assume enabled if STRIPE_SECRET_KEY exists)
