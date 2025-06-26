@@ -142,6 +142,7 @@ Changelog:
 - June 26, 2025. Successfully tested and validated complete scheduler system: auto-created table for 2025-06-24 with 16 customers from Calendly, 3 closed customers detected, all automation working correctly
 - June 26, 2025. Hidden all management buttons per user request: "Thêm Bảng Chi Tiết Khách Hàng", "Kiểm tra Pay", "Thêm Khách Hàng", "Cập Nhật Khách Hàng" - interface now clean with automation running in background
 - June 26, 2025. Added light background styling to main tracking table: light slate background and header styling to visually distinguish from customer detail tables
+- June 26, 2025. Added red border to main tracking table: changed border to red color (border-2 border-red-400) for better visual prominence per user request
 ```
 
 ## User Preferences
