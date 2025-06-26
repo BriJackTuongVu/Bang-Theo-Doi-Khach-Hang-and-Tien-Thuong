@@ -830,7 +830,7 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
       <CardContent>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-blue-50">
+            <thead className="bg-facebook-blue">
               <tr>
                 <th className="px-3 py-0.5 text-left text-2xs font-medium text-gray-600 uppercase tracking-wider">
                   STT

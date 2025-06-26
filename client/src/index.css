@@ -81,3 +81,8 @@
   font-size: 0.625rem !important;
   line-height: 0.75rem !important;
 }
+
+/* Facebook-like bright blue background */
+.bg-facebook-blue {
+  background-color: #e3f2fd !important;
+}
