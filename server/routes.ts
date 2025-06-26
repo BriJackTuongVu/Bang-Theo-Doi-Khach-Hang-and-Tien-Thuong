@@ -999,7 +999,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test end-of-day Stripe check
+  // Test end-of-day Stripe check for specific date
   app.post("/api/test-stripe-endday", async (req, res) => {
     try {
       const { date } = req.body;
@@ -1008,17 +1008,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🕚 TESTING END-OF-DAY STRIPE CHECK for ${testDate}`);
       
       // Import scheduler function directly
-      const { runEndOfDayStripeCheck } = require('./scheduler');
+      const { autoCheckStripePayments } = require('./scheduler');
       
-      // Run the end-of-day Stripe check
-      await runEndOfDayStripeCheck();
+      // Run Stripe check for specific date
+      await autoCheckStripePayments(testDate);
       
       console.log(`✅ End-of-day Stripe check completed for ${testDate}`);
       
+      // Get updated tracking record to show result
+      const records = await storage.getTrackingRecords();
+      const updatedRecord = records.find(r => r.date === testDate);
+      
       res.json({
         success: true,
-        message: `End-of-day Stripe check completed for ${testDate}`,
-        date: testDate
+        message: `Stripe check completed for ${testDate}`,
+        date: testDate,
+        updatedRecord: updatedRecord
       });
       
     } catch (error) {
