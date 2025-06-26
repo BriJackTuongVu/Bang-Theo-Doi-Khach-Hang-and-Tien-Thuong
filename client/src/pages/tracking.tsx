@@ -98,49 +98,7 @@ export default function TrackingPage() {
     }
   };
 
-  const autoSyncTrackingRecords = async () => {
-    try {
-      // Get all tracking records
-      const trackingResponse = await fetch('/api/tracking-records');
-      const trackingRecords = await trackingResponse.json();
-      
-      // Get all customer reports to find existing dates
-      const reportsResponse = await fetch('/api/customer-reports');
-      const customerReports = await reportsResponse.json();
-      
-      // Get unique dates from customer reports
-      const customerDates = [...new Set(customerReports.map((report: any) => report.customerDate))];
-      
-      // Find tracking records that don't have corresponding customer tables
-      const recordsToDelete = trackingRecords.filter((record: any) => 
-        !customerDates.includes(record.date)
-      );
-      
-      // Delete orphaned tracking records
-      for (const record of recordsToDelete) {
-        await fetch(`/api/tracking-records/${record.id}`, {
-          method: 'DELETE'
-        });
-      }
-      
-      if (recordsToDelete.length > 0) {
-        console.log(`Auto-sync: Đã xóa ${recordsToDelete.length} dòng tracking không có bảng khách hàng tương ứng`);
-        // Refresh tracking data
-        window.location.reload();
-      }
-    } catch (error) {
-      console.error('Lỗi auto-sync:', error);
-    }
-  };
-
-  // Auto-sync on component mount and when customer tables change
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      autoSyncTrackingRecords();
-    }, 2000); // Delay to ensure data is loaded
-    
-    return () => clearTimeout(timer);
-  }, [customerTables]);
+  // Remove auto-sync for now - it was causing infinite loops
 
   return (
     <div className="min-h-screen bg-gray-50">
