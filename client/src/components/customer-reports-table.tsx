@@ -346,44 +346,7 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
         document.body.appendChild(modal);
         return;
       }
-      
-      if (result.events && result.events.length > 0) {
-        let addedCount = 0;
-        
-        for (const event of result.events) {
-          if (event.invitee_name && event.invitee_name.trim() !== '') {
-            // Check if customer already exists
-            const existingReports = reports as CustomerReport[];
-            const exists = existingReports.some(report => 
-              report.customerName.toLowerCase().trim() === event.invitee_name.toLowerCase().trim() &&
-              report.customerDate === selectedDate
-            );
-            
-            if (!exists) {
-              await createMutation.mutateAsync({
-                customerName: event.invitee_name.trim(),
-                reportSent: false,
-                reportReceivedDate: null,
-                customerDate: selectedDate,
-                trackingRecordId: tableId,
-              });
-              addedCount++;
-            }
-          }
-        }
-        
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-        notification.textContent = `Đã thêm ${addedCount} khách hàng từ Calendly`;
-        document.body.appendChild(notification);
-        setTimeout(() => document.body.removeChild(notification), 3000);
-      } else {
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-        notification.textContent = 'Không tìm thấy cuộc hẹn nào trong Calendly cho ngày này';
-        document.body.appendChild(notification);
-        setTimeout(() => document.body.removeChild(notification), 3000);
-      }
+
     } catch (error) {
       console.error('Error importing from Calendly:', error);
       const notification = document.createElement('div');
