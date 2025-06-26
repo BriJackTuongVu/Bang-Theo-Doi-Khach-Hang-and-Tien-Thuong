@@ -473,15 +473,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Extract phone from questions if available
               let phone = null;
               if (invitees.length > 0 && invitees[0].questions_and_answers) {
+                console.log('Questions and answers:', JSON.stringify(invitees[0].questions_and_answers, null, 2));
                 const phoneQuestion = invitees[0].questions_and_answers.find((qa: any) => 
                   qa.question.toLowerCase().includes('phone') || 
                   qa.question.toLowerCase().includes('số điện thoại') ||
                   qa.question.toLowerCase().includes('contact') ||
-                  qa.question.toLowerCase().includes('sdt')
+                  qa.question.toLowerCase().includes('sdt') ||
+                  qa.question.toLowerCase().includes('mobile') ||
+                  qa.question.toLowerCase().includes('cell')
                 );
                 if (phoneQuestion) {
                   phone = phoneQuestion.answer;
+                  console.log('Found phone number:', phone);
+                } else {
+                  console.log('No phone question found in questions_and_answers');
                 }
+              } else {
+                console.log('No questions_and_answers available for invitee');
               }
 
               const result = {
