@@ -669,16 +669,21 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
         console.log('Could not delete tracking record:', trackingError);
       }
 
-      // Show success notification
+      // Show success notification at center for 1 second
       const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-      notification.textContent = `Đã xóa toàn bộ bảng ngày ${selectedDate} với ${reportsForThisDate.length} khách hàng`;
+      notification.className = 'fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50';
+      notification.innerHTML = `
+        <div class="bg-green-500 text-white px-8 py-4 rounded-lg shadow-xl text-center">
+          <div class="text-lg font-semibold">✓ Đã xóa thành công</div>
+          <div class="text-sm mt-1">Bảng ngày ${selectedDate} với ${reportsForThisDate.length} khách hàng</div>
+        </div>
+      `;
       document.body.appendChild(notification);
       setTimeout(() => {
         if (document.body.contains(notification)) {
           document.body.removeChild(notification);
         }
-      }, 3000);
+      }, 1000);
 
       // Notify parent component to remove this table
       window.dispatchEvent(new CustomEvent('tableDeleted', { 
@@ -692,7 +697,7 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
       // Reload page to refresh everything
       setTimeout(() => {
         window.location.reload();
-      }, 1000);
+      }, 1200);
 
     } catch (error) {
       console.error('Error deleting table:', error);

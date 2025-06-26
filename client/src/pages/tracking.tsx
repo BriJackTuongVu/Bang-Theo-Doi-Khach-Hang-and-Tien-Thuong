@@ -22,6 +22,20 @@ export default function TrackingPage() {
   // Check Calendly connection status on load
   useEffect(() => {
     checkCalendlyConnection();
+    
+    // Add event listener for table deletion - just reload the page
+    const handleTableDeleted = (event: CustomEvent) => {
+      // Since tracking records are managed by the database, we just need to refresh
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    };
+    
+    window.addEventListener('tableDeleted', handleTableDeleted as EventListener);
+    
+    return () => {
+      window.removeEventListener('tableDeleted', handleTableDeleted as EventListener);
+    };
   }, []);
 
   const checkCalendlyConnection = async () => {
@@ -86,16 +100,11 @@ export default function TrackingPage() {
   };
 
   const addNewCustomerTable = async () => {
-    const newTableId = Math.max(...customerTables.map(t => t.id)) + 1;
-    // Get the latest date from existing tables and find next working day
-    const latestDate = customerTables.reduce((latest, table) => 
-      table.date > latest ? table.date : latest, customerTables[0]?.date || getTodayDate()
-    );
+    // Get the latest date from existing records and find next working day
+    const latestDate = records.length > 0 
+      ? records.reduce((latest, record) => record.date > latest ? record.date : latest, records[0].date)
+      : getTodayDate();
     const nextWorkingDate = getNextWorkingDay(latestDate);
-    
-    // Add new table to the beginning of the array (newest first)
-    const newTables = [{ id: newTableId, date: nextWorkingDate }, ...customerTables];
-    setCustomerTables(newTables);
     
     // Auto-create tracking record for this date if it doesn't exist
     try {
@@ -122,6 +131,11 @@ export default function TrackingPage() {
         notification.textContent = `Đã tạo dòng tracking cho ngày ${nextWorkingDate}`;
         document.body.appendChild(notification);
         setTimeout(() => notification.remove(), 3000);
+        
+        // Reload page to show new tracking record
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       }
     } catch (error) {
       console.error('Error creating tracking record:', error);
