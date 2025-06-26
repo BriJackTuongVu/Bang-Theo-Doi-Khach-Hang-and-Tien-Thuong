@@ -147,6 +147,8 @@ Changelog:
 - June 26, 2025. Refined PIN authentication logic: PIN 1995 now only required when switching from ON to OFF, not from OFF to ON for better user experience
 - June 26, 2025. Diagnosed Calendly import issue: System correctly creates tracking records but Calendly API returns 404 when no events exist for specific dates (normal behavior) - automatic import only works when actual appointments are scheduled in Calendly
 - June 26, 2025. Fixed Calendly user URI issue: Updated scheduler to use correct user URI (5e8c8c66-7fe1-4727-ba2d-32c9a56eb1ca) instead of outdated URI - successfully imported 3 customers for June 26 with full contact information including phone numbers
+- June 26, 2025. Added delete functionality for individual customer report dates: customers can now click "✕" button next to received dates in "NGÀY NHẬN REPORT" column to clear the date and automatically update tracking records
+- June 26, 2025. Removed delete button from date picker in table header: restored original disabled date picker behavior while keeping individual report date deletion functionality in the data rows
 ```
 
 ## User Preferences

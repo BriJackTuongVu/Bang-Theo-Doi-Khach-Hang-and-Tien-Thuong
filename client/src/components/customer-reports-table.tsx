@@ -807,26 +807,13 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              <div className="relative">
-                <Input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-40 pr-8"
-                  placeholder="mm/dd/yyyy"
-                />
-                {selectedDate && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100"
-                    onClick={() => setSelectedDate("")}
-                  >
-                    ✕
-                  </Button>
-                )}
-              </div>
+              <Input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-40 cursor-not-allowed"
+                disabled
+              />
             </div>
 
             <Button
@@ -1046,11 +1033,30 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
                         </Button>
                       </div>
                     ) : (
-                      <div
-                        className="text-sm text-gray-900 cursor-pointer hover:bg-blue-50 px-2 py-1 rounded"
-                        onClick={() => handleStartEdit(report.id, "reportReceivedDate", report.reportReceivedDate || "")}
-                      >
-                        {report.reportReceivedDate ? formatDate(report.reportReceivedDate) : "Chưa nhận"}
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="text-sm text-gray-900 cursor-pointer hover:bg-blue-50 px-2 py-1 rounded flex-1"
+                          onClick={() => handleStartEdit(report.id, "reportReceivedDate", report.reportReceivedDate || "")}
+                        >
+                          {report.reportReceivedDate ? formatDate(report.reportReceivedDate) : "Chưa nhận"}
+                        </div>
+                        {report.reportReceivedDate && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 hover:bg-red-100 text-red-600"
+                            onClick={() => {
+                              updateMutation.mutate({
+                                id: report.id,
+                                data: { reportReceivedDate: null },
+                              });
+                            }}
+                            title="Xóa ngày nhận report"
+                          >
+                            ✕
+                          </Button>
+                        )}
                       </div>
                     )}
                   </td>
