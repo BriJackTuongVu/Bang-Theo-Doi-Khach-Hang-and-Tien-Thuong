@@ -402,14 +402,14 @@ export function SummaryStats({ records }: SummaryStatsProps) {
         icon={<TrendingUp className="mr-2 h-4 w-4" />}
       />
 
-      {/* Thống Kê Theo Tuần */}
+      {/* Thống Kê Theo Tuần - Hiển thị 4 tuần gần nhất */}
       {weeklyData.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-gray-700 flex items-center px-1">
             <Clock className="mr-1 h-4 w-4" />
-            Tuần
+            Tuần (4 tuần gần nhất)
           </h3>
-          {weeklyData.map((week) => {
+          {weeklyData.slice(0, 4).map((week) => {
             const weekStats = calculateMonthStats(week.records);
             return (
               <StatsSummaryBox 
@@ -423,14 +423,14 @@ export function SummaryStats({ records }: SummaryStatsProps) {
         </div>
       )}
 
-      {/* Thống Kê Theo Tháng */}
+      {/* Thống Kê Theo Tháng - Hiển thị 3 tháng gần nhất */}
       {monthlyData.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-gray-700 flex items-center px-1">
             <Calendar className="mr-1 h-4 w-4" />
-            Tháng
+            Tháng (3 tháng gần nhất)
           </h3>
-          {monthlyData.map((month) => {
+          {monthlyData.slice(0, 3).map((month) => {
             const monthStats = calculateMonthStats(month.records);
             return (
               <StatsSummaryBox 
