@@ -732,11 +732,6 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
           <div className="flex items-center gap-2">
             <User className="h-5 w-5" />
             Chi Tiết Khách Hàng
-            {initialDate && (
-              <span className="text-sm font-normal text-gray-500">
-                ({getDayOfWeek(selectedDate)})
-              </span>
-            )}
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
