@@ -548,26 +548,43 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
       return;
     }
 
-    const confirmDelete = confirm(`Bạn có chắc chắn muốn xóa toàn bộ bảng ${tableId}?\n\nThao tác này sẽ xóa tất cả ${(reports as CustomerReport[]).length} khách hàng và không thể hoàn tác.`);
+    // Get all customer reports for this date
+    const allReports = Array.isArray(reports) ? reports : [];
+    const reportsForThisDate = allReports.filter((r: CustomerReport) => r.customerDate === selectedDate);
+    
+    const confirmDelete = confirm(`Bạn có chắc chắn muốn xóa toàn bộ bảng cho ngày ${selectedDate}?\n\nThao tác này sẽ xóa tất cả ${reportsForThisDate.length} khách hàng và không thể hoàn tác.`);
     
     if (!confirmDelete) {
       return;
     }
 
     try {
-      // Delete all customer reports for this table
-      const reportsToDelete = (reports as CustomerReport[]).filter(r => r.trackingRecordId === tableId);
-      
-      for (const report of reportsToDelete) {
+      // Delete all customer reports for this date
+      for (const report of reportsForThisDate) {
         await fetch(`/api/customer-reports/${report.id}`, {
           method: 'DELETE'
         });
       }
 
+      // Also try to delete the corresponding tracking record
+      try {
+        const trackingResponse = await fetch('/api/tracking-records');
+        const trackingRecords = await trackingResponse.json();
+        const trackingRecord = trackingRecords.find((r: any) => r.date === selectedDate);
+        
+        if (trackingRecord) {
+          await fetch(`/api/tracking-records/${trackingRecord.id}`, {
+            method: 'DELETE'
+          });
+        }
+      } catch (trackingError) {
+        console.log('Could not delete tracking record:', trackingError);
+      }
+
       // Show success notification
       const notification = document.createElement('div');
       notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-      notification.textContent = `Đã xóa toàn bộ bảng ${tableId} với ${reportsToDelete.length} khách hàng`;
+      notification.textContent = `Đã xóa toàn bộ bảng ngày ${selectedDate} với ${reportsForThisDate.length} khách hàng`;
       document.body.appendChild(notification);
       setTimeout(() => {
         if (document.body.contains(notification)) {
@@ -575,8 +592,20 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
         }
       }, 3000);
 
+      // Notify parent component to remove this table
+      window.dispatchEvent(new CustomEvent('tableDeleted', { 
+        detail: { date: selectedDate, tableId } 
+      }));
+
       // Refetch data to update UI
       queryClient.invalidateQueries({ queryKey: ['/api/customer-reports'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tracking-records'] });
+      
+      // Reload page to refresh everything
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+
     } catch (error) {
       console.error('Error deleting table:', error);
       alert('Lỗi khi xóa bảng. Vui lòng thử lại.');
