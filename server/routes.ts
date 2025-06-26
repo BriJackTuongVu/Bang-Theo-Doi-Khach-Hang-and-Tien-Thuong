@@ -470,7 +470,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const invitees = inviteesData.collection || [];
               console.log('Found invitees for event:', invitees.length);
               
-              // Debug: log full invitee data structure
+              // Debug: log full event and invitee data structure
+              console.log('Event data structure:', JSON.stringify(event, null, 2));
               if (invitees.length > 0) {
                 console.log('Full invitee data structure:', JSON.stringify(invitees[0], null, 2));
               }
@@ -478,13 +479,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Extract phone from location field or questions if available
               let phone = null;
               
-              // First try to get from location field
-              if (invitees.length > 0 && invitees[0].text_reminder_number) {
+              // First try to get from event location field
+              if (event.location && event.location.location) {
+                const locationText = event.location.location;
+                console.log('Event location field:', locationText);
+                // Check if location contains phone number pattern
+                const phoneRegex = /[\+]?[1-9][\d\s\-\(\)]{8,20}/;
+                if (phoneRegex.test(locationText)) {
+                  phone = locationText.trim();
+                  console.log('Found phone from event location:', phone);
+                }
+              }
+              
+              // Try text_reminder_number from invitee
+              if (!phone && invitees.length > 0 && invitees[0].text_reminder_number) {
                 phone = invitees[0].text_reminder_number;
                 console.log('Found phone from text_reminder_number:', phone);
               }
               
-              // If not found, try questions and answers for location
+              // Try questions and answers for location/phone
               if (!phone && invitees.length > 0 && invitees[0].questions_and_answers) {
                 console.log('Questions and answers:', JSON.stringify(invitees[0].questions_and_answers, null, 2));
                 const locationQuestion = invitees[0].questions_and_answers.find((qa: any) => 
@@ -506,7 +519,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               } 
               
               if (!phone) {
-                console.log('No phone information available for invitee');
+                console.log('No phone information available for event');
               }
 
               const result = {
