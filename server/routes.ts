@@ -1550,6 +1550,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Endpoint chuyên dụng để cập nhật toàn bộ tháng 6
+  app.post("/api/stripe/refresh-june-complete", async (req, res) => {
+    try {
+      console.log('🚀 Starting complete June 2025 Stripe refresh...');
+      
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ 
+          success: false, 
+          message: "Stripe secret key not configured" 
+        });
+      }
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+      
+      // Lấy TẤT CẢ tracking records trong tháng 6
+      const allRecords = await storage.getTrackingRecords();
+      const juneRecords = allRecords
+        .filter(record => record.date.startsWith('2025-06'))
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // Sắp xếp từ cũ đến mới
+        
+      console.log(`📊 Processing COMPLETE JUNE: ${juneRecords.length} records found`);
+      
+      let totalUpdated = 0;
+      const results = [];
+      
+      // Lấy TẤT CẢ payments trong tháng 6 một lần
+      const juneStart = new Date('2025-06-01T00:00:00.000Z');
+      const juneEnd = new Date('2025-06-30T23:59:59.999Z');
+      
+      console.log('📥 Fetching ALL June payments from Stripe...');
+      const allJuneCharges = await stripe.charges.list({
+        created: {
+          gte: Math.floor(juneStart.getTime() / 1000),
+          lte: Math.floor(juneEnd.getTime() / 1000),
+        },
+        limit: 100, // Max limit
+      });
+      
+      console.log(`💰 Found ${allJuneCharges.data.length} total charges in June 2025`);
+      
+      // Xử lý từng ngày
+      for (const record of juneRecords) {
+        const recordDate = record.date;
+        console.log(`\n🔍 Processing ${recordDate}...`);
+        
+        // Lọc charges cho ngày này
+        const dayCharges = allJuneCharges.data.filter(charge => {
+          const chargeDate = new Date(charge.created * 1000).toISOString().split('T')[0];
+          return chargeDate === recordDate;
+        });
+        
+        console.log(`📈 Found ${dayCharges.data?.length || dayCharges.length} charges for ${recordDate}`);
+        
+        // Kiểm tra first-time customers
+        let firstTimeCount = 0;
+        const processedEmails = new Set();
+        
+        for (const charge of (dayCharges.data || dayCharges)) {
+          if (charge.status === 'succeeded' && charge.receipt_email) {
+            const email = charge.receipt_email.toLowerCase();
+            
+            if (!processedEmails.has(email)) {
+              processedEmails.add(email);
+              
+              // Kiểm tra xem có payment nào trước ngày này không
+              const hasEarlierPayment = allJuneCharges.data.some(earlierCharge => {
+                if (earlierCharge.receipt_email?.toLowerCase() === email) {
+                  const earlierDate = new Date(earlierCharge.created * 1000).toISOString().split('T')[0];
+                  return earlierDate < recordDate;
+                }
+                return false;
+              });
+              
+              if (!hasEarlierPayment) {
+                firstTimeCount++;
+                console.log(`✅ First-time customer: ${email} ($${(charge.amount / 100).toFixed(2)})`);
+              } else {
+                console.log(`❌ Returning customer: ${email} ($${(charge.amount / 100).toFixed(2)})`);
+              }
+            }
+          }
+        }
+        
+        console.log(`💰 Found ${firstTimeCount} first-time payments for ${recordDate}`);
+        
+        // Cập nhật record nếu khác
+        if (record.closedCustomers !== firstTimeCount) {
+          console.log(`🔄 Updating ${recordDate}: ${record.closedCustomers} → ${firstTimeCount}`);
+          
+          await storage.updateTrackingRecord(record.id, {
+            closedCustomers: firstTimeCount
+          });
+          
+          totalUpdated++;
+          results.push({
+            date: recordDate,
+            oldValue: record.closedCustomers,
+            newValue: firstTimeCount
+          });
+        } else {
+          console.log(`✓ No change needed for ${recordDate}`);
+        }
+      }
+      
+      console.log(`\n🎉 June refresh complete! Updated ${totalUpdated} records`);
+      
+      res.json({
+        success: true,
+        message: `Successfully updated ${totalUpdated} records in June 2025`,
+        totalRecords: juneRecords.length,
+        updatedRecords: totalUpdated,
+        results: results
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Error in June Stripe refresh:', error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to refresh June payments: " + error.message
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
