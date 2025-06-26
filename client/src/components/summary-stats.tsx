@@ -247,7 +247,6 @@ export function SummaryStats({ records }: SummaryStatsProps) {
         <div className="grid grid-cols-8 gap-0.5 items-center">
           {/* Tiêu đề - cột đầu tiên */}
           <div className="flex items-center min-w-[80px]">
-            <div className="h-2 w-2 mr-1">{icon}</div>
             <h4 className="text-xs font-medium text-gray-700 whitespace-nowrap">{title}</h4>
           </div>
           
@@ -393,7 +392,7 @@ export function SummaryStats({ records }: SummaryStatsProps) {
       <StatsSummaryBox 
         data={overallTotals}
         title="Tổng Kết Chung"
-        icon={<TrendingUp className="mr-1 h-3 w-3" />}
+        icon={null}
       />
 
       {/* Thống Kê Theo Tuần */}
@@ -408,7 +407,7 @@ export function SummaryStats({ records }: SummaryStatsProps) {
                 key={week.weekKey}
                 data={weekStats}
                 title={week.weekName}
-                icon={<Clock className="mr-1 h-3 w-3" />}
+                icon={null}
                 showButton={showButton}
                 buttonLabel={showAllWeeks ? `Ẩn (${weeklyData.length - 1})` : `+${weeklyData.length - 1}`}
                 onButtonClick={() => setShowAllWeeks(!showAllWeeks)}
@@ -430,7 +429,7 @@ export function SummaryStats({ records }: SummaryStatsProps) {
                 key={month.monthKey}
                 data={monthStats}
                 title={month.monthName}
-                icon={<Calendar className="mr-1 h-3 w-3" />}
+                icon={null}
                 showButton={showButton}
                 buttonLabel={showAllMonths ? `Ẩn (${monthlyData.length - 1})` : `+${monthlyData.length - 1}`}
                 onButtonClick={() => setShowAllMonths(!showAllMonths)}
@@ -450,7 +449,7 @@ export function SummaryStats({ records }: SummaryStatsProps) {
                 key={year.year}
                 data={yearStats}
                 title={year.yearName}
-                icon={<CalendarDays className="mr-1 h-3 w-3" />}
+                icon={null}
               />
             );
           })}
