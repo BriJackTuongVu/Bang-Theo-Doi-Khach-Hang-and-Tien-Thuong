@@ -323,7 +323,7 @@ export function TrackingTable() {
             <table className="min-w-full tracking-table-compact">
               <thead>
                 <tr>
-                  <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                  <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                     Ngày Tháng
                   </th>
                   <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
@@ -332,16 +332,16 @@ export function TrackingTable() {
                   <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                     Report
                   </th>
-                  <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                  <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                     Tỉ Lệ %
                   </th>
-                  <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                  <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                     Tiền Thưởng
                   </th>
-                  <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                  <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                     Tưởng Closed
                   </th>
-                  <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                  <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                     Trạng Thái
                   </th>
                 </tr>
@@ -369,8 +369,8 @@ export function TrackingTable() {
                         : 'hover:bg-gray-50'
                     }`}
                   >
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="flex items-center space-x-1">
+                    <td className="px-2 py-2 whitespace-nowrap w-32 text-center">
+                      <div className="flex justify-center items-center">
                         {editingCell?.id === record.id && editingCell?.field === 'date' ? (
                           <>
                             <Input
@@ -383,7 +383,7 @@ export function TrackingTable() {
                               size="sm"
                               variant="ghost"
                               onClick={handleConfirmEdit}
-                              className="text-green-600 hover:text-green-900 hover:bg-green-50 p-1"
+                              className="text-green-600 hover:text-green-900 hover:bg-green-50 p-1 ml-1"
                             >
                               <Save className="h-3 w-3" />
                             </Button>
@@ -399,14 +399,14 @@ export function TrackingTable() {
                         ) : (
                           <div
                             onClick={() => handleStartEdit(record.id, 'date', record.date)}
-                            className="cursor-pointer hover:bg-blue-50 p-2 rounded border-2 border-transparent hover:border-blue-200"
+                            className="cursor-pointer hover:bg-blue-50 p-2 rounded border-2 border-transparent hover:border-blue-200 text-center text-sm"
                           >
                             {record.date}
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="px-2 py-2 whitespace-nowrap w-16">
+                    <td className="px-2 py-2 whitespace-nowrap w-20 text-center">
                       <div className="flex justify-center">
                         {editingCell?.id === record.id && editingCell?.field === 'scheduledCustomers' ? (
                           <>
@@ -439,7 +439,7 @@ export function TrackingTable() {
                         )}
                       </div>
                     </td>
-                    <td className="px-2 py-2 whitespace-nowrap w-16">
+                    <td className="px-2 py-2 whitespace-nowrap w-20 text-center">
                       <div className="flex justify-center">
                         {editingCell?.id === record.id && editingCell?.field === 'reportedCustomers' ? (
                           <>
@@ -473,28 +473,30 @@ export function TrackingTable() {
                         )}
                       </div>
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="flex items-center">
+                    <td className="px-2 py-2 whitespace-nowrap w-20 text-center">
+                      <div className="flex justify-center items-center">
                         <span className="text-sm font-semibold">
                           {formatPercentage(percentage)}
                         </span>
                         {getTierBadge(percentage)}
                       </div>
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <div>
-                        <span className={`text-sm font-bold ${totalBonus > 0 ? 'text-green-600' : 'text-gray-500'}`}>
-                          {formatCurrency(totalBonus)}
-                        </span>
-                        {totalBonus > 0 && (
-                          <div className="text-xs text-gray-500">
-                            {formatCurrency(bonusRate)} × {record.reportedCustomers}
-                          </div>
-                        )}
+                    <td className="px-2 py-2 whitespace-nowrap w-32 text-center">
+                      <div className="flex justify-center items-center">
+                        <div>
+                          <span className={`text-sm font-bold ${totalBonus > 0 ? 'text-green-600' : 'text-gray-500'}`}>
+                            {formatCurrency(totalBonus)}
+                          </span>
+                          {totalBonus > 0 && (
+                            <div className="text-xs text-gray-500">
+                              {formatCurrency(bonusRate)} × {record.reportedCustomers}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
 
-                    <td className="px-3 py-2 whitespace-nowrap text-center">
+                    <td className="px-2 py-2 whitespace-nowrap w-24 text-center">
                       <div className="flex justify-center">
                         {editingCell?.id === record.id && editingCell?.field === 'closedCustomers' ? (
                           <>
@@ -527,7 +529,7 @@ export function TrackingTable() {
                         )}
                       </div>
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-center">
+                    <td className="px-2 py-2 whitespace-nowrap w-24 text-center">
                       <div className="flex justify-center">
                         {editingCell?.id === record.id && editingCell?.field === 'paymentStatus' ? (
                           <>
