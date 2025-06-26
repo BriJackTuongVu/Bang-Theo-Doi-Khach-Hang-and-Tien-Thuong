@@ -361,7 +361,7 @@ export function TrackingTable() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {records.map((record) => {
+              {records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((record) => {
                 const { percentage, totalBonus, bonusRate } = calculateBonus(
                   record.scheduledCustomers,
                   record.reportedCustomers
