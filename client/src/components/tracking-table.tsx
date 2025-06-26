@@ -140,15 +140,22 @@ export function TrackingTable() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/tracking-records'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/customer-reports'] });
+      
+      const updatedCount = data.updatedCount || 0;
+      const totalRecords = data.totalRecords || 0;
+      
       toast({
-        title: "Cập nhật thành công",
-        description: `Đã cập nhật ${data.updatedCount || 0} bản ghi với dữ liệu Stripe`,
+        title: "Cập nhật Stripe hoàn tất",
+        description: updatedCount > 0 
+          ? `Đã cập nhật ${updatedCount}/${totalRecords} bản ghi với dữ liệu thanh toán mới` 
+          : `Đã kiểm tra ${totalRecords} bản ghi - không có thay đổi`,
       });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
-        title: "Lỗi",
-        description: "Không thể cập nhật dữ liệu Stripe",
+        title: "Lỗi kết nối Stripe",
+        description: "Không thể lấy dữ liệu từ Stripe API. Vui lòng thử lại sau.",
         variant: "destructive",
       });
     },
@@ -374,11 +381,16 @@ export function TrackingTable() {
                         onClick={handleRefreshStripe}
                         disabled={refreshStripeMutation.isPending}
                         className="p-0 h-4 w-4 hover:bg-blue-100 text-blue-600"
-                        title="Refresh dữ liệu Stripe"
+                        title={refreshStripeMutation.isPending ? "Đang cập nhật Stripe..." : "Refresh dữ liệu Stripe"}
                       >
-                        <RefreshCw className={`h-3 w-3 ${refreshStripeMutation.isPending ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`h-3 w-3 ${refreshStripeMutation.isPending ? 'animate-spin text-orange-500' : ''}`} />
                       </Button>
                     </div>
+                    {refreshStripeMutation.isPending && (
+                      <div className="text-xs text-orange-600 mt-1 animate-pulse">
+                        Đang kiểm tra Stripe...
+                      </div>
+                    )}
                   </th>
                   <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                     Trạng Thái

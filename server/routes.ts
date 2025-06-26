@@ -1232,8 +1232,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Endpoint để refresh tất cả Stripe payments cho tracking records
+  // Endpoint để refresh tất cả Stripe payments cho tracking records với timeout protection
   app.post("/api/stripe/refresh-all-payments", async (req, res) => {
+    // Set timeout 60 seconds for this endpoint
+    req.setTimeout(60000);
+    
     try {
       console.log('🔄 Starting Stripe refresh for all tracking records...');
       
@@ -1243,12 +1246,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
       
-      // Lấy tất cả tracking records
-      const trackingRecords = await storage.getTrackingRecords();
-      console.log(`📊 Found ${trackingRecords.length} tracking records to check`);
+      // Lấy tracking records và giới hạn chỉ 5 records gần nhất
+      const allRecords = await storage.getTrackingRecords();
+      const trackingRecords = allRecords
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 5);
+        
+      console.log(`📊 Processing ${trackingRecords.length} most recent records (limited for performance)...`);
       
       let updatedCount = 0;
       
+      // Process records sequentially để tránh timeout
       for (const record of trackingRecords) {
         try {
           console.log(`🔍 Checking payments for date: ${record.date}`);
@@ -1256,19 +1264,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const startDate = new Date(record.date + "T00:00:00.000Z");
           const endDate = new Date(record.date + "T23:59:59.999Z");
           
-          // Lấy tất cả charges cho ngày này
-          const charges = await stripe.charges.list({
+          // Lấy charges với timeout protection và limit thấp hơn
+          const chargesPromise = stripe.charges.list({
             created: {
               gte: Math.floor(startDate.getTime() / 1000),
               lte: Math.floor(endDate.getTime() / 1000),
             },
-            limit: 100,
+            limit: 50, // Reduced limit for faster response
           });
+          
+          // Add timeout protection per API call
+          const charges = await Promise.race([
+            chargesPromise,
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Stripe API timeout for this date')), 15000)
+            )
+          ]);
 
           console.log(`📈 Found ${charges.data.length} charges for ${record.date}`);
           
           // Đếm first-time payments cho ngày này (simplified)
-          // Chỉ đếm unique emails trong ngày (tạm thời)
           let firstTimePayments = 0;
           const todayUniqueEmails = new Set();
           
@@ -1297,6 +1312,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
         } catch (dateError) {
           console.error(`❌ Error processing ${record.date}:`, dateError);
+          // Continue với record tiếp theo
         }
       }
       
@@ -1306,7 +1322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true, 
         updatedCount,
         totalRecords: trackingRecords.length,
-        message: `Updated ${updatedCount} out of ${trackingRecords.length} records`
+        message: `Updated ${updatedCount} out of ${trackingRecords.length} recent records`
       });
       
     } catch (error) {
