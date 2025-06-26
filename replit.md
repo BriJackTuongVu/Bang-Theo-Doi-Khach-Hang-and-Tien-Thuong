@@ -119,6 +119,8 @@ Changelog:
 - June 25, 2025. Added auto-creation of tracking records when new customer tables are created
 - June 25, 2025. Implemented strict relationship: tracking records only exist when corresponding customer detail tables exist
 - June 25, 2025. Added automatic synchronization: tracking records auto-sync with customer tables without manual intervention
+- June 26, 2025. Successfully implemented Calendly API integration with full event import functionality
+- June 26, 2025. Added database setting to prevent automatic deletion of old data per user request
 ```
 
 ## User Preferences
@@ -129,4 +131,5 @@ Development approach: Must ask user permission before creating new solutions or 
 Image processing: User requested OCR functionality to extract customer names from uploaded images.
 Interface simplification: User requested removal of import and upload buttons, addition of table deletion functionality.
 Auto-sync preference: User wants automatic synchronization between customer detail tables and main tracking table without manual buttons.
+Data retention: User requested to preserve old data in database - no automatic deletion of memory/historical records.
 ```
