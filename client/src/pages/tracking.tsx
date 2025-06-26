@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { TrackingRecord } from "@shared/schema";
 import { useState, useEffect } from "react";
-import { Plus, Clock, CheckCircle, XCircle, Settings } from "lucide-react";
+import { Plus, Clock, CheckCircle, XCircle, Settings, Database } from "lucide-react";
 import { getNextWorkingDay, getTodayDate } from "@/lib/utils";
 
 export default function TrackingPage() {
@@ -51,6 +51,36 @@ export default function TrackingPage() {
         setTimeout(() => notification.remove(), 3000);
       } catch (error) {
         alert('Lỗi khi ngắt kết nối');
+      }
+    }
+  };
+
+  const handleSaveMemoryForever = async () => {
+    if (confirm('Bạn có chắc chắn muốn lưu toàn bộ dữ liệu memory vĩnh viễn? Điều này sẽ đảm bảo không bao giờ mất dữ liệu.')) {
+      try {
+        await fetch('/api/settings/save-memory-forever', { method: 'POST' });
+        
+        const notification = document.createElement('div');
+        notification.className = 'fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50';
+        notification.innerHTML = `
+          <div class="bg-purple-500 text-white px-8 py-6 rounded-lg shadow-lg max-w-md mx-4 text-center">
+            <div class="flex items-center justify-center gap-3 mb-3">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              <div class="text-xl font-medium">Thành công!</div>
+            </div>
+            <div class="text-sm opacity-90">Đã lưu memory vĩnh viễn - dữ liệu sẽ không bao giờ bị xóa</div>
+          </div>
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 1000);
+      } catch (error) {
+        alert('Lỗi khi lưu memory');
       }
     }
   };
@@ -153,6 +183,16 @@ export default function TrackingPage() {
                   Kết nối Calendly
                 </Button>
               )}
+              
+              {/* Memory Save Button */}
+              <Button
+                onClick={handleSaveMemoryForever}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+                size="sm"
+              >
+                <Database className="h-4 w-4 mr-1" />
+                Lưu Memory Vĩnh Viễn
+              </Button>
             </div>
           </div>
         </div>

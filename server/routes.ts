@@ -576,6 +576,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Save memory forever
+  app.post("/api/settings/save-memory-forever", async (req, res) => {
+    try {
+      // Set multiple settings to ensure data preservation
+      const memorySettings = [
+        { key: 'auto_delete_old_data', value: 'false' },
+        { key: 'preserve_memory_forever', value: 'true' },
+        { key: 'data_retention_policy', value: 'permanent' },
+        { key: 'memory_saved_at', value: new Date().toISOString() }
+      ];
+
+      for (const setting of memorySettings) {
+        await db.insert(settings)
+          .values(setting)
+          .onConflictDoUpdate({
+            target: settings.key,
+            set: { value: setting.value }
+          });
+      }
+
+      console.log('Memory preservation settings saved successfully');
+      res.json({ success: true, message: 'Memory saved forever successfully' });
+    } catch (error) {
+      console.error('Error saving memory forever:', error);
+      res.status(500).json({ error: 'Failed to save memory settings' });
+    }
+  });
+
   // Sync tracking data from customer reports
   app.post("/api/sync-tracking-data", async (req, res) => {
     try {
