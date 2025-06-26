@@ -1061,15 +1061,10 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
                     )}
                   </td>
                   <td className="px-6 py-1 whitespace-nowrap">
-                    <Button
-                      variant="destructive"
-                      size="sm"
+                    <Trash2 
+                      className="h-4 w-4 text-gray-400 hover:text-gray-600 cursor-pointer" 
                       onClick={() => handleDelete(report.id)}
-                      disabled={deleteMutation.isPending}
-                      className="hover:bg-red-600"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    />
                   </td>
                 </tr>
               ))}
