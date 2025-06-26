@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CustomerReport, InsertCustomerReport } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDate, getTodayDate, getDayOfWeek, getNextWorkingDay, formatDateWithDay } from "@/lib/utils";
-import { Plus, User, Send, Calendar, Trash2, Upload, Link, Image, Clock } from "lucide-react";
+import { Plus, User, Send, Calendar, Trash2, Upload, Link, Image, Clock, Mail, Phone } from "lucide-react";
 
 interface CalendarEvent {
   name: string;
@@ -772,6 +772,18 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Email
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    Phone
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex items-center gap-2">
                     <Send className="h-4 w-4" />
                     Đã Gửi Report
                   </div>
@@ -826,6 +838,74 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
                         onClick={() => handleStartEdit(report.id, "customerName", report.customerName)}
                       >
                         {report.customerName}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {editingCell?.id === report.id && editingCell.field === "customerEmail" ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={editingCell.value as string}
+                          onChange={(e) => handleInputChange(e.target.value)}
+                          className="w-48"
+                          autoFocus
+                          placeholder="email@example.com"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={handleConfirmEdit}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          ✓
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleCancelEdit}
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                    ) : (
+                      <div
+                        className="text-sm text-gray-900 cursor-pointer hover:bg-blue-50 px-2 py-1 rounded"
+                        onClick={() => handleStartEdit(report.id, "customerEmail", report.customerEmail || "")}
+                      >
+                        {report.customerEmail || "Chưa có email"}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {editingCell?.id === report.id && editingCell.field === "customerPhone" ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={editingCell.value as string}
+                          onChange={(e) => handleInputChange(e.target.value)}
+                          className="w-48"
+                          autoFocus
+                          placeholder="0912345678"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={handleConfirmEdit}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          ✓
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleCancelEdit}
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                    ) : (
+                      <div
+                        className="text-sm text-gray-900 cursor-pointer hover:bg-blue-50 px-2 py-1 rounded"
+                        onClick={() => handleStartEdit(report.id, "customerPhone", report.customerPhone || "")}
+                      >
+                        {report.customerPhone || "Chưa có phone"}
                       </div>
                     )}
                   </td>

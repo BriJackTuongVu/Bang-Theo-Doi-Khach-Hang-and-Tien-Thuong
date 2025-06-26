@@ -14,6 +14,8 @@ export const trackingRecords = pgTable("tracking_records", {
 export const customerReports = pgTable("customer_reports", {
   id: serial("id").primaryKey(),
   customerName: text("customer_name").notNull(),
+  customerEmail: text("customer_email"),
+  customerPhone: text("customer_phone"),
   reportSent: boolean("report_sent").notNull().default(false),
   reportReceivedDate: date("report_received_date"),
   customerDate: date("customer_date").notNull(),
