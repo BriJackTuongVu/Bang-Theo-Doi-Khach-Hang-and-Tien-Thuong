@@ -158,6 +158,8 @@ function useAutoSync() {
 export function SummaryStats({ records }: SummaryStatsProps) {
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState("total");
+  const [showAllWeeks, setShowAllWeeks] = useState(false);
+  const [showAllMonths, setShowAllMonths] = useState(false);
   const queryClient = useQueryClient();
   
   // Enable auto-sync
@@ -402,14 +404,36 @@ export function SummaryStats({ records }: SummaryStatsProps) {
         icon={<TrendingUp className="mr-2 h-4 w-4" />}
       />
 
-      {/* Thống Kê Theo Tuần - Hiển thị 4 tuần gần nhất */}
+      {/* Thống Kê Theo Tuần - Hiển thị 1 tuần với dropdown */}
       {weeklyData.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-sm font-medium text-gray-700 flex items-center px-1">
-            <Clock className="mr-1 h-4 w-4" />
-            Tuần (4 tuần gần nhất)
-          </h3>
-          {weeklyData.slice(0, 4).map((week) => {
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-sm font-medium text-gray-700 flex items-center">
+              <Clock className="mr-1 h-4 w-4" />
+              Tuần
+            </h3>
+            {weeklyData.length > 1 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAllWeeks(!showAllWeeks)}
+                className="text-xs h-6 px-2"
+              >
+                {showAllWeeks ? (
+                  <>
+                    <ChevronUp className="h-3 w-3 mr-1" />
+                    Ẩn bớt
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-3 w-3 mr-1" />
+                    Xem thêm ({weeklyData.length - 1})
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+          {(showAllWeeks ? weeklyData : weeklyData.slice(0, 1)).map((week) => {
             const weekStats = calculateMonthStats(week.records);
             return (
               <StatsSummaryBox 
@@ -423,14 +447,36 @@ export function SummaryStats({ records }: SummaryStatsProps) {
         </div>
       )}
 
-      {/* Thống Kê Theo Tháng - Hiển thị 3 tháng gần nhất */}
+      {/* Thống Kê Theo Tháng - Hiển thị 1 tháng với dropdown */}
       {monthlyData.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-sm font-medium text-gray-700 flex items-center px-1">
-            <Calendar className="mr-1 h-4 w-4" />
-            Tháng (3 tháng gần nhất)
-          </h3>
-          {monthlyData.slice(0, 3).map((month) => {
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-sm font-medium text-gray-700 flex items-center">
+              <Calendar className="mr-1 h-4 w-4" />
+              Tháng
+            </h3>
+            {monthlyData.length > 1 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAllMonths(!showAllMonths)}
+                className="text-xs h-6 px-2"
+              >
+                {showAllMonths ? (
+                  <>
+                    <ChevronUp className="h-3 w-3 mr-1" />
+                    Ẩn bớt
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-3 w-3 mr-1" />
+                    Xem thêm ({monthlyData.length - 1})
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+          {(showAllMonths ? monthlyData : monthlyData.slice(0, 1)).map((month) => {
             const monthStats = calculateMonthStats(month.records);
             return (
               <StatsSummaryBox 
