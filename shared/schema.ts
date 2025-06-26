@@ -29,6 +29,19 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const stripePayments = pgTable("stripe_payments", {
+  id: serial("id").primaryKey(),
+  stripePaymentIntentId: text("stripe_payment_intent_id").notNull().unique(),
+  customerEmail: text("customer_email"),
+  customerName: text("customer_name"),
+  amount: integer("amount").notNull(),
+  currency: text("currency").notNull().default("usd"),
+  paymentDate: timestamp("payment_date").notNull(),
+  isFirstTimePayment: boolean("is_first_time_payment").notNull().default(true),
+  trackingRecordId: integer("tracking_record_id").references(() => trackingRecords.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertTrackingRecordSchema = createInsertSchema(trackingRecords).omit({
   id: true,
 });
@@ -44,12 +57,19 @@ export const insertSettingSchema = createInsertSchema(settings).omit({
   updatedAt: true,
 });
 
+export const insertStripePaymentSchema = createInsertSchema(stripePayments).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertTrackingRecord = z.infer<typeof insertTrackingRecordSchema>;
 export type TrackingRecord = typeof trackingRecords.$inferSelect;
 export type InsertCustomerReport = z.infer<typeof insertCustomerReportSchema>;
 export type CustomerReport = typeof customerReports.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingSchema>;
 export type Setting = typeof settings.$inferSelect;
+export type InsertStripePayment = z.infer<typeof insertStripePaymentSchema>;
+export type StripePayment = typeof stripePayments.$inferSelect;
 
 // Bonus calculation utilities
 export const BONUS_TIERS = {

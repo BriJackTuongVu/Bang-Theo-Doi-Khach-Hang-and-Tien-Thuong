@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertTrackingRecordSchema, insertCustomerReportSchema } from "@shared/schema";
 import { z } from "zod";
+import Stripe from "stripe";
 import { google } from 'googleapis';
 import { db } from "./db";
 import { trackingRecords, customerReports, settings } from "@shared/schema";
