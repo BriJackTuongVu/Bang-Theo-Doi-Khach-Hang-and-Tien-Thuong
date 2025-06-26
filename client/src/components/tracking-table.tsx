@@ -353,7 +353,7 @@ export function TrackingTable() {
 
 
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tưởng Only
+                  Tưởng Closed
                 </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Trạng Thái
