@@ -41,7 +41,12 @@ interface CustomerReportsTableProps {
 }
 
 export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTableProps) {
-  console.log('CustomerReportsTable received tableId:', tableId);
+  console.log('CustomerReportsTable received tableId:', tableId, 'initialDate:', initialDate);
+  
+  if (!tableId) {
+    console.error('CustomerReportsTable: tableId is required but not provided');
+    return <div>Error: tableId not provided</div>;
+  }
   const queryClient = useQueryClient();
 
   const [editingCell, setEditingCell] = useState<{
