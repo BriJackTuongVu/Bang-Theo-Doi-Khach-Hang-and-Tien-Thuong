@@ -577,7 +577,8 @@ export function TrackingTable() {
           </table>
         </div>
         
-        <div className="px-6 py-4 border-t border-gray-200">
+        {/* Hidden: Add row button per user request */}
+        <div className="px-6 py-4 border-t border-gray-200" style={{ display: 'none' }}>
           <Button 
             onClick={handleAddRow}
             disabled={createMutation.isPending}

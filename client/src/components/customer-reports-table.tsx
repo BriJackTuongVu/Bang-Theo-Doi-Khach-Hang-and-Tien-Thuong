@@ -1059,7 +1059,8 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
           </table>
         </div>
 
-        <div className="flex gap-2 mt-4">
+        {/* Hidden: Customer management buttons per user request */}
+        <div className="flex gap-2 mt-4" style={{ display: 'none' }}>
           <Button
             onClick={handleAddCustomer}
             disabled={createMutation.isPending}

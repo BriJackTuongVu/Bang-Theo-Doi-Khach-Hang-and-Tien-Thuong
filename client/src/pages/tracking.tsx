@@ -536,8 +536,8 @@ export default function TrackingPage() {
                 Lưu Memory Vĩnh Viễn
               </Button>
               
-              {/* Stripe Payment Check Section */}
-              <div className="flex items-center gap-2">
+              {/* Hidden: Stripe Payment Check Section per user request */}
+              <div className="flex items-center gap-2" style={{ display: 'none' }}>
                 <Input
                   type="date"
                   value={selectedPaymentDate}
@@ -569,8 +569,8 @@ export default function TrackingPage() {
         {/* Tracking Table */}
         <TrackingTable />
         
-        {/* Add Customer Table Button */}
-        <div className="flex justify-center">
+        {/* Hidden: Add Customer Table Button per user request */}
+        <div className="flex justify-center" style={{ display: 'none' }}>
           <Button
             onClick={addNewCustomerTable}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3"
