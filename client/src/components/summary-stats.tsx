@@ -140,13 +140,13 @@ function useAutoSync() {
     }
   });
 
-  // Auto-sync every 5 seconds
+  // Auto-sync every 15 seconds (reduced from 5 for better performance)
   useEffect(() => {
     const interval = setInterval(() => {
       if (!syncMutation.isPending) {
         syncMutation.mutate();
       }
-    }, 5000);
+    }, 15000);
 
     return () => clearInterval(interval);
   }, [syncMutation]);

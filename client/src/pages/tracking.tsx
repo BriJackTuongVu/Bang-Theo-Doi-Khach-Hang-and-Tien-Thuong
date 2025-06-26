@@ -146,10 +146,41 @@ export default function TrackingPage() {
   };
 
   const handleConfirmAddTable = async () => {
+    // Immediately close modal and show processing state
+    setShowAddTableModal(false);
+    
+    // Show instant processing feedback
+    const processingNotification = document.createElement('div');
+    processingNotification.id = 'processing-notification';
+    processingNotification.innerHTML = `
+      <div style="
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #3B82F6;
+        color: white;
+        padding: 16px 32px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        z-index: 9999;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      ">
+        ⏳ Đang tạo bảng cho ngày ${selectedAddTableDate}...
+      </div>
+    `;
+    document.body.appendChild(processingNotification);
+
     // Check if table already exists for this date
     const existingTable = records?.find(record => record.date === selectedAddTableDate);
     if (existingTable) {
-      // Show notification in center of screen for 1 second
+      // Remove processing notification
+      if (document.body.contains(processingNotification)) {
+        document.body.removeChild(processingNotification);
+      }
+      
+      // Show error notification
       const notification = document.createElement('div');
       notification.innerHTML = `
         <div style="
@@ -172,8 +203,7 @@ export default function TrackingPage() {
       document.body.appendChild(notification);
       setTimeout(() => {
         document.body.removeChild(notification);
-      }, 1000);
-      setShowAddTableModal(false);
+      }, 2000);
       return;
     }
 
@@ -315,6 +345,11 @@ export default function TrackingPage() {
         console.log('Calendly auto-import failed, continuing without it:', calendlyError);
       }
       
+      // Remove processing notification immediately
+      if (document.body.contains(processingNotification)) {
+        document.body.removeChild(processingNotification);
+      }
+      
       // Show success notification in center of screen for 1 second
       const notification = document.createElement('div');
       let successMessage = `✓ Đã tạo bảng cho ngày ${selectedAddTableDate}`;
@@ -372,6 +407,12 @@ export default function TrackingPage() {
       }, 1200);
     } catch (error) {
       console.error('Error creating tracking record:', error);
+      
+      // Remove processing notification on error
+      if (document.body.contains(processingNotification)) {
+        document.body.removeChild(processingNotification);
+      }
+      
       const notification = document.createElement('div');
       notification.innerHTML = `
         <div style="
