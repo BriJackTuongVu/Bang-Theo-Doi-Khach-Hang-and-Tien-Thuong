@@ -100,11 +100,32 @@ export default function TrackingPage() {
 
   const handleSyncTrackingRecords = async () => {
     try {
-      const result = await syncTrackingWithCustomerTables();
+      // Get all tracking records
+      const trackingResponse = await fetch('/api/tracking-records');
+      const trackingRecords = await trackingResponse.json();
+      
+      // Get all customer reports to find existing dates
+      const reportsResponse = await fetch('/api/customer-reports');
+      const customerReports = await reportsResponse.json();
+      
+      // Get unique dates from customer reports
+      const customerDates = [...new Set(customerReports.map((report: any) => report.customerDate))];
+      
+      // Find tracking records that don't have corresponding customer tables
+      const recordsToDelete = trackingRecords.filter((record: any) => 
+        !customerDates.includes(record.date)
+      );
+      
+      // Delete orphaned tracking records
+      for (const record of recordsToDelete) {
+        await fetch(`/api/tracking-records/${record.id}`, {
+          method: 'DELETE'
+        });
+      }
       
       const notification = document.createElement('div');
       notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-      notification.textContent = `Đã xóa ${result.deleted} dòng tracking không có bảng khách hàng tương ứng`;
+      notification.textContent = `Đã xóa ${recordsToDelete.length} dòng tracking không có bảng khách hàng tương ứng`;
       document.body.appendChild(notification);
       setTimeout(() => notification.remove(), 3000);
       
