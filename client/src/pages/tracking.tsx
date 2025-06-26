@@ -558,13 +558,34 @@ export default function TrackingPage() {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Bảng Theo Dõi Khách Hàng & Tiền Thưởng
-              </h1>
-              <p className="mt-1 text-sm text-gray-600">
-                Quản lý số lượng khách hàng và tính toán tiền thưởng hàng ngày
-              </p>
+            <div className="flex items-center gap-8">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Bảng Theo Dõi Khách Hàng & Tiền Thưởng
+                </h1>
+                <p className="mt-1 text-sm text-gray-600">
+                  Quản lý số lượng khách hàng và tính toán tiền thưởng hàng ngày
+                </p>
+              </div>
+              
+              {/* Compact Bonus Tier Indicator */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg px-3 py-2">
+                <div className="text-xs font-medium text-gray-700 mb-1">Thang điểm tiền thưởng:</div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                    <span className="text-xs text-gray-600">≥30%: {formatCurrency(BONUS_TIERS.TIER_1.rate)}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                    <span className="text-xs text-gray-600">≥50%: {formatCurrency(BONUS_TIERS.TIER_2.rate)}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                    <span className="text-xs text-gray-600">≥70%: {formatCurrency(BONUS_TIERS.TIER_3.rate)}</span>
+                  </div>
+                </div>
+              </div>
             </div>
             
             {/* Status Toggle Switches - Vertical Layout */}

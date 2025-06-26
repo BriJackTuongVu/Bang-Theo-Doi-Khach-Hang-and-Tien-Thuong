@@ -314,14 +314,7 @@ export function TrackingTable() {
                 </div>
               )}
             </div>
-            <div className="text-sm font-normal text-gray-600 bg-blue-50 p-3 rounded-lg">
-              <strong>Thang điểm tiền thưởng:</strong>
-              <div className="mt-1 space-y-1">
-                <div>• ≥30% report: <span className="font-semibold text-green-600">200,000 VND</span></div>
-                <div>• ≥50% report: <span className="font-semibold text-green-600">300,000 VND</span></div>
-                <div>• ≥70% report: <span className="font-semibold text-green-600">400,000 VND</span></div>
-              </div>
-            </div>
+
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
