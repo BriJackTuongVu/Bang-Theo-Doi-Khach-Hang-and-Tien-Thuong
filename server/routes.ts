@@ -758,18 +758,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       let totalPaymentCount = 0;
+      let firstTimePaymentCount = 0;
       const paymentDetails = [];
+      const firstTimeCustomers = [];
 
       for (const charge of charges.data) {
         if (charge.status === 'succeeded') {
           totalPaymentCount++;
+          
+          const customerEmail = charge.receipt_email;
+          const customerName = charge.billing_details?.name || 'Unknown';
+          
+          // Check if this is a first-time customer by looking at their payment history
+          let isFirstTimeCustomer = false;
+          
+          if (customerEmail) {
+            // Get all charges for this customer email before this date
+            const customerHistoryCharges = await stripe.charges.list({
+              created: {
+                lt: Math.floor(startOfDay.getTime() / 1000), // Before this date
+              },
+              limit: 100,
+            });
+            
+            // Check if this customer has any previous successful payments
+            const previousPayments = customerHistoryCharges.data.filter(prevCharge => 
+              prevCharge.receipt_email === customerEmail && prevCharge.status === 'succeeded'
+            );
+            
+            isFirstTimeCustomer = previousPayments.length === 0;
+          }
+          
+          if (isFirstTimeCustomer) {
+            firstTimePaymentCount++;
+            firstTimeCustomers.push({
+              customer_email: customerEmail,
+              customer_name: customerName,
+              amount: charge.amount / 100,
+            });
+          }
+          
           paymentDetails.push({
             amount: charge.amount / 100,
             currency: charge.currency,
-            customer_email: charge.receipt_email,
-            customer_name: charge.billing_details?.name || 'Unknown',
+            customer_email: customerEmail,
+            customer_name: customerName,
             created: new Date(charge.created * 1000).toISOString(),
             charge_id: charge.id,
+            is_first_time: isFirstTimeCustomer,
           });
         }
       }
@@ -780,8 +816,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (trackingRecord) {
         await storage.updateTrackingRecord(trackingRecord.id, {
-          closedCustomers: totalPaymentCount,
-          paymentStatus: totalPaymentCount > 0 ? "đã pay" : "chưa pay"
+          closedCustomers: firstTimePaymentCount,
+          paymentStatus: firstTimePaymentCount > 0 ? "đã pay" : "chưa pay"
         });
       }
 
@@ -789,9 +825,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true,
         date,
         totalPaymentCount,
+        firstTimePaymentCount,
+        firstTimeCustomers,
         paymentDetails,
         trackingRecordUpdated: !!trackingRecord,
-        message: `Tìm thấy ${totalPaymentCount} thanh toán thành công vào ngày ${date}`
+        message: `Tìm thấy ${firstTimePaymentCount} khách hàng thanh toán lần đầu vào ngày ${date} (tổng ${totalPaymentCount} thanh toán)`
       });
 
     } catch (error: any) {
