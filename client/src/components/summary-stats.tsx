@@ -418,43 +418,22 @@ export function SummaryStats({ records }: SummaryStatsProps) {
         </div>
       )}
 
-      {/* Thống Kê Theo Tháng - Hiển thị 1 tháng với dropdown */}
+      {/* Thống Kê Theo Tháng */}
       {monthlyData.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between px-1">
-            <h3 className="text-sm font-medium text-gray-700 flex items-center">
-              <Calendar className="mr-1 h-4 w-4" />
-              Tháng
-            </h3>
-            {monthlyData.length > 1 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowAllMonths(!showAllMonths)}
-                className="text-xs h-6 px-2"
-              >
-                {showAllMonths ? (
-                  <>
-                    <ChevronUp className="h-3 w-3 mr-1" />
-                    Ẩn bớt
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-3 w-3 mr-1" />
-                    Xem thêm ({monthlyData.length - 1})
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
-          {(showAllMonths ? monthlyData : monthlyData.slice(0, 1)).map((month) => {
+        <div className="space-y-1">
+          {(showAllMonths ? monthlyData : monthlyData.slice(0, 1)).map((month, index) => {
             const monthStats = calculateMonthStats(month.records);
+            const isFirst = index === 0;
+            const showButton = isFirst && monthlyData.length > 1;
             return (
               <StatsSummaryBox 
                 key={month.monthKey}
                 data={monthStats}
                 title={month.monthName}
-                icon={<Calendar className="mr-2 h-4 w-4" />}
+                icon={<Calendar className="mr-1 h-3 w-3" />}
+                showButton={showButton}
+                buttonLabel={showAllMonths ? `Ẩn (${monthlyData.length - 1})` : `+${monthlyData.length - 1}`}
+                onButtonClick={() => setShowAllMonths(!showAllMonths)}
               />
             );
           })}
@@ -463,11 +442,7 @@ export function SummaryStats({ records }: SummaryStatsProps) {
 
       {/* Thống Kê Theo Năm */}
       {yearlyData.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-gray-700 flex items-center px-1">
-            <CalendarDays className="mr-1 h-4 w-4" />
-            Năm
-          </h3>
+        <div className="space-y-1">
           {yearlyData.map((year) => {
             const yearStats = calculateMonthStats(year.records);
             return (
@@ -475,7 +450,7 @@ export function SummaryStats({ records }: SummaryStatsProps) {
                 key={year.year}
                 data={yearStats}
                 title={year.yearName}
-                icon={<CalendarDays className="mr-2 h-4 w-4" />}
+                icon={<CalendarDays className="mr-1 h-3 w-3" />}
               />
             );
           })}
