@@ -319,35 +319,35 @@ export function TrackingTable() {
         </CardHeader>
         <CardContent className="p-0">
           {/* Container with max height for 7 rows and scroll */}
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-48 overflow-y-auto">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <Calendar className="inline mr-2 h-4 w-4" />
+                    <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <Calendar className="inline mr-1 h-3 w-3" />
                       Ngày Tháng
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                    <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
                       <Users className="inline mr-1 h-3 w-3" />
                       Khách Hẹn
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                    <th className="px-2 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
                       <FileText className="inline mr-1 h-3 w-3" />
                       Report
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <Percent className="inline mr-2 h-4 w-4" />
+                    <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <Percent className="inline mr-1 h-3 w-3" />
                       Tỉ Lệ %
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <DollarSign className="inline mr-2 h-4 w-4" />
+                    <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <DollarSign className="inline mr-1 h-3 w-3" />
                       Tiền Thưởng
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Tưởng Closed
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Trạng Thái
                     </th>
                   </tr>
@@ -368,31 +368,31 @@ export function TrackingTable() {
                         : 'hover:bg-gray-50'
                     }`}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="flex items-center space-x-1">
                         {editingCell?.id === record.id && editingCell?.field === 'date' ? (
                           <>
                             <Input
                               type="date"
                               value={editingCell.value as string}
                               onChange={(e) => handleInputChange(e.target.value)}
-                              className="border border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              className="border border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                             />
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={handleConfirmEdit}
-                              className="text-green-600 hover:text-green-900 hover:bg-green-50"
+                              className="text-green-600 hover:text-green-900 hover:bg-green-50 p-1"
                             >
-                              <Save className="h-4 w-4" />
+                              <Save className="h-3 w-3" />
                             </Button>
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={handleCancelEdit}
-                              className="text-red-600 hover:text-red-900 hover:bg-red-50"
+                              className="text-red-600 hover:text-red-900 hover:bg-red-50 p-1"
                             >
-                              <X className="h-4 w-4" />
+                              <X className="h-3 w-3" />
                             </Button>
                           </>
                         ) : (
@@ -405,7 +405,7 @@ export function TrackingTable() {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap w-20">
+                    <td className="px-2 py-2 whitespace-nowrap w-16">
                       <div className="flex justify-center">
                         {editingCell?.id === record.id && editingCell?.field === 'scheduledCustomers' ? (
                           <>
@@ -417,13 +417,13 @@ export function TrackingTable() {
                                 handleInputChange(value);
                               }}
                               min="0"
-                              className="w-16 border border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                              className="w-12 border border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-sm"
                             />
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={handleConfirmEdit}
-                              className="text-green-600 hover:text-green-900 hover:bg-green-50 ml-1"
+                              className="text-green-600 hover:text-green-900 hover:bg-green-50 ml-1 p-1"
                             >
                               <Save className="h-3 w-3" />
                             </Button>
@@ -431,14 +431,14 @@ export function TrackingTable() {
                         ) : (
                           <div
                             onClick={() => handleStartEdit(record.id, 'scheduledCustomers', record.scheduledCustomers)}
-                            className="cursor-pointer hover:bg-blue-50 p-2 rounded border-2 border-transparent hover:border-blue-200 text-center w-16"
+                            className="cursor-pointer hover:bg-blue-50 p-1 rounded border-2 border-transparent hover:border-blue-200 text-center w-12 text-sm"
                           >
                             {record.scheduledCustomers}
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap w-20">
+                    <td className="px-2 py-2 whitespace-nowrap w-16">
                       <div className="flex justify-center">
                         {editingCell?.id === record.id && editingCell?.field === 'reportedCustomers' ? (
                           <>
@@ -451,13 +451,13 @@ export function TrackingTable() {
                               }}
                               min="0"
                               max={record.scheduledCustomers}
-                              className="w-16 border border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                              className="w-12 border border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-sm"
                             />
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={handleConfirmEdit}
-                              className="text-green-600 hover:text-green-900 hover:bg-green-50 ml-1"
+                              className="text-green-600 hover:text-green-900 hover:bg-green-50 ml-1 p-1"
                             >
                               <Save className="h-3 w-3" />
                             </Button>
@@ -465,36 +465,36 @@ export function TrackingTable() {
                         ) : (
                           <div
                             onClick={() => handleStartEdit(record.id, 'reportedCustomers', record.reportedCustomers)}
-                            className="cursor-pointer hover:bg-blue-50 p-2 rounded border-2 border-transparent hover:border-blue-200 text-center w-16"
+                            className="cursor-pointer hover:bg-blue-50 p-1 rounded border-2 border-transparent hover:border-blue-200 text-center w-12 text-sm"
                           >
                             {record.reportedCustomers}
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 py-2 whitespace-nowrap">
                       <div className="flex items-center">
-                        <span className="text-lg font-semibold">
+                        <span className="text-sm font-semibold">
                           {formatPercentage(percentage)}
                         </span>
                         {getTierBadge(percentage)}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 py-2 whitespace-nowrap">
                       <div>
-                        <span className={`text-lg font-bold ${totalBonus > 0 ? 'text-green-600' : 'text-gray-500'}`}>
+                        <span className={`text-sm font-bold ${totalBonus > 0 ? 'text-green-600' : 'text-gray-500'}`}>
                           {formatCurrency(totalBonus)}
                         </span>
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-gray-500">
                           {totalBonus > 0 
-                            ? `${formatCurrency(bonusRate)} × ${record.reportedCustomers} reports`
+                            ? `${formatCurrency(bonusRate)} × ${record.reportedCustomers}`
                             : "Chưa đạt mức tối thiểu"
                           }
                         </div>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <td className="px-3 py-2 whitespace-nowrap text-center">
                       <div className="flex justify-center">
                         {editingCell?.id === record.id && editingCell?.field === 'closedCustomers' ? (
                           <>
@@ -506,13 +506,13 @@ export function TrackingTable() {
                                 handleInputChange(value);
                               }}
                               min="0"
-                              className="w-16 border border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                              className="w-12 border border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-sm"
                             />
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={handleConfirmEdit}
-                              className="text-green-600 hover:text-green-900 hover:bg-green-50 ml-1"
+                              className="text-green-600 hover:text-green-900 hover:bg-green-50 ml-1 p-1"
                             >
                               <Save className="h-3 w-3" />
                             </Button>
@@ -520,21 +520,21 @@ export function TrackingTable() {
                         ) : (
                           <div
                             onClick={() => handleStartEdit(record.id, 'closedCustomers', record.closedCustomers || 0)}
-                            className="cursor-pointer hover:bg-blue-50 p-2 rounded border-2 border-transparent hover:border-blue-200 text-center w-16 font-medium"
+                            className="cursor-pointer hover:bg-blue-50 p-1 rounded border-2 border-transparent hover:border-blue-200 text-center w-12 font-medium text-sm"
                           >
                             {record.closedCustomers || 0}
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <td className="px-3 py-2 whitespace-nowrap text-center">
                       <div className="flex justify-center">
                         {editingCell?.id === record.id && editingCell?.field === 'paymentStatus' ? (
                           <>
                             <select
                               value={editingCell.value as string}
                               onChange={(e) => handleInputChange(e.target.value)}
-                              className="px-2 py-1 border border-blue-300 rounded text-xs"
+                              className="px-1 py-1 border border-blue-300 rounded text-xs"
                             >
                               <option value="chưa pay">chưa pay</option>
                               <option value="đã pay">đã pay</option>
@@ -543,7 +543,7 @@ export function TrackingTable() {
                               size="sm"
                               variant="ghost"
                               onClick={handleConfirmEdit}
-                              className="text-green-600 hover:text-green-900 hover:bg-green-50 ml-1"
+                              className="text-green-600 hover:text-green-900 hover:bg-green-50 ml-1 p-1"
                             >
                               <Save className="h-3 w-3" />
                             </Button>
