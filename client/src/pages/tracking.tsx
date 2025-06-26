@@ -588,57 +588,57 @@ export default function TrackingPage() {
               </div>
             </div>
             
-            {/* Status Toggle Switches */}
-            <div className="flex items-center gap-6">
+            {/* Status Toggle Switches - Vertical Layout */}
+            <div className="flex flex-col gap-2">
               {/* Calendly Toggle */}
-              <div className="flex items-center gap-3">
-                <Clock className="h-5 w-5 text-orange-600" />
-                <span className="text-sm font-medium text-gray-700">Calendly:</span>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-orange-600" />
+                <span className="text-xs font-medium text-gray-700">Calendly:</span>
                 <button
                   onClick={handleToggleCalendly}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  className={`relative inline-flex h-3 w-6 items-center rounded-full transition-colors ${
                     calendlyConnected ? 'bg-green-600' : 'bg-gray-300'
                   }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      calendlyConnected ? 'translate-x-6' : 'translate-x-1'
+                    className={`inline-block h-2 w-2 transform rounded-full bg-white transition-transform ${
+                      calendlyConnected ? 'translate-x-3.5' : 'translate-x-0.5'
                     }`}
                   />
                 </button>
               </div>
 
               {/* Stripe Toggle */}
-              <div className="flex items-center gap-3">
-                <CreditCard className="h-5 w-5 text-blue-600" />
-                <span className="text-sm font-medium text-gray-700">Stripe:</span>
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-blue-600" />
+                <span className="text-xs font-medium text-gray-700">Stripe:</span>
                 <button
                   onClick={handleToggleStripe}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  className={`relative inline-flex h-3 w-6 items-center rounded-full transition-colors ${
                     stripeEnabled ? 'bg-green-600' : 'bg-gray-300'
                   }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      stripeEnabled ? 'translate-x-6' : 'translate-x-1'
+                    className={`inline-block h-2 w-2 transform rounded-full bg-white transition-transform ${
+                      stripeEnabled ? 'translate-x-3.5' : 'translate-x-0.5'
                     }`}
                   />
                 </button>
               </div>
 
               {/* Data Retention Toggle */}
-              <div className="flex items-center gap-3">
-                <Database className="h-5 w-5 text-purple-600" />
-                <span className="text-sm font-medium text-gray-700">Lưu dữ liệu vĩnh viễn:</span>
+              <div className="flex items-center gap-2">
+                <Database className="h-4 w-4 text-purple-600" />
+                <span className="text-xs font-medium text-gray-700">Lưu dữ liệu vĩnh viễn:</span>
                 <button
                   onClick={handleToggleDataRetention}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  className={`relative inline-flex h-3 w-6 items-center rounded-full transition-colors ${
                     dataRetentionEnabled ? 'bg-green-600' : 'bg-gray-300'
                   }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      dataRetentionEnabled ? 'translate-x-6' : 'translate-x-1'
+                    className={`inline-block h-2 w-2 transform rounded-full bg-white transition-transform ${
+                      dataRetentionEnabled ? 'translate-x-3.5' : 'translate-x-0.5'
                     }`}
                   />
                 </button>
