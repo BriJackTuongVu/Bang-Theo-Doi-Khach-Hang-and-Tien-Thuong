@@ -26,7 +26,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { CustomerReport, InsertCustomerReport } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
-import { formatDate, getTodayDate, getDayOfWeek, getNextWorkingDay } from "@/lib/utils";
+import { formatDate, getTodayDate, getDayOfWeek, getNextWorkingDay, formatDateWithDay } from "@/lib/utils";
 import { Plus, User, Send, Calendar, Trash2, Upload, Link, Image, Clock } from "lucide-react";
 
 interface CalendarEvent {
@@ -731,7 +731,7 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            Chi Tiết Khách Hàng
+            Chi Tiết Khách Hàng - {formatDateWithDay(selectedDate)}
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
