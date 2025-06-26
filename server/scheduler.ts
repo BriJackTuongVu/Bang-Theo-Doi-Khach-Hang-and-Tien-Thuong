@@ -77,11 +77,34 @@ async function autoImportFromCalendly(date: string, trackingRecordId: number) {
   try {
     console.log(`📞 Bắt đầu import khách hàng từ Calendly cho ngày ${date}...`);
     
-    // Gọi API internal để lấy events thay vì trực tiếp gọi Calendly
-    const response = await fetch(`http://localhost:5000/api/calendly/events?date=${date}`);
+    // Lấy Calendly token từ database
+    const { db } = await import('./db');
+    const { settings } = await import('../shared/schema');
+    const { eq } = await import('drizzle-orm');
+    
+    const [tokenSetting] = await db.select().from(settings).where(eq(settings.key, 'calendly_token'));
+    
+    if (!tokenSetting) {
+      console.log('⚠️ Không tìm thấy Calendly token');
+      return;
+    }
+    
+    const calendlyToken = tokenSetting.value;
+    
+    // Gọi trực tiếp Calendly API để lấy events
+    const nextDay = new Date(date);
+    nextDay.setDate(nextDay.getDate() + 1);
+    const endDate = nextDay.toISOString().split('T')[0];
+    
+    const response = await fetch(`https://api.calendly.com/scheduled_events?user=https://api.calendly.com/users/GHEAKECV6H5CQZ2A&min_start_time=${date}T00:00:00.000000Z&max_start_time=${endDate}T00:00:00.000000Z&status=active`, {
+      headers: {
+        'Authorization': `Bearer ${calendlyToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
 
     if (!response.ok) {
-      console.log('⚠️ Không thể kết nối Calendly API');
+      console.log('⚠️ Không thể kết nối Calendly API:', response.status);
       return;
     }
 

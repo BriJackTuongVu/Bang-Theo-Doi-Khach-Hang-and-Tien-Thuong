@@ -1034,6 +1034,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint to manually import from Calendly for today
+  app.post('/api/test-calendly-import', async (req, res) => {
+    try {
+      const { date } = req.body;
+      const targetDate = date || new Date().toISOString().split('T')[0];
+      
+      console.log(`🧪 Testing Calendly import for ${targetDate}...`);
+      
+      // Get existing tracking record for this date
+      const records = await storage.getTrackingRecords();
+      const record = records.find(r => r.date === targetDate);
+      
+      if (!record) {
+        return res.status(404).json({ error: 'No tracking record found for this date' });
+      }
+      
+      // Get Calendly token from database
+      const [tokenSetting] = await db.select().from(settings).where(eq(settings.key, 'calendly_token'));
+      
+      if (!tokenSetting) {
+        return res.status(400).json({ error: 'No Calendly token found' });
+      }
+      
+      const calendlyToken = tokenSetting.value;
+      
+      // Call Calendly API
+      const nextDay = new Date(targetDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      const endDate = nextDay.toISOString().split('T')[0];
+      
+      const response = await fetch(`https://api.calendly.com/scheduled_events?user=https://api.calendly.com/users/GHEAKECV6H5CQZ2A&min_start_time=${targetDate}T00:00:00.000000Z&max_start_time=${endDate}T00:00:00.000000Z&status=active`, {
+        headers: {
+          'Authorization': `Bearer ${calendlyToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        return res.status(500).json({ error: 'Failed to fetch from Calendly API', status: response.status });
+      }
+      
+      const eventsData = await response.json();
+      const events = eventsData.collection || [];
+      
+      console.log(`📋 Found ${events.length} events from Calendly for ${targetDate}`);
+      
+      let importedCount = 0;
+      const customerDetails = [];
+      
+      // Process each event
+      for (const event of events) {
+        try {
+          const eventId = event.uri.split('/').pop();
+          const inviteesResponse = await fetch(`https://api.calendly.com/scheduled_events/${eventId}/invitees`, {
+            headers: {
+              'Authorization': `Bearer ${calendlyToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (inviteesResponse.ok) {
+            const inviteesData = await inviteesResponse.json();
+            const invitees = inviteesData.collection || [];
+            
+            for (const invitee of invitees) {
+              // Extract phone from event location
+              let phone = null;
+              if (event.location && event.location.location) {
+                const locationText = event.location.location;
+                const phoneRegex = /[\+]?[1-9][\d\s\-\(\)]{8,20}/;
+                if (phoneRegex.test(locationText)) {
+                  phone = locationText.trim();
+                }
+              }
+              
+              // Create customer report
+              const newCustomer = await storage.createCustomerReport({
+                customerName: invitee.name || 'Unknown',
+                customerEmail: invitee.email || '',
+                customerPhone: phone,
+                reportSent: false,
+                reportReceivedDate: null,
+                customerDate: targetDate,
+                trackingRecordId: record.id
+              });
+              
+              customerDetails.push({
+                name: newCustomer.customerName,
+                email: newCustomer.customerEmail,
+                phone: newCustomer.customerPhone
+              });
+              
+              importedCount++;
+            }
+          }
+        } catch (eventError) {
+          console.error('Error processing event:', eventError);
+        }
+      }
+      
+      // Update tracking record
+      if (importedCount > 0) {
+        await storage.updateTrackingRecord(record.id, {
+          scheduledCustomers: importedCount
+        });
+      }
+      
+      res.json({
+        success: true,
+        date: targetDate,
+        eventsFound: events.length,
+        customersImported: importedCount,
+        customers: customerDetails
+      });
+      
+    } catch (error) {
+      console.error('Test import error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Settings endpoints for data retention
   app.get('/api/settings/data-retention', async (req, res) => {
     try {
