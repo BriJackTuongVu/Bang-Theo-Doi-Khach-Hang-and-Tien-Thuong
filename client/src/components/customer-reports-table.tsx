@@ -213,18 +213,18 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
       const statusResult = await statusResponse.json();
       
       if (!statusResult.connected) {
-        // Show connection notification
+        // Show connection notification in center of page
         const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 max-w-sm';
+        notification.className = 'fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50';
         notification.innerHTML = `
-          <div class="flex items-center gap-3">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <div>
-              <div class="font-medium">Chưa kết nối Calendly</div>
-              <div class="text-sm opacity-90">Vui lòng kết nối với Calendly trước khi cập nhật khách hàng</div>
+          <div class="bg-blue-500 text-white px-8 py-6 rounded-lg shadow-lg max-w-md mx-4 text-center">
+            <div class="flex items-center justify-center gap-3 mb-3">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <div class="text-xl font-medium">Chưa kết nối Calendly</div>
             </div>
+            <div class="text-sm opacity-90">Vui lòng kết nối với Calendly trước khi cập nhật khách hàng</div>
           </div>
         `;
         document.body.appendChild(notification);
@@ -232,7 +232,7 @@ export function CustomerReportsTable({ tableId = 1, initialDate }: CustomerRepor
           if (document.body.contains(notification)) {
             document.body.removeChild(notification);
           }
-        }, 4000);
+        }, 1000);
         return;
       }
       
