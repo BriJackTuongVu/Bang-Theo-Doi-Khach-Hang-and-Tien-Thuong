@@ -437,13 +437,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const events = eventsData.collection || [];
 
+      console.log('Processing events with invitees...');
       // Get invitee information for each event
       const eventsWithInvitees = await Promise.all(
         events.map(async (event: any) => {
           try {
-            const inviteesResponse = await fetch(`https://api.calendly.com/scheduled_events/${event.uri.split('/').pop()}/invitees`, {
+            console.log('Processing event:', event.uri);
+            const eventId = event.uri.split('/').pop();
+            const inviteesResponse = await fetch(`https://api.calendly.com/scheduled_events/${eventId}/invitees`, {
               headers: {
-                'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+                'Authorization': `Bearer ${calendlyToken}`,
                 'Content-Type': 'application/json'
               }
             });
@@ -451,8 +454,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (inviteesResponse.ok) {
               const inviteesData = await inviteesResponse.json();
               const invitees = inviteesData.collection || [];
+              console.log('Found invitees for event:', invitees.length);
               
-              return {
+              const result = {
                 event_name: event.name,
                 start_time: event.start_time,
                 end_time: event.end_time,
@@ -460,11 +464,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 invitee_name: invitees.length > 0 ? invitees[0].name : 'Unknown',
                 invitee_email: invitees.length > 0 ? invitees[0].email : ''
               };
+              console.log('Event result:', result);
+              return result;
+            } else {
+              console.log('Failed to fetch invitees:', inviteesResponse.status);
+              return {
+                event_name: event.name,
+                start_time: event.start_time,
+                end_time: event.end_time,
+                status: event.status,
+                invitee_name: 'Unknown',
+                invitee_email: ''
+              };
             }
-            return null;
           } catch (error) {
             console.error('Error fetching invitee:', error);
-            return null;
+            return {
+              event_name: event.name,
+              start_time: event.start_time,
+              end_time: event.end_time,
+              status: event.status,
+              invitee_name: 'Unknown',
+              invitee_email: ''
+            };
           }
         })
       );
