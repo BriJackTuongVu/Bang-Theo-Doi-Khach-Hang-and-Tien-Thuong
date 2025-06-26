@@ -234,8 +234,8 @@ export default function TrackingPage() {
           </Button>
         </div>
         
-        {/* Customer Reports Tables - One for each tracking record */}
-        {records.map((record) => (
+        {/* Customer Reports Tables - One for each tracking record (newest first) */}
+        {records.slice().reverse().map((record) => (
           <div key={record.id} className="space-y-4">
             <CustomerReportsTable 
               key={`customer-table-${record.id}`}
