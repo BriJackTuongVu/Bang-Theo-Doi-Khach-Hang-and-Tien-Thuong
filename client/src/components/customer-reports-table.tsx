@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CustomerReport, InsertCustomerReport } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDate, getTodayDate, getDayOfWeek, getNextWorkingDay, formatDateWithDay } from "@/lib/utils";
-import { Plus, User, Send, Calendar, Trash2, Upload, Link, Image, Clock, Mail, Phone } from "lucide-react";
+import { Plus, User, Send, Calendar, Trash2, Upload, Link, Image, Clock, Mail, Phone, RefreshCw } from "lucide-react";
 
 interface CalendarEvent {
   name: string;
@@ -70,6 +70,7 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
   const [newCustomerName, setNewCustomerName] = useState("");
   const [newCustomerEmail, setNewCustomerEmail] = useState("");
   const [newCustomerPhone, setNewCustomerPhone] = useState("");
+  const [isUpdatingCustomers, setIsUpdatingCustomers] = useState(false);
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["/api/customer-reports", tableId],
@@ -654,6 +655,82 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
     setShowConfirmDialog(false);
   };
 
+  const handleManualUpdate = async () => {
+    setIsUpdatingCustomers(true);
+    
+    try {
+      // Call the scheduler function specifically for this date
+      const response = await apiRequest("POST", "/api/manual-update-customers", {
+        date: selectedDate,
+        trackingRecordId: tableId
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        // Show success notification
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: #10B981;
+          color: white;
+          padding: 16px 32px;
+          border-radius: 8px;
+          font-size: 16px;
+          font-weight: 600;
+          z-index: 9999;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        `;
+        notification.textContent = `✓ Đã cập nhật thành công từ Calendly: ${result.importedCount || 0} khách hàng`;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 3000);
+
+        // Refresh data
+        queryClient.invalidateQueries({ queryKey: ["/api/customer-reports"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/tracking-records"] });
+      } else {
+        throw new Error(result.error || 'Có lỗi xảy ra');
+      }
+    } catch (error) {
+      console.error('Error updating customers:', error);
+      
+      // Show error notification
+      const errorNotification = document.createElement('div');
+      errorNotification.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #EF4444;
+        color: white;
+        padding: 16px 32px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        z-index: 9999;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      `;
+      errorNotification.textContent = `❌ Lỗi khi cập nhật: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      document.body.appendChild(errorNotification);
+      
+      setTimeout(() => {
+        if (document.body.contains(errorNotification)) {
+          document.body.removeChild(errorNotification);
+        }
+      }, 3000);
+    } finally {
+      setIsUpdatingCustomers(false);
+    }
+  };
+
   const handleDeleteTable = async () => {
     // Ask for PIN confirmation
     const pin = prompt('Nhập PIN để xác nhận xóa toàn bộ bảng (không thể hoàn tác):');
@@ -815,6 +892,20 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
                 disabled
               />
             </div>
+
+            <Button
+              onClick={handleManualUpdate}
+              variant="outline"
+              size="sm"
+              disabled={isUpdatingCustomers}
+              className="bg-blue-500 hover:bg-blue-600 text-white border-blue-500 p-0.5 min-w-0 h-6 w-6"
+            >
+              {isUpdatingCustomers ? (
+                <div className="animate-spin h-2 w-2 border border-white border-t-transparent rounded-full" />
+              ) : (
+                <RefreshCw className="h-2 w-2" />
+              )}
+            </Button>
 
             <Button
               onClick={handleDeleteTable}
