@@ -842,15 +842,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
                         });
                       }
 
-                      // Check if customer already exists for this date
+                      // Check if customer already exists for this date by email or phone
                       const existingReports = await storage.getCustomerReports();
-                      const exists = existingReports.some(report => 
+                      const existingReport = existingReports.find(report => 
                         report.customerDate === date && 
-                        report.customerEmail === customerEmail &&
-                        report.trackingRecordId === trackingRecordId
+                        report.trackingRecordId === trackingRecordId &&
+                        (
+                          (report.customerEmail === customerEmail && customerEmail) ||
+                          (report.customerPhone === customerPhone && customerPhone)
+                        )
                       );
 
-                      if (!exists) {
+                      if (!existingReport) {
+                        // Create new customer
                         await storage.createCustomerReport({
                           customerName,
                           customerEmail,
@@ -861,6 +865,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
                           trackingRecordId: trackingRecordId
                         });
                         importedCount++;
+                        console.log(`Created new customer: ${customerName} with time: ${appointmentTime}`);
+                      } else {
+                        // Update existing customer with appointment time
+                        if (appointmentTime) {
+                          await storage.updateCustomerReport(existingReport.id, {
+                            appointmentTime: appointmentTime
+                          });
+                          console.log(`Updated appointment time for ${customerName}: ${appointmentTime}`);
+                        }
                       }
                     }
                   }
