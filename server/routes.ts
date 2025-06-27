@@ -746,6 +746,161 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check and remove canceled customers from Calendly
+  app.post("/api/check-canceled-customers", async (req, res) => {
+    try {
+      const { date, trackingRecordId } = req.body;
+      
+      if (!date || !trackingRecordId) {
+        return res.status(400).json({ error: "Date and trackingRecordId are required" });
+      }
+      
+      console.log(`Checking canceled customers for date ${date}, tracking record ${trackingRecordId}`);
+      
+      let removedCount = 0;
+      let calendlyError = null;
+      
+      // Get Calendly token from database
+      let calendlyToken = process.env.CALENDLY_API_TOKEN;
+      if (!calendlyToken) {
+        try {
+          const [setting] = await db.select().from(settings).where(eq(settings.key, 'calendly_token'));
+          calendlyToken = setting?.value;
+          console.log('Calendly token fetched from database:', calendlyToken ? 'Found' : 'Not found');
+        } catch (error) {
+          console.error('Error fetching Calendly token from database:', error);
+        }
+      }
+      
+      if (!calendlyToken) {
+        calendlyError = "Calendly API token not configured";
+      } else {
+        try {
+          console.log(`Fetching Calendly events for date: ${date}`);
+          const calendlyUrl = `https://api.calendly.com/scheduled_events?user=https://api.calendly.com/users/5e8c8c66-7fe1-4727-ba2d-32c9a56eb1ca&min_start_time=${date}T00:00:00.000000Z&max_start_time=${date}T23:59:59.999999Z`;
+          console.log(`Calendly URL: ${calendlyUrl}`);
+          
+          const calendlyResponse = await fetch(calendlyUrl, {
+            headers: {
+              'Authorization': `Bearer ${calendlyToken}`,
+            },
+          });
+
+          console.log(`Calendly response status: ${calendlyResponse.status}`);
+          
+          if (calendlyResponse.ok) {
+            const calendlyData = await calendlyResponse.json();
+            console.log(`Calendly data received:`, JSON.stringify(calendlyData, null, 2));
+            
+            // Get all customer reports for this date
+            const allReports = await storage.getCustomerReports();
+            const customerReports = allReports.filter(report => 
+              report.customerDate === date && 
+              report.trackingRecordId === trackingRecordId
+            );
+            
+            console.log(`Found ${customerReports.length} customer reports for this date`);
+            
+            // Get active (non-canceled) event phone numbers from Calendly
+            const activePhones = new Set();
+            const activeEmails = new Set();
+            
+            if (calendlyData.collection && calendlyData.collection.length > 0) {
+              console.log(`Found ${calendlyData.collection.length} events from Calendly`);
+              
+              for (const event of calendlyData.collection) {
+                // Only process active events (not canceled)
+                if (event.status === 'active') {
+                  // Get event details including invitee information
+                  const eventResponse = await fetch(event.uri, {
+                    headers: {
+                      'Authorization': `Bearer ${calendlyToken}`,
+                    },
+                  });
+
+                  if (eventResponse.ok) {
+                    const eventData = await eventResponse.json();
+                    
+                    // Extract phone from event location if available
+                    if (eventData.resource?.location?.location) {
+                      const phoneMatch = eventData.resource.location.location.match(/(\+?\d[\d\s\-\(\)]{8,})/);
+                      if (phoneMatch) {
+                        activePhones.add(phoneMatch[1]);
+                      }
+                    }
+                    
+                    // Get invitees for this event
+                    const inviteesResponse = await fetch(`${event.uri}/invitees`, {
+                      headers: {
+                        'Authorization': `Bearer ${calendlyToken}`,
+                      },
+                    });
+
+                    if (inviteesResponse.ok) {
+                      const inviteesData = await inviteesResponse.json();
+                      
+                      for (const invitee of inviteesData.collection) {
+                        if (invitee.email) {
+                          activeEmails.add(invitee.email);
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            
+            console.log(`Active phones from Calendly:`, [...activePhones]);
+            console.log(`Active emails from Calendly:`, [...activeEmails]);
+            
+            // Check each customer report and remove if not found in active appointments
+            for (const report of customerReports) {
+              const hasActivePhone = report.customerPhone && activePhones.has(report.customerPhone);
+              const hasActiveEmail = report.customerEmail && activeEmails.has(report.customerEmail);
+              
+              // If customer is not found in active appointments, they likely canceled
+              if (!hasActivePhone && !hasActiveEmail) {
+                console.log(`Removing canceled customer: ${report.customerName} (Phone: ${report.customerPhone}, Email: ${report.customerEmail})`);
+                await storage.deleteCustomerReport(report.id);
+                removedCount++;
+              }
+            }
+            
+          } else {
+            const errorText = await calendlyResponse.text();
+            calendlyError = `Calendly API error: ${calendlyResponse.status} - ${errorText}`;
+            console.error(calendlyError);
+          }
+        } catch (error) {
+          calendlyError = `Calendly check error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+          console.error('Calendly check error:', error);
+        }
+      }
+      
+      console.log(`Cancel check completed. Removed ${removedCount} canceled customers.`);
+      
+      // Return result with detailed information
+      if (calendlyError && removedCount === 0) {
+        res.json({ 
+          success: false, 
+          removedCount, 
+          error: calendlyError,
+          message: `Không thể kiểm tra Calendly: ${calendlyError}`
+        });
+      } else {
+        res.json({ 
+          success: true, 
+          removedCount,
+          message: removedCount > 0 ? `Đã xóa ${removedCount} khách hàng đã cancel` : 'Không có khách hàng nào bị cancel'
+        });
+      }
+      
+    } catch (error) {
+      console.error('Cancel check error:', error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Manual update customers from Calendly
   app.post("/api/manual-update-customers", async (req, res) => {
     try {
