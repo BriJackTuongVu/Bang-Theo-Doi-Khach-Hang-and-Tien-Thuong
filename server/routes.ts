@@ -746,6 +746,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manual update customers from Calendly
+  app.post("/api/manual-update-customers", async (req, res) => {
+    try {
+      const { date, trackingRecordId } = req.body;
+      
+      if (!date || !trackingRecordId) {
+        return res.status(400).json({ error: "Date and trackingRecordId are required" });
+      }
+      
+      console.log(`Manual update for date ${date}, tracking record ${trackingRecordId}`);
+      
+      // Import from Calendly for this specific date
+      let importedCount = 0;
+      try {
+        const calendlyResponse = await fetch(`https://api.calendly.com/scheduled_events?user=https://api.calendly.com/users/5e8c8c66-7fe1-4727-ba2d-32c9a56eb1ca&min_start_time=${date}T00:00:00.000000Z&max_start_time=${date}T23:59:59.999999Z`, {
+          headers: {
+            'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+          },
+        });
+
+        if (calendlyResponse.ok) {
+          const calendlyData = await calendlyResponse.json();
+          
+          for (const event of calendlyData.collection) {
+            // Get event details including invitee information
+            const eventResponse = await fetch(event.uri, {
+              headers: {
+                'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+              },
+            });
+
+            if (eventResponse.ok) {
+              const eventData = await eventResponse.json();
+              
+              // Get invitees for this event
+              const inviteesResponse = await fetch(`${event.uri}/invitees`, {
+                headers: {
+                  'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+                },
+              });
+
+              if (inviteesResponse.ok) {
+                const inviteesData = await inviteesResponse.json();
+                
+                for (const invitee of inviteesData.collection) {
+                  const customerName = invitee.name;
+                  const customerEmail = invitee.email;
+                  
+                  // Extract phone from event location if available
+                  let customerPhone = '';
+                  if (eventData.resource?.location?.location) {
+                    const phoneMatch = eventData.resource.location.location.match(/(\+?\d[\d\s\-\(\)]{8,})/);
+                    if (phoneMatch) {
+                      customerPhone = phoneMatch[1];
+                    }
+                  }
+
+                  // Check if customer already exists for this date
+                  const existingReports = await storage.getCustomerReports();
+                  const exists = existingReports.some(report => 
+                    report.customerDate === date && 
+                    report.customerEmail === customerEmail &&
+                    report.trackingRecordId === trackingRecordId
+                  );
+
+                  if (!exists) {
+                    await storage.createCustomerReport({
+                      customerName,
+                      customerEmail,
+                      customerPhone,
+                      reportSent: false,
+                      customerDate: date,
+                      trackingRecordId: trackingRecordId
+                    });
+                    importedCount++;
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (calendlyError) {
+        console.error('Calendly import error:', calendlyError);
+      }
+      
+      console.log(`Manual update completed. Imported ${importedCount} customers.`);
+      res.json({ success: true, importedCount });
+      
+    } catch (error) {
+      console.error("Error in manual update:", error);
+      res.status(500).json({ error: "Failed to update customers" });
+    }
+  });
+
   // Sync tracking data from customer reports
   app.post("/api/sync-tracking-data", async (req, res) => {
     try {
