@@ -828,6 +828,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
                           customerPhone = phoneMatch[1];
                         }
                       }
+                      
+                      // Extract appointment time from start_time
+                      let appointmentTime = '';
+                      if (eventData.resource?.start_time) {
+                        const startTime = new Date(eventData.resource.start_time);
+                        // Format time as HH:MM AM/PM
+                        appointmentTime = startTime.toLocaleTimeString('en-US', {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true,
+                          timeZone: 'America/New_York' // Eastern Time
+                        });
+                      }
 
                       // Check if customer already exists for this date
                       const existingReports = await storage.getCustomerReports();
@@ -842,6 +855,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                           customerName,
                           customerEmail,
                           customerPhone,
+                          appointmentTime,
                           reportSent: false,
                           customerDate: date,
                           trackingRecordId: trackingRecordId

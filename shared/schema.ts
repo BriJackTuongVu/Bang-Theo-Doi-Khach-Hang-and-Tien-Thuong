@@ -16,6 +16,7 @@ export const customerReports = pgTable("customer_reports", {
   customerName: text("customer_name").notNull(),
   customerEmail: text("customer_email"),
   customerPhone: text("customer_phone"),
+  appointmentTime: text("appointment_time"), // Thời gian hẹn
   reportSent: boolean("report_sent").notNull().default(false),
   reportReceivedDate: date("report_received_date"),
   customerDate: date("customer_date").notNull(),
