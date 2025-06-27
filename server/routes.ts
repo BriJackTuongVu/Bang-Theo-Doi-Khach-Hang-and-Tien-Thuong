@@ -1816,7 +1816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let processedCount = 0;
 
       for (const charge of allCharges) {
-        if (charge.status === 'succeeded' && charge.amount >= 10000) { // $100+
+        if (charge.status === 'succeeded') { // Track ALL successful payments
           const chargeDate = new Date(charge.created * 1000).toISOString().split('T')[0];
           const customerEmail = charge.receipt_email;
           
@@ -1834,8 +1834,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             const previousPayments = earlierCharges.data.filter(prevCharge => 
               prevCharge.receipt_email === customerEmail && 
-              prevCharge.status === 'succeeded' &&
-              prevCharge.amount >= 10000 // Previous payments $100+
+              prevCharge.status === 'succeeded' // Previous payments (any amount)
             );
             
             if (previousPayments.length === 0) {
@@ -1851,7 +1850,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
               dailyStats[chargeDate]++;
               
-              console.log(`✅ First-time $100+ payment: ${customerEmail} - $${charge.amount/100} on ${chargeDate}`);
+              console.log(`✅ First-time payment (any amount): ${customerEmail} - $${charge.amount/100} on ${chargeDate}`);
             } else {
               console.log(`⏭️ Recurring customer: ${customerEmail} (${previousPayments.length} previous payments)`);
             }
@@ -1859,7 +1858,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      console.log(`🎯 Total first-time $100+ payments found: ${firstTimePayments.length}`);
+      console.log(`🎯 Total first-time payments found (any amount): ${firstTimePayments.length}`);
 
       res.json({
         success: true,
