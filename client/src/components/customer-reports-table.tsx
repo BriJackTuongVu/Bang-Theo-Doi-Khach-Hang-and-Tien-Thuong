@@ -71,7 +71,6 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
   const [newCustomerEmail, setNewCustomerEmail] = useState("");
   const [newCustomerPhone, setNewCustomerPhone] = useState("");
   const [isUpdatingCustomers, setIsUpdatingCustomers] = useState(false);
-  const [isCheckingCanceled, setIsCheckingCanceled] = useState(false);
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["/api/customer-reports", tableId],
@@ -237,6 +236,105 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
         document.body.removeChild(notification);
       }
     }, 15000);
+  };
+
+  const handleManualUpdate = async () => {
+    setIsUpdatingCustomers(true);
+    
+    // Step 1: Update customers from Calendly using manual-update-customers endpoint
+    try {
+      const updateResponse = await apiRequest("POST", "/api/manual-update-customers", {
+        date: selectedDate,
+        trackingRecordId: tableId
+      });
+      
+      const updateResult = await updateResponse.json();
+      
+      if (!updateResponse.ok) {
+        throw new Error(updateResult.error || 'Có lỗi khi cập nhật từ Calendly');
+      }
+
+      // Step 2: Check for canceled customers and remove them
+      const cancelResponse = await apiRequest("POST", "/api/check-canceled-customers", {
+        date: selectedDate,
+        trackingRecordId: tableId
+      });
+      
+      const cancelResult = await cancelResponse.json();
+      
+      if (!cancelResponse.ok) {
+        throw new Error(cancelResult.error || 'Có lỗi khi kiểm tra cancel');
+      }
+
+      // Show combined success notification
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #10B981;
+        color: white;
+        padding: 16px 32px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        z-index: 9999;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        white-space: pre-line;
+        text-align: center;
+      `;
+      
+      let message = `✅ Đã cập nhật ${updateResult.updatedCount} khách hàng từ Calendly`;
+      if (cancelResult.removedCount > 0) {
+        message += `\n🗑️ Đã xóa ${cancelResult.removedCount} khách hàng cancel`;
+      } else {
+        message += `\n✓ Không có khách hàng nào bị cancel`;
+      }
+      
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 4000);
+
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/customer-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tracking-records"] });
+      
+    } catch (error) {
+      console.error('Error in manual update:', error);
+      
+      // Show error notification
+      const errorNotification = document.createElement('div');
+      errorNotification.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #EF4444;
+        color: white;
+        padding: 16px 32px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        z-index: 9999;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      `;
+      errorNotification.textContent = `❌ Lỗi: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      document.body.appendChild(errorNotification);
+      
+      setTimeout(() => {
+        if (document.body.contains(errorNotification)) {
+          document.body.removeChild(errorNotification);
+        }
+      }, 3000);
+    } finally {
+      setIsUpdatingCustomers(false);
+    }
   };
 
   const handleCalendlyImport = async () => {
@@ -656,159 +754,9 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
     setShowConfirmDialog(false);
   };
 
-  const handleManualUpdate = async () => {
-    setIsUpdatingCustomers(true);
-    
-    try {
-      // Call the scheduler function specifically for this date
-      const response = await apiRequest("POST", "/api/manual-update-customers", {
-        date: selectedDate,
-        trackingRecordId: tableId
-      });
-      
-      const result = await response.json();
-      
-      if (response.ok) {
-        // Show success notification
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          background: #10B981;
-          color: white;
-          padding: 16px 32px;
-          border-radius: 8px;
-          font-size: 16px;
-          font-weight: 600;
-          z-index: 9999;
-          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        `;
-        notification.textContent = `✓ Đã cập nhật thành công từ Calendly: ${result.importedCount || 0} khách hàng`;
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-          if (document.body.contains(notification)) {
-            document.body.removeChild(notification);
-          }
-        }, 3000);
 
-        // Refresh data
-        queryClient.invalidateQueries({ queryKey: ["/api/customer-reports"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/tracking-records"] });
-      } else {
-        throw new Error(result.error || 'Có lỗi xảy ra');
-      }
-    } catch (error) {
-      console.error('Error updating customers:', error);
-      
-      // Show error notification
-      const errorNotification = document.createElement('div');
-      errorNotification.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: #EF4444;
-        color: white;
-        padding: 16px 32px;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 600;
-        z-index: 9999;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-      `;
-      errorNotification.textContent = `❌ Lỗi khi cập nhật: ${error instanceof Error ? error.message : 'Unknown error'}`;
-      document.body.appendChild(errorNotification);
-      
-      setTimeout(() => {
-        if (document.body.contains(errorNotification)) {
-          document.body.removeChild(errorNotification);
-        }
-      }, 3000);
-    } finally {
-      setIsUpdatingCustomers(false);
-    }
-  };
 
-  const handleCheckCanceled = async () => {
-    setIsCheckingCanceled(true);
-    
-    try {
-      // Call the check canceled customers endpoint
-      const response = await apiRequest("POST", "/api/check-canceled-customers", {
-        date: selectedDate,
-        trackingRecordId: tableId
-      });
-      
-      const result = await response.json();
-      
-      if (response.ok) {
-        // Show success notification
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          background: ${result.removedCount > 0 ? '#EF4444' : '#10B981'};
-          color: white;
-          padding: 16px 32px;
-          border-radius: 8px;
-          font-size: 16px;
-          font-weight: 600;
-          z-index: 9999;
-          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        `;
-        notification.textContent = result.removedCount > 0 
-          ? `🗑️ Đã xóa ${result.removedCount} khách hàng đã cancel` 
-          : `✓ Không có khách hàng nào bị cancel`;
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-          if (document.body.contains(notification)) {
-            document.body.removeChild(notification);
-          }
-        }, 3000);
 
-        // Refresh data
-        queryClient.invalidateQueries({ queryKey: ["/api/customer-reports"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/tracking-records"] });
-      } else {
-        throw new Error(result.error || 'Có lỗi xảy ra');
-      }
-    } catch (error) {
-      console.error('Error checking canceled customers:', error);
-      
-      // Show error notification
-      const errorNotification = document.createElement('div');
-      errorNotification.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: #EF4444;
-        color: white;
-        padding: 16px 32px;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 600;
-        z-index: 9999;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-      `;
-      errorNotification.textContent = `❌ Lỗi khi kiểm tra cancel: ${error instanceof Error ? error.message : 'Unknown error'}`;
-      document.body.appendChild(errorNotification);
-      
-      setTimeout(() => {
-        if (document.body.contains(errorNotification)) {
-          document.body.removeChild(errorNotification);
-        }
-      }, 3000);
-    } finally {
-      setIsCheckingCanceled(false);
-    }
-  };
 
   const handleDeleteTable = async () => {
     // Ask for PIN confirmation
@@ -1254,28 +1202,19 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
             Thêm Khách Hàng
           </Button>
           <Button
-            onClick={handleCalendlyImport}
+            onClick={handleManualUpdate}
+            disabled={isUpdatingCustomers}
             className="bg-orange-600 hover:bg-orange-700 text-white"
           >
-            <Clock className="h-4 w-4 mr-2" />
-            Cập Nhật Khách Hàng
-          </Button>
-          <Button
-            onClick={handleCheckCanceled}
-            disabled={isCheckingCanceled}
-            className="bg-red-600 hover:bg-red-700 text-white"
-          >
-            {isCheckingCanceled ? (
+            {isUpdatingCustomers ? (
               <>
                 <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Đang kiểm tra...
+                Đang cập nhật...
               </>
             ) : (
               <>
-                <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                </svg>
-                Xóa Cancel
+                <Clock className="h-4 w-4 mr-2" />
+                Cập Nhật Khách Hàng
               </>
             )}
           </Button>
