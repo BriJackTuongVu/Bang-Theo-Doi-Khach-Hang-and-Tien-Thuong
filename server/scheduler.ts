@@ -152,11 +152,29 @@ async function autoImportFromCalendly(date: string, trackingRecordId: number) {
               }
             }
 
+            // Lấy thời gian hẹn
+            let appointmentTime = null;
+            if (event.start_time) {
+              try {
+                const startTime = new Date(event.start_time);
+                const easternTime = startTime.toLocaleString('en-US', {
+                  timeZone: 'America/New_York',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true
+                });
+                appointmentTime = easternTime;
+              } catch (error) {
+                console.error('Error parsing appointment time:', error);
+              }
+            }
+
             // Tạo customer report
             await storage.createCustomerReport({
               customerName: invitee.name || 'Unknown',
               customerEmail: invitee.email || '',
               customerPhone: phone,
+              appointmentTime: appointmentTime,
               reportSent: false,
               reportReceivedDate: null,
               customerDate: date,

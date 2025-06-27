@@ -946,6 +946,12 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
                 </th>
                 <th className="px-3 py-0.5 text-left text-2xs font-medium text-gray-600 uppercase tracking-wider">
                   <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Giờ Hẹn
+                  </div>
+                </th>
+                <th className="px-3 py-0.5 text-left text-2xs font-medium text-gray-600 uppercase tracking-wider">
+                  <div className="flex items-center gap-1">
                     <Send className="h-3 w-3" />
                     Đã Gửi Report
                   </div>
@@ -1071,6 +1077,11 @@ export function CustomerReportsTable({ tableId, initialDate }: CustomerReportsTa
                         {report.customerPhone || "Chưa nhập"}
                       </div>
                     )}
+                  </td>
+                  <td className="px-6 py-1 whitespace-nowrap">
+                    <div className="text-xs text-gray-600">
+                      {report.appointmentTime || "Chưa có"}
+                    </div>
                   </td>
                   <td className="px-6 py-1 whitespace-nowrap">
                     <div className="flex items-center">
