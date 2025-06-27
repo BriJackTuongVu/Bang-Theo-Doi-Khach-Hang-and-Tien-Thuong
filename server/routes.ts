@@ -757,82 +757,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Manual update for date ${date}, tracking record ${trackingRecordId}`);
       
-      // Import from Calendly for this specific date
       let importedCount = 0;
-      try {
-        const calendlyResponse = await fetch(`https://api.calendly.com/scheduled_events?user=https://api.calendly.com/users/5e8c8c66-7fe1-4727-ba2d-32c9a56eb1ca&min_start_time=${date}T00:00:00.000000Z&max_start_time=${date}T23:59:59.999999Z`, {
-          headers: {
-            'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
-          },
-        });
-
-        if (calendlyResponse.ok) {
-          const calendlyData = await calendlyResponse.json();
+      let calendlyError = null;
+      
+      // Check if we have Calendly token
+      if (!process.env.CALENDLY_API_TOKEN) {
+        calendlyError = "Calendly API token not configured";
+      } else {
+        try {
+          console.log(`Fetching Calendly events for date: ${date}`);
+          const calendlyUrl = `https://api.calendly.com/scheduled_events?user=https://api.calendly.com/users/5e8c8c66-7fe1-4727-ba2d-32c9a56eb1ca&min_start_time=${date}T00:00:00.000000Z&max_start_time=${date}T23:59:59.999999Z`;
+          console.log(`Calendly URL: ${calendlyUrl}`);
           
-          for (const event of calendlyData.collection) {
-            // Get event details including invitee information
-            const eventResponse = await fetch(event.uri, {
-              headers: {
-                'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
-              },
-            });
+          const calendlyResponse = await fetch(calendlyUrl, {
+            headers: {
+              'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+            },
+          });
 
-            if (eventResponse.ok) {
-              const eventData = await eventResponse.json();
+          console.log(`Calendly response status: ${calendlyResponse.status}`);
+          
+          if (calendlyResponse.ok) {
+            const calendlyData = await calendlyResponse.json();
+            console.log(`Calendly data received:`, JSON.stringify(calendlyData, null, 2));
+            
+            if (calendlyData.collection && calendlyData.collection.length > 0) {
+              console.log(`Found ${calendlyData.collection.length} events`);
               
-              // Get invitees for this event
-              const inviteesResponse = await fetch(`${event.uri}/invitees`, {
-                headers: {
-                  'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
-                },
-              });
+              for (const event of calendlyData.collection) {
+                // Get event details including invitee information
+                const eventResponse = await fetch(event.uri, {
+                  headers: {
+                    'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+                  },
+                });
 
-              if (inviteesResponse.ok) {
-                const inviteesData = await inviteesResponse.json();
-                
-                for (const invitee of inviteesData.collection) {
-                  const customerName = invitee.name;
-                  const customerEmail = invitee.email;
+                if (eventResponse.ok) {
+                  const eventData = await eventResponse.json();
                   
-                  // Extract phone from event location if available
-                  let customerPhone = '';
-                  if (eventData.resource?.location?.location) {
-                    const phoneMatch = eventData.resource.location.location.match(/(\+?\d[\d\s\-\(\)]{8,})/);
-                    if (phoneMatch) {
-                      customerPhone = phoneMatch[1];
+                  // Get invitees for this event
+                  const inviteesResponse = await fetch(`${event.uri}/invitees`, {
+                    headers: {
+                      'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+                    },
+                  });
+
+                  if (inviteesResponse.ok) {
+                    const inviteesData = await inviteesResponse.json();
+                    
+                    for (const invitee of inviteesData.collection) {
+                      const customerName = invitee.name;
+                      const customerEmail = invitee.email;
+                      
+                      // Extract phone from event location if available
+                      let customerPhone = '';
+                      if (eventData.resource?.location?.location) {
+                        const phoneMatch = eventData.resource.location.location.match(/(\+?\d[\d\s\-\(\)]{8,})/);
+                        if (phoneMatch) {
+                          customerPhone = phoneMatch[1];
+                        }
+                      }
+
+                      // Check if customer already exists for this date
+                      const existingReports = await storage.getCustomerReports();
+                      const exists = existingReports.some(report => 
+                        report.customerDate === date && 
+                        report.customerEmail === customerEmail &&
+                        report.trackingRecordId === trackingRecordId
+                      );
+
+                      if (!exists) {
+                        await storage.createCustomerReport({
+                          customerName,
+                          customerEmail,
+                          customerPhone,
+                          reportSent: false,
+                          customerDate: date,
+                          trackingRecordId: trackingRecordId
+                        });
+                        importedCount++;
+                      }
                     }
-                  }
-
-                  // Check if customer already exists for this date
-                  const existingReports = await storage.getCustomerReports();
-                  const exists = existingReports.some(report => 
-                    report.customerDate === date && 
-                    report.customerEmail === customerEmail &&
-                    report.trackingRecordId === trackingRecordId
-                  );
-
-                  if (!exists) {
-                    await storage.createCustomerReport({
-                      customerName,
-                      customerEmail,
-                      customerPhone,
-                      reportSent: false,
-                      customerDate: date,
-                      trackingRecordId: trackingRecordId
-                    });
-                    importedCount++;
                   }
                 }
               }
+            } else {
+              console.log('No events found in Calendly for this date');
             }
+          } else {
+            const errorText = await calendlyResponse.text();
+            calendlyError = `Calendly API error: ${calendlyResponse.status} - ${errorText}`;
+            console.error(calendlyError);
           }
+        } catch (error) {
+          calendlyError = `Calendly import error: ${error instanceof Error ? error.message : 'Unknown error'}`;
+          console.error('Calendly import error:', error);
         }
-      } catch (calendlyError) {
-        console.error('Calendly import error:', calendlyError);
       }
       
       console.log(`Manual update completed. Imported ${importedCount} customers.`);
-      res.json({ success: true, importedCount });
+      
+      // Return result with detailed information
+      if (calendlyError && importedCount === 0) {
+        res.json({ 
+          success: false, 
+          importedCount, 
+          error: calendlyError,
+          message: `Không thể import từ Calendly: ${calendlyError}`
+        });
+      } else {
+        res.json({ 
+          success: true, 
+          importedCount,
+          message: importedCount > 0 ? `Đã import thành công ${importedCount} khách hàng` : 'Không có khách hàng mới nào từ Calendly'
+        });
+      }
       
     } catch (error) {
       console.error("Error in manual update:", error);
