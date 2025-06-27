@@ -760,8 +760,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let importedCount = 0;
       let calendlyError = null;
       
-      // Check if we have Calendly token
-      if (!process.env.CALENDLY_API_TOKEN) {
+      // Get Calendly token from database
+      let calendlyToken = process.env.CALENDLY_API_TOKEN;
+      if (!calendlyToken) {
+        try {
+          const [setting] = await db.select().from(settings).where(eq(settings.key, 'calendly_token'));
+          calendlyToken = setting?.value;
+          console.log('Calendly token fetched from database:', calendlyToken ? 'Found' : 'Not found');
+        } catch (error) {
+          console.error('Error fetching Calendly token from database:', error);
+        }
+      }
+      
+      if (!calendlyToken) {
         calendlyError = "Calendly API token not configured";
       } else {
         try {
@@ -771,7 +782,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           const calendlyResponse = await fetch(calendlyUrl, {
             headers: {
-              'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+              'Authorization': `Bearer ${calendlyToken}`,
             },
           });
 
@@ -788,7 +799,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // Get event details including invitee information
                 const eventResponse = await fetch(event.uri, {
                   headers: {
-                    'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+                    'Authorization': `Bearer ${calendlyToken}`,
                   },
                 });
 
@@ -798,7 +809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   // Get invitees for this event
                   const inviteesResponse = await fetch(`${event.uri}/invitees`, {
                     headers: {
-                      'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+                      'Authorization': `Bearer ${calendlyToken}`,
                     },
                   });
 
