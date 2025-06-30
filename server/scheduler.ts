@@ -132,7 +132,7 @@ async function autoImportFromCalendly(date: string, trackingRecordId: number) {
         const eventId = event.uri.split('/').pop();
         const inviteesResponse = await fetch(`https://api.calendly.com/scheduled_events/${eventId}/invitees`, {
           headers: {
-            'Authorization': `Bearer ${process.env.CALENDLY_API_TOKEN}`,
+            'Authorization': `Bearer ${calendlyToken}`,
             'Content-Type': 'application/json'
           }
         });
