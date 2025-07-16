@@ -1,11 +1,10 @@
 services:
   - type: web
     name: customer-tracking-nodejs
-    runtime: node  # 👈 PHẢI có dòng này để Render không hiểu nhầm là Elixir
+    runtime: node
     plan: free
     buildCommand: npm run build
     startCommand: npm start
-    rootDir: .
     envVars:
       - key: DATABASE_URL
         sync: false
