@@ -3,8 +3,8 @@ services:
     name: customer-tracking-phoenix
     env: elixir
     plan: free
-    buildCommand: mix deps.get --only prod && mix compile && mix assets.setup && mix assets.deploy && mix phx.digest
-    startCommand: mix ecto.migrate && mix phx.server
+    buildCommand: ./build.sh
+    startCommand: ./start.sh
     envVars:
       - key: DATABASE_URL
         sync: false

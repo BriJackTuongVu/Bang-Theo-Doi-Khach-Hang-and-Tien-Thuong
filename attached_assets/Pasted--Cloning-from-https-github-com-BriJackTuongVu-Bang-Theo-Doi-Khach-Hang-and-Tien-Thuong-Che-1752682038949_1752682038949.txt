@@ -1,0 +1,55 @@
+==> Cloning from https://github.com/BriJackTuongVu/Bang-Theo-Doi-Khach-Hang-and-Tien-Thuong
+==> Checking out commit d576fc50fd0aab2532cb953b08bccb8b4a96c3f8 in branch main
+==> Using Erlang version 27.0 (default)
+==> Using Elixir version 1.18.4 (default)
+Error! Failed to load module 'elixir' because it requires a more recent Erlang/OTP version or its .beam file was corrupted.
+(You are running Erlang/OTP 27.)
+Runtime terminating during boot ({undef,[{init,start_it,1,[]},{init,start_em,1,[]},{init,do_boot,3,[]}]})
+Crash dump is being written to: erl_crash.dump...done
+==> Fetching Elixir 1.18.4 for OTP 27 from https://repo.hex.pm/builds/elixir/v1.18.4-otp-27.zip
+==> Docs on specifying Elixir and Erlang versions: https://render.com/docs/elixir-erlang-versions
+==> Clearing build cache after environment update
+* creating /opt/render/project/.mix/archives/hex-2.2.2-otp-27
+* creating /opt/render/project/.mix/elixir/1-18-otp-27/rebar3
+==> Running build command 'mix phx.digest'...
+Unchecked dependencies for environment prod:
+* telemetry_metrics (Hex package)
+  the dependency is not available, run "mix deps.get"
+* phoenix_live_view (Hex package)
+  the dependency is not available, run "mix deps.get"
+* telemetry_poller (Hex package)
+  the dependency is not available, run "mix deps.get"
+* esbuild (Hex package)
+  the dependency is not available, run "mix deps.get"
+* jason (Hex package)
+  the dependency is not available, run "mix deps.get"
+* phoenix_html (Hex package)
+  the dependency is not available, run "mix deps.get"
+* phoenix (Hex package)
+  the dependency is not available, run "mix deps.get"
+* phoenix_live_dashboard (Hex package)
+  the dependency is not available, run "mix deps.get"
+* gettext (Hex package)
+  the dependency is not available, run "mix deps.get"
+* postgrex (Hex package)
+  the dependency is not available, run "mix deps.get"
+* plug_cowboy (Hex package)
+  the dependency is not available, run "mix deps.get"
+* timex (Hex package)
+  the dependency is not available, run "mix deps.get"
+* ecto_sql (Hex package)
+  the dependency is not available, run "mix deps.get"
+* quantum (Hex package)
+  the dependency is not available, run "mix deps.get"
+* tailwind (Hex package)
+  the dependency is not available, run "mix deps.get"
+* httpoison (Hex package)
+  the dependency is not available, run "mix deps.get"
+* phoenix_ecto (Hex package)
+  the dependency is not available, run "mix deps.get"
+** (Mix) Can't continue due to errors on dependencies
+==> Build failed 😞
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+==> Requesting Node.js version 20
+==> Using Node.js version 20.19.4 via /opt/render/project/src/.node-version
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
