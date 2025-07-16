@@ -4,11 +4,11 @@
     {
       "type": "web",
       "name": "customer-tracking-app",
-      "runtime": "docker",
-      "dockerfilePath": "./Dockerfile",
-      "dockerContext": "./",
+      "runtime": "node",
       "plan": "starter",
       "region": "oregon",
+      "buildCommand": "npm run build",
+      "startCommand": "npm run start",
       "buildFilter": {
         "paths": ["**/*"]
       },
