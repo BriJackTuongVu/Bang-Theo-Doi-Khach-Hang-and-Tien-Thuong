@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: customer-tracking-app
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    plan: starter
+    region: oregon
+    env: node
+    buildFilter:
+      paths:
+      - "**/*"
+    envVars:
+      - key: NODE_ENV
+        value: production
