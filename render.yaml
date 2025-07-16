@@ -2,11 +2,12 @@ services:
   - type: web
     name: customer-tracking-app
     runtime: node
-    buildCommand: npm install && npm run build
+    buildCommand: chmod +x build.sh && ./build.sh
     startCommand: npm run start
     plan: starter
     region: oregon
     env: node
+    nodeVersion: 18
     buildFilter:
       paths:
       - "**/*"
