@@ -1,1 +1,1 @@
-web: npm run start
+web: mix ecto.migrate && mix phx.server
