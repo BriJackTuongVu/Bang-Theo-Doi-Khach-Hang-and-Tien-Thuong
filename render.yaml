@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: customer-tracking-app
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    buildFilter:
+      paths:
+        - "**/*.js"
+        - "**/*.ts"
+        - "**/*.tsx"
+        - "**/*.json"
+        - "package.json"
+        - "package-lock.json"
+        - "!**/*.ex"
+        - "!**/*.exs"
+        - "!mix.exs"
+        - "!mix.lock"
+    envVars:
+      - key: NODE_ENV
+        value: production
