@@ -4,11 +4,8 @@ services:
     runtime: node
     plan: starter
     region: oregon
-    buildCommand: npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm run start
-    buildFilter:
-      paths:
-      - "**/*"
     envVars:
       - key: NODE_ENV
         value: production
