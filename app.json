@@ -1,0 +1,20 @@
+{
+  "name": "customer-tracking-app",
+  "description": "Vietnamese Customer Tracking System",
+  "keywords": ["nodejs", "express", "react", "typescript"],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "env": {
+    "NODE_ENV": {
+      "description": "Node environment",
+      "value": "production"
+    }
+  },
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
+  }
+}
