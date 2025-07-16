@@ -1,6 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
 import { startScheduler } from "./scheduler";
 
 const app = express();
@@ -35,7 +34,7 @@ app.use((req, res, next) => {
         logLine = logLine.slice(0, 79) + "…";
       }
 
-      log(logLine);
+      console.log(`${new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true })} [express] ${logLine}`);
     }
   });
 
@@ -57,9 +56,26 @@ app.use((req, res, next) => {
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
+    const { setupVite } = await import("./vite");
     await setupVite(app, server);
   } else {
-    serveStatic(app);
+    // Serve static files in production
+    const express = await import("express");
+    const path = await import("path");
+    const fs = await import("fs");
+    
+    // Serve static files from dist/public
+    app.use(express.static(path.resolve("dist/public")));
+    
+    // Serve index.html for all other routes (SPA)
+    app.get("*", (req, res) => {
+      const indexPath = path.resolve("dist/public/index.html");
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(404).send("Application not built. Please run 'npm run build'");
+      }
+    });
   }
 
   // Use PORT environment variable from Render or default to 5000
@@ -69,8 +85,8 @@ app.use((req, res, next) => {
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
-    log(`Railway URL: https://${process.env.RAILWAY_STATIC_URL || 'localhost:' + port}`);
+    console.log(`${new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true })} [express] serving on port ${port}`);
+    console.log(`${new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true })} [express] Railway URL: https://${process.env.RAILWAY_STATIC_URL || 'localhost:' + port}`);
     
     // Khởi động scheduler cho việc tạo bảng tự động
     startScheduler();
