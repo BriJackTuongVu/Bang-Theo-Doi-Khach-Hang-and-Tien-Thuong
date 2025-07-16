@@ -1,0 +1,1 @@
+node_modules/\n.env\n.env.*\ndist/\n*.log\n.DS_Store\n*.ex\n*.exs\nmix.exs\nmix.lock\n_build/\ndeps/\n.tool-versions\n.elixir_ls/
