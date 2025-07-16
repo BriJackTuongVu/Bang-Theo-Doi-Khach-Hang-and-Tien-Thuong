@@ -14,10 +14,23 @@ services:
         - "**/*.json"
         - "package.json"
         - "package-lock.json"
-        - "!**/*.ex"
-        - "!**/*.exs"
-        - "!mix.exs"
-        - "!mix.lock"
+        - "client/**"
+        - "server/**"
+        - "shared/**"
+        - "*.config.*"
+      ignoredPaths:
+        - "**/*.ex"
+        - "**/*.exs"
+        - "mix.exs"
+        - "mix.lock"
+        - "_build/**"
+        - "deps/**"
+        - "priv/**"
+        - "**/*.beam"
+        - "**/*.erl"
+        - "lib/**/*.ex"
+        - "config/**/*.ex"
+        - "test/**/*.ex"
     envVars:
       - key: NODE_ENV
         value: production

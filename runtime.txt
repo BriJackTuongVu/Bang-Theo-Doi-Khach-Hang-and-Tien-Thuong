@@ -1,1 +1,1 @@
-nodejs-20
+node-20.x
