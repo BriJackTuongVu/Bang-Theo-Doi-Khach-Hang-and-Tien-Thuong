@@ -1,10 +1,10 @@
 services:
   - type: web
-    name: customer-tracking-phoenix
-    env: elixir
+    name: customer-tracking-nodejs
+    env: node
     plan: free
-    buildCommand: ./build.sh
-    startCommand: ./start.sh
+    buildCommand: npm run build
+    startCommand: npm start
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -14,9 +14,7 @@ services:
         sync: false
       - key: VITE_STRIPE_PUBLIC_KEY
         sync: false
-      - key: MIX_ENV
-        value: prod
-      - key: SECRET_KEY_BASE
-        generateValue: true
+      - key: NODE_ENV
+        value: production
       - key: PORT
-        value: 4000
+        value: 5000

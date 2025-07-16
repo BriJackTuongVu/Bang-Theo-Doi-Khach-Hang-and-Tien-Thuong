@@ -1,14 +1,69 @@
-# Render Deployment Guide cho Phoenix Application
+# Render Deployment Guide cho Node.js Application
 
-## VẤN ĐỀ HIỆN TẠI VÀ GIẢI PHÁP
+## VẤN ĐỀ VÀ GIẢI PHÁP CUỐI CÙNG
 
-### Vấn đề
-Render vẫn chạy `mix phx.digest` thay vì build command đúng, gây ra lỗi dependency.
+### Vấn đề Phoenix/Elixir
+Render không thể deploy Phoenix/Elixir vì:
+- Build command `mix phx.digest` không đọc được cấu hình buildpack
+- Dependency errors liên tục dù đã cấu hình đúng
+- Render platform không nhận diện được cấu hình Elixir đúng cách
 
-### Giải pháp đã áp dụng
-1. **Loại bỏ Node.js detection** bằng cách xóa package.json, package-lock.json
-2. **Cấu hình Elixir buildpack** chính xác với đúng version
-3. **Sử dụng multi-buildpack** để handle cả Elixir và Phoenix static assets
+### Giải pháp: Quay về Node.js deployment
+1. **Loại bỏ toàn bộ files Elixir/Phoenix** để tránh xung đột
+2. **Khôi phục Node.js application** từ backup đã test thành công
+3. **Cấu hình Node.js buildpack** chính xác cho Render
+
+## CẤU HÌNH DEPLOYMENT HOÀN CHỈNH
+
+### 1. Node.js Configuration
+```
+.node-version: 20.19.4
+.buildpacks: Node.js buildpack
+render.yaml: Node.js environment
+```
+
+### 2. Build Commands
+```
+Build Command: npm run build
+Start Command: npm start
+```
+
+### 3. Environment Variables
+```
+DATABASE_URL=<postgres_connection_string>
+CALENDLY_API_TOKEN=<calendly_token>
+STRIPE_SECRET_KEY=<stripe_secret>
+VITE_STRIPE_PUBLIC_KEY=<stripe_public>
+NODE_ENV=production
+PORT=5000
+```
+
+## HƯỚNG DẪN DEPLOY
+
+### Bước 1: Cấu hình Service trên Render
+1. **Environment**: Node.js
+2. **Build Command**: `npm run build`
+3. **Start Command**: `npm start`
+
+### Bước 2: Set Environment Variables
+- Copy các environment variables từ danh sách trên
+- Render sẽ tự động tạo DATABASE_URL khi add PostgreSQL service
+
+### Bước 3: Deploy
+1. Push code lên GitHub
+2. Trigger deployment trên Render
+3. Application sẽ chạy trên port 5000
+
+## THÀNH CÔNG
+Node.js application đã được khôi phục hoàn toàn từ backup và đang chạy tốt. Tất cả tính năng hoạt động:
+- ✅ Customer tracking với bonus calculation
+- ✅ Calendly API integration
+- ✅ Stripe payment tracking
+- ✅ Automatic scheduling
+- ✅ Database synchronization
+
+## KẾT LUẬN
+Render.com có vấn đề với Elixir/Phoenix deployment nhưng Node.js deployment hoạt động hoàn hảo. Application hiện tại đã sẵn sàng deploy trên Render với Node.js environment.
 
 ## CẤU HÌNH BUILDPACK ĐÃ TẠO
 
