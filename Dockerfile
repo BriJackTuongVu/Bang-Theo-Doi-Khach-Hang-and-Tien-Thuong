@@ -18,7 +18,8 @@ RUN npm run build
 # Remove dev dependencies
 RUN npm prune --production
 
-# Expose port (Render will set PORT env var, default to 5000)
+# Expose port (Railway will set PORT env var, default to 5000)
+EXPOSE $PORT
 EXPOSE 5000
 
 # Start the application

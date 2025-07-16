@@ -65,6 +65,7 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    log(`Railway URL: https://${process.env.RAILWAY_STATIC_URL || 'localhost:' + port}`);
     
     // Khởi động scheduler cho việc tạo bảng tự động
     startScheduler();
