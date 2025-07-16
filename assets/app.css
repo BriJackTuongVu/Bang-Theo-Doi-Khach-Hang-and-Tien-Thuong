@@ -1,0 +1,74 @@
+/* Phoenix LiveView CSS */
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* Custom styles for Vietnamese customer tracking app */
+.phx-no-feedback.phx-no-feedback:focus {
+  @apply ring-1 ring-blue-300 border-blue-300;
+}
+
+.phx-click-loading {
+  @apply cursor-wait;
+}
+
+.phx-submit-loading {
+  @apply opacity-75;
+}
+
+.phx-submit-loading:disabled {
+  @apply opacity-50;
+}
+
+/* Vietnamese text styling */
+html {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Red theme for main tracking table */
+.tracking-table {
+  @apply bg-red-50 border-red-400;
+}
+
+.tracking-table-header {
+  @apply bg-red-100 text-red-800;
+}
+
+/* Customer detail tables */
+.customer-table {
+  @apply bg-white border-gray-200;
+}
+
+.customer-table-header {
+  @apply bg-gray-50 text-gray-700;
+}
+
+/* Toggle switches */
+.toggle-switch {
+  @apply relative inline-flex h-4 w-8 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+.toggle-switch-ball {
+  @apply inline-block h-3 w-3 transform rounded-full bg-white transition;
+}
+
+/* Loading states */
+.loading-spinner {
+  @apply animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full;
+}
+
+/* Vietnamese character support */
+input, textarea, select {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .table-responsive {
+    @apply overflow-x-auto;
+  }
+  
+  .table-responsive table {
+    @apply min-w-full;
+  }
+}
