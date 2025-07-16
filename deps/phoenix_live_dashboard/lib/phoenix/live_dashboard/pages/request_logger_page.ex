@@ -19,7 +19,8 @@ defmodule Phoenix.LiveDashboard.RequestLoggerPage do
     end
 
     socket =
-      assign(socket,
+      socket
+      |> assign(
         stream: stream,
         param_key: param_key,
         cookie_key: cookie_key,
@@ -28,14 +29,16 @@ defmodule Phoenix.LiveDashboard.RequestLoggerPage do
         autoscroll_enabled: true,
         messages_present: false
       )
+      |> stream_configure(:messages, dom_id: fn _ -> "log-#{System.unique_integer()}" end)
+      |> stream(:messages, [])
 
-    {:ok, socket, temporary_assigns: [messages: []]}
+    {:ok, socket}
   end
 
   def mount(_, %{request_logger: _}, socket) do
     stream = :crypto.strong_rand_bytes(3) |> Base.url_encode64()
     to = live_dashboard_path(socket, socket.assigns.page, stream: stream)
-    {:ok, push_redirect(socket, to: to)}
+    {:ok, push_navigate(socket, to: to)}
   end
 
   @impl true
@@ -53,7 +56,7 @@ defmodule Phoenix.LiveDashboard.RequestLoggerPage do
 
   @impl true
   def handle_info({:logger, level, message}, socket) do
-    {:noreply, assign(socket, messages: [{message, level}], messages_present: true)}
+    {:noreply, socket |> stream(:messages, [{message, level}]) |> assign(messages_present: true)}
   end
 
   @impl true
@@ -70,8 +73,6 @@ defmodule Phoenix.LiveDashboard.RequestLoggerPage do
   end
 
   @impl true
-  def render_page(_assigns), do: raise("this page is special cased to use render/2 instead")
-
   def render(assigns) do
     ~H"""
     <!-- Card containing log messages -->
@@ -80,26 +81,35 @@ defmodule Phoenix.LiveDashboard.RequestLoggerPage do
 
       <div class="card mb-4" id="logger-messages-card" phx-hook="PhxRequestLoggerMessages">
         <div class="card-body">
-          <div id="logger-messages" phx-update="append">
-            <%= for {message, level} <- @messages do %>
-              <pre id={"log-#{System.unique_integer()}"} class={"log-level#{level}"}><%= message %></pre>
+          <div id="logger-messages" phx-update="stream">
+            <%= for {id, {message, level}} <- @streams.messages do %>
+              <pre id={id} class={"log-level-#{level} text-wrap"}><%= message %></pre>
             <% end %>
           </div>
-
           <!-- Autoscroll ON/OFF checkbox -->
           <div id="logger-autoscroll" class="text-right mt-3">
-            <label>Autoscroll <input phx-click="toggle_autoscroll" checked={@autoscroll_enabled} class="logger-autoscroll-checkbox" type="checkbox"></label>
+            <label>
+              Autoscroll
+              <input
+                phx-click="toggle_autoscroll"
+                checked={@autoscroll_enabled}
+                class="logger-autoscroll-checkbox"
+                type="checkbox"
+              />
+            </label>
           </div>
         </div>
       </div>
     </div>
-
     <!-- Row containing cookie and query parameter cards -->
     <div class="row">
-
       <!-- Param column -->
       <%= if @param_key do %>
-        <div class="col-md d-flex flex-column" id="logger-query-params" phx-hook="PhxRequestLoggerQueryParameter">
+        <div
+          class="col-md d-flex flex-column"
+          id="logger-query-params"
+          phx-hook="PhxRequestLoggerQueryParameter"
+        >
           <h5 class="card-title flex-grow-0">Query Parameter</h5>
 
           <div class="card mb-4 flex-grow-1">
@@ -129,7 +139,9 @@ defmodule Phoenix.LiveDashboard.RequestLoggerPage do
 
           <div class="card mb-4 flex-grow-1">
             <div class="card-body d-flex flex-column">
-              <p class="flex-grow-1">Create a logger cookie to automatically log requests for the current browser session.</p>
+              <p class="flex-grow-1">
+                Create a logger cookie to automatically log requests for the current browser session.
+              </p>
 
               <div class="row flex-grow-0">
                 <div class="col">
@@ -138,33 +150,47 @@ defmodule Phoenix.LiveDashboard.RequestLoggerPage do
 
                 <div class="col">
                   <!-- Button and hook for switching cookie on and off -->
-                  <div phx-hook="PhxRequestLoggerCookie" id="logger-cookie-buttons"
+                  <div
+                    phx-hook="PhxRequestLoggerCookie"
+                    id="logger-cookie-buttons"
                     data-cookie-key={@cookie_key}
                     data-cookie-value={sign(@socket, @cookie_key, @stream)}
                     data-cookie-enabled={@cookie_enabled}
-                    data-cookie-domain={@cookie_domain}>
-
+                    data-cookie-domain={@cookie_domain}
+                  >
                     <%= if @cookie_enabled do %>
-                      <button phx-click="toggle_cookie" phx-value-enable="false" class="btn btn-secondary float-right">Disable cookie</button>
+                      <button
+                        phx-click="toggle_cookie"
+                        phx-value-enable="false"
+                        class="btn btn-secondary float-right"
+                      >
+                        Disable cookie
+                      </button>
                     <% else %>
-                      <button phx-click="toggle_cookie" phx-value-enable="true" class="btn btn-primary float-right">Enable cookie</button>
+                      <button
+                        phx-click="toggle_cookie"
+                        phx-value-enable="true"
+                        class="btn btn-primary float-right"
+                      >
+                        Enable cookie
+                      </button>
                     <% end %>
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
         </div>
       <% end %>
       <!-- End cookie column -->
     </div>
-
     <!-- Row with a 'new stream' link -->
     <div class="row mb-3">
       <div class="col text-center">
         Want to refresh the logger parameter?
-        <%= live_redirect "Start a new stream", to: live_dashboard_path(@socket, @page, []) %>
+        <.link navigate={live_dashboard_path(@socket, @page, [])}>
+          Start a new stream
+        </.link>
       </div>
     </div>
     """

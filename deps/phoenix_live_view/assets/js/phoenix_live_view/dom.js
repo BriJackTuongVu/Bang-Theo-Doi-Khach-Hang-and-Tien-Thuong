@@ -22,6 +22,8 @@ import {
   THROTTLED
 } from "./constants"
 
+import JS from "./js"
+
 import {
   logError
 } from "./utils"
@@ -48,7 +50,13 @@ let DOM = {
 
   isUploadInput(el){ return el.type === "file" && el.getAttribute(PHX_UPLOAD_REF) !== null },
 
-  findUploadInputs(node){ return this.all(node, `input[type="file"][${PHX_UPLOAD_REF}]`) },
+  isAutoUpload(inputEl){ return inputEl.hasAttribute("data-phx-auto-upload") },
+
+  findUploadInputs(node){
+    const formId = node.id
+    const inputsOutsideForm = this.all(document, `input[type="file"][${PHX_UPLOAD_REF}][form="${formId}"]`)
+    return this.all(node, `input[type="file"][${PHX_UPLOAD_REF}]`).concat(inputsOutsideForm)
+  },
 
   findComponentNodeList(node, cid){
     return this.filterWithinSameLiveView(this.all(node, `[${PHX_COMPONENT}="${cid}"]`), node)
@@ -60,15 +68,33 @@ let DOM = {
 
   wantsNewTab(e){
     let wantsNewTab = e.ctrlKey || e.shiftKey || e.metaKey || (e.button && e.button === 1)
-    return wantsNewTab || e.target.getAttribute("target") === "_blank"
+    let isDownload = (e.target instanceof HTMLAnchorElement && e.target.hasAttribute("download"))
+    let isTargetBlank = e.target.hasAttribute("target") && e.target.getAttribute("target").toLowerCase() === "_blank"
+    let isTargetNamedTab = e.target.hasAttribute("target") && !e.target.getAttribute("target").startsWith("_")
+    return wantsNewTab || isTargetBlank || isDownload || isTargetNamedTab
   },
 
   isUnloadableFormSubmit(e){
-    return !e.defaultPrevented && !this.wantsNewTab(e)
+    // Ignore form submissions intended to close a native <dialog> element
+    // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dialog#usage_notes
+    let isDialogSubmit = (e.target && e.target.getAttribute("method") === "dialog") ||
+      (e.submitter && e.submitter.getAttribute("formmethod") === "dialog")
+
+    if(isDialogSubmit){
+      return false
+    } else {
+      return !e.defaultPrevented && !this.wantsNewTab(e)
+    }
   },
 
-  isNewPageHref(href, currentLocation){
+  isNewPageClick(e, currentLocation){
+    let href = e.target instanceof HTMLAnchorElement ? e.target.getAttribute("href") : null
     let url
+
+    if(e.defaultPrevented || href === null || this.wantsNewTab(e)){ return false }
+    if(href.startsWith("mailto:") || href.startsWith("tel:")){ return false }
+    if(e.target.isContentEditable){ return false }
+
     try {
       url = new URL(href)
     } catch(e) {
@@ -85,7 +111,7 @@ let DOM = {
         return url.hash === "" && !url.href.endsWith("#")
       }
     }
-    return true
+    return url.protocol.startsWith("http")
   },
 
   markPhxChildDestroyed(el){
@@ -113,20 +139,27 @@ let DOM = {
     return this.all(el, `${PHX_VIEW_SELECTOR}[${PHX_PARENT_ID}="${parentId}"]`)
   },
 
-  findParentCIDs(node, cids){
-    let initial = new Set(cids)
-    let parentCids =
-      cids.reduce((acc, cid) => {
-        let selector = `[${PHX_COMPONENT}="${cid}"] [${PHX_COMPONENT}]`
+  findExistingParentCIDs(node, cids){
+    // we only want to find parents that exist on the page
+    // if a cid is not on the page, the only way it can be added back to the page
+    // is if a parent adds it back, therefore if a cid does not exist on the page,
+    // we should not try to render it by itself (because it would be rendered twice,
+    // one by the parent, and a second time by itself)
+    let parentCids = new Set()
+    let childrenCids = new Set()
 
-        this.filterWithinSameLiveView(this.all(node, selector), node)
+    cids.forEach(cid => {
+      this.filterWithinSameLiveView(this.all(node, `[${PHX_COMPONENT}="${cid}"]`), node).forEach(parent => {
+        parentCids.add(cid)
+        this.all(parent, `[${PHX_COMPONENT}]`)
           .map(el => parseInt(el.getAttribute(PHX_COMPONENT)))
-          .forEach(childCID => acc.delete(childCID))
+          .forEach(childCID => childrenCids.add(childCID))
+      })
+    })
 
-        return acc
-      }, initial)
+    childrenCids.forEach(childCid => parentCids.delete(childCid))
 
-    return parentCids.size === 0 ? new Set(cids) : parentCids
+    return parentCids
   },
 
   filterWithinSameLiveView(nodes, parent){
@@ -181,6 +214,7 @@ let DOM = {
   debounce(el, event, phxDebounce, defaultDebounce, phxThrottle, defaultThrottle, asyncFilter, callback){
     let debounce = el.getAttribute(phxDebounce)
     let throttle = el.getAttribute(phxThrottle)
+
     if(debounce === ""){ debounce = defaultDebounce }
     if(throttle === ""){ throttle = defaultThrottle }
     let value = debounce || throttle
@@ -189,7 +223,9 @@ let DOM = {
 
       case "blur":
         if(this.once(el, "debounce-blur")){
-          el.addEventListener("blur", () => callback())
+          el.addEventListener("blur", () => {
+            if(asyncFilter()){ callback() }
+          })
         }
         return
 
@@ -210,10 +246,10 @@ let DOM = {
             return false
           } else {
             callback()
-            this.putPrivate(el, THROTTLED, true)
-            setTimeout(() => {
+            const t = setTimeout(() => {
               if(asyncFilter()){ this.triggerCycle(el, DEBOUNCE_TRIGGER) }
             }, timeout)
+            this.putPrivate(el, THROTTLED, t)
           }
         } else {
           setTimeout(() => {
@@ -232,7 +268,13 @@ let DOM = {
           })
         }
         if(this.once(el, "bind-debounce")){
-          el.addEventListener("blur", () => this.triggerCycle(el, DEBOUNCE_TRIGGER))
+          el.addEventListener("blur", () => {
+            // because we trigger the callback here,
+            // we also clear the throttle timeout to prevent the callback
+            // from being called again after the timeout fires
+            clearTimeout(this.private(el, THROTTLED))
+            this.triggerCycle(el, DEBOUNCE_TRIGGER)
+          })
         }
     }
   },
@@ -259,35 +301,85 @@ let DOM = {
     return currentCycle
   },
 
-  discardError(container, el, phxFeedbackFor){
-    let field = el.getAttribute && el.getAttribute(phxFeedbackFor)
-    // TODO: Remove id lookup after we update Phoenix to use input_name instead of input_id
-    let input = field && container.querySelector(`[id="${field}"], [name="${field}"], [name="${field}[]"]`)
-    if(!input){ return }
-
-    if(!(this.private(input, PHX_HAS_FOCUSED) || this.private(input, PHX_HAS_SUBMITTED))){
-      el.classList.add(PHX_NO_FEEDBACK_CLASS)
+  maybeAddPrivateHooks(el, phxViewportTop, phxViewportBottom){
+    if(el.hasAttribute && (el.hasAttribute(phxViewportTop) || el.hasAttribute(phxViewportBottom))){
+      el.setAttribute("data-phx-hook", "Phoenix.InfiniteScroll")
     }
   },
 
-  resetForm(form, phxFeedbackFor){
-    Array.from(form.elements).forEach(input => {
-      let query = `[${phxFeedbackFor}="${input.id}"],
-                   [${phxFeedbackFor}="${input.name}"],
-                   [${phxFeedbackFor}="${input.name.replace(/\[\]$/, "")}"]`
+  isFeedbackContainer(el, phxFeedbackFor){
+    return el.hasAttribute && el.hasAttribute(phxFeedbackFor)
+  },
 
+  maybeHideFeedback(container, feedbackContainers, phxFeedbackFor, phxFeedbackGroup){
+    // because we can have multiple containers with the same phxFeedbackFor value
+    // we perform the check only once and store the result;
+    // we often have multiple containers, because we push both fromEl and toEl in dompatch
+    // when a container is updated
+    const feedbackResults = {}
+    feedbackContainers.forEach(el => {
+      // skip elements that are not in the DOM
+      if(!container.contains(el)) return
+      const feedback = el.getAttribute(phxFeedbackFor)
+      if(!feedback){
+        // the container previously had phx-feedback-for, but now it doesn't
+        // remove the class from the container (if it exists)
+        JS.addOrRemoveClasses(el, [], [PHX_NO_FEEDBACK_CLASS])
+        return
+      }
+      if(feedbackResults[feedback] === true){
+        this.hideFeedback(el)
+        return
+      }
+      feedbackResults[feedback] = this.shouldHideFeedback(container, feedback, phxFeedbackGroup)
+      if(feedbackResults[feedback] === true){
+        this.hideFeedback(el)
+      }
+    })
+  },
+
+  hideFeedback(container){
+    JS.addOrRemoveClasses(container, [PHX_NO_FEEDBACK_CLASS], [])
+  },
+
+  shouldHideFeedback(container, nameOrGroup, phxFeedbackGroup){
+    const query = `[name="${nameOrGroup}"],
+                   [name="${nameOrGroup}[]"],
+                   [${phxFeedbackGroup}="${nameOrGroup}"]`
+    let focused = false
+    DOM.all(container, query, (input) => {
+      if(this.private(input, PHX_HAS_FOCUSED) || this.private(input, PHX_HAS_SUBMITTED)){
+        focused = true
+      }
+    })
+    return !focused
+  },
+
+  feedbackSelector(input, phxFeedbackFor, phxFeedbackGroup){
+    let query = `[${phxFeedbackFor}="${input.name}"],
+                 [${phxFeedbackFor}="${input.name.replace(/\[\]$/, "")}"]`
+    if(input.getAttribute(phxFeedbackGroup)){
+      query += `,[${phxFeedbackFor}="${input.getAttribute(phxFeedbackGroup)}"]`
+    }
+    return query
+  },
+
+  resetForm(form, phxFeedbackFor, phxFeedbackGroup){
+    Array.from(form.elements).forEach(input => {
+      let query = this.feedbackSelector(input, phxFeedbackFor, phxFeedbackGroup)
       this.deletePrivate(input, PHX_HAS_FOCUSED)
       this.deletePrivate(input, PHX_HAS_SUBMITTED)
       this.all(document, query, feedbackEl => {
-        feedbackEl.classList.add(PHX_NO_FEEDBACK_CLASS)
+        JS.addOrRemoveClasses(feedbackEl, [PHX_NO_FEEDBACK_CLASS], [])
       })
     })
   },
 
-  showError(inputEl, phxFeedbackFor){
-    if(inputEl.id || inputEl.name){
-      this.all(inputEl.form, `[${phxFeedbackFor}="${inputEl.id}"], [${phxFeedbackFor}="${inputEl.name}"]`, (el) => {
-        this.removeClass(el, PHX_NO_FEEDBACK_CLASS)
+  showError(inputEl, phxFeedbackFor, phxFeedbackGroup){
+    if(inputEl.name){
+      let query = this.feedbackSelector(inputEl, phxFeedbackFor, phxFeedbackGroup)
+      this.all(document, query, (el) => {
+        JS.addOrRemoveClasses(el, [], [PHX_NO_FEEDBACK_CLASS])
       })
     }
   },
@@ -300,12 +392,21 @@ let DOM = {
     return node.getAttribute && node.getAttribute(PHX_STICKY) !== null
   },
 
+  isChildOfAny(el, parents){
+    return !!parents.find(parent => parent.contains(el))
+  },
+
   firstPhxChild(el){
     return this.isPhxChild(el) ? el : this.all(el, `[${PHX_PARENT_ID}]`)[0]
   },
 
   dispatchEvent(target, name, opts = {}){
-    let bubbles = opts.bubbles === undefined ? true : !!opts.bubbles
+    let defaultBubble = true
+    let isUploadTarget = target.nodeName === "INPUT" && target.type === "file"
+    if(isUploadTarget && name === "click"){
+      defaultBubble = false
+    }
+    let bubbles = opts.bubbles === undefined ? defaultBubble : !!opts.bubbles
     let eventOpts = {bubbles: bubbles, cancelable: true, detail: opts.detail || {}}
     let event = name === "click" ? new MouseEvent("click", eventOpts) : new CustomEvent(name, eventOpts)
     target.dispatchEvent(event)
@@ -321,20 +422,40 @@ let DOM = {
     }
   },
 
+  // merge attributes from source to target
+  // if an element is ignored, we only merge data attributes
+  // including removing data attributes that are no longer in the source
   mergeAttrs(target, source, opts = {}){
-    let exclude = opts.exclude || []
+    let exclude = new Set(opts.exclude || [])
     let isIgnored = opts.isIgnored
     let sourceAttrs = source.attributes
     for(let i = sourceAttrs.length - 1; i >= 0; i--){
       let name = sourceAttrs[i].name
-      if(exclude.indexOf(name) < 0){ target.setAttribute(name, source.getAttribute(name)) }
+      if(!exclude.has(name)){
+        const sourceValue = source.getAttribute(name)
+        if(target.getAttribute(name) !== sourceValue && (!isIgnored || (isIgnored && name.startsWith("data-")))){
+          target.setAttribute(name, sourceValue)
+        }
+      } else {
+        // We exclude the value from being merged on focused inputs, because the
+        // user's input should always win.
+        // We can still assign it as long as the value property is the same, though.
+        // This prevents a situation where the updated hook is not being triggered
+        // when an input is back in its "original state", because the attribute
+        // was never changed, see:
+        // https://github.com/phoenixframework/phoenix_live_view/issues/2163
+        if(name === "value" && target.value === source.value){
+          // actually set the value attribute to sync it with the value property
+          target.setAttribute("value", source.getAttribute(name))
+        }
+      }
     }
 
     let targetAttrs = target.attributes
     for(let i = targetAttrs.length - 1; i >= 0; i--){
       let name = targetAttrs[i].name
       if(isIgnored){
-        if(name.startsWith("data-") && !source.hasAttribute(name)){ target.removeAttribute(name) }
+        if(name.startsWith("data-") && !source.hasAttribute(name) && ![PHX_REF, PHX_REF_SRC].includes(name)){ target.removeAttribute(name) }
       } else {
         if(!source.hasAttribute(name)){ target.removeAttribute(name) }
       }
@@ -344,6 +465,7 @@ let DOM = {
   mergeFocusedInput(target, source){
     // skip selects because FF will reset highlighted index for any setAttribute
     if(!(target instanceof HTMLSelectElement)){ DOM.mergeAttrs(target, source, {exclude: ["value"]}) }
+
     if(source.readOnly){
       target.setAttribute("readonly", true)
     } else {
@@ -356,9 +478,10 @@ let DOM = {
   },
 
   restoreFocus(focused, selectionStart, selectionEnd){
+    if(focused instanceof HTMLSelectElement){ focused.focus() }
     if(!DOM.isTextualInput(focused)){ return }
+
     let wasFocused = focused.matches(":focus")
-    if(focused.readOnly){ focused.blur() }
     if(!wasFocused){ focused.focus() }
     if(this.hasSelectionRange(focused)){
       focused.setSelectionRange(selectionStart, selectionEnd)
@@ -405,7 +528,7 @@ let DOM = {
         if(!childNode.id){
           // Skip warning if it's an empty text node (e.g. a new-line)
           let isEmptyTextNode = childNode.nodeType === Node.TEXT_NODE && childNode.nodeValue.trim() === ""
-          if(!isEmptyTextNode){
+          if(!isEmptyTextNode && childNode.nodeType !== Node.COMMENT_NODE){
             logError("only HTML element tags with an id are allowed inside containers with phx-update.\n\n" +
               `removing illegal node: "${(childNode.outerHTML || childNode.nodeValue).trim()}"\n\n`)
           }

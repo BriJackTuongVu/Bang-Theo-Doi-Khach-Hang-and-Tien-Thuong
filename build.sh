@@ -1,16 +1,19 @@
 #!/bin/bash
+# Build script for Phoenix application
 set -e
 
-echo "=== BUILD SCRIPT FOR NODE.JS APPLICATION ==="
-echo "Node.js version: $(node --version)"
-echo "NPM version: $(npm --version)"
+echo "Building Phoenix application..."
 
-# Clean install dependencies
-echo "=== Installing dependencies ==="
-npm ci
+# Install dependencies
+mix deps.get --only prod
 
-# Build the application
-echo "=== Building application ==="
-npm run build
+# Compile the application
+mix compile
 
-echo "=== Build completed successfully! ==="
+# Setup and build assets
+mix assets.deploy
+
+# Create release
+mix phx.digest
+
+echo "Build completed successfully!"

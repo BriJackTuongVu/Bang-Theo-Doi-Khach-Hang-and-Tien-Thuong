@@ -216,20 +216,14 @@ defmodule Phoenix.LiveView.HTMLFormatter do
   # Default line length to be used in case nothing is specified in the `.formatter.exs` options.
   @default_line_length 98
 
-  if Version.match?(System.version(), ">= 1.13.0") do
-    @behaviour Mix.Tasks.Format
-  end
+  @behaviour Mix.Tasks.Format
 
-  # TODO: Add it back after versions before Elixir 1.13 are no longer supported.
-  # @impl Mix.Tasks.Format
-  @doc false
+  @impl Mix.Tasks.Format
   def features(_opts) do
     [sigils: [:H], extensions: [".heex"]]
   end
 
-  # TODO: Add it back after versions before Elixir 1.13 are no longer supported.
-  # @impl Mix.Tasks.Format
-  @doc false
+  @impl Mix.Tasks.Format
   def format(source, opts) do
     line_length = opts[:heex_line_length] || opts[:line_length] || @default_line_length
     newlines = :binary.matches(source, ["\r\n", "\n"])
@@ -249,9 +243,9 @@ defmodule Phoenix.LiveView.HTMLFormatter do
           raise ParseError, line: line, column: column, file: file, description: message
       end
 
-    # If the opening delimiter is a single character, such as ~H"...",
+    # If the opening delimiter is a single character, such as ~H"...", or the formatted code is empty,
     # do not add trailing newline.
-    newline = if match?(<<_>>, opts[:opening_delimiter]), do: [], else: ?\n
+    newline = if match?(<<_>>, opts[:opening_delimiter]) or formatted == [], do: [], else: ?\n
 
     # TODO: Remove IO.iodata_to_binary/1 call on Elixir v1.14+
     IO.iodata_to_binary([formatted, newline])
@@ -462,42 +456,24 @@ defmodule Phoenix.LiveView.HTMLFormatter do
     end
   end
 
-  defp to_tree([{:eex_comment, text, _meta} | tokens], buffer, stack, source) do
-    to_tree(tokens, [{:eex_comment, text} | buffer], stack, source)
-  end
-
-  defp to_tree([{type, name, attrs, %{self_close: true} = meta} | tokens], buffer, stack, source)
+  defp to_tree([{type, _name, attrs, %{closing: _} = meta} | tokens], buffer, stack, source)
        when is_tag_open(type) do
-    # TODO: fix me
-    tag_name = meta[:tag_name] || name
-    to_tree(tokens, [{:tag_self_close, tag_name, attrs} | buffer], stack, source)
+    to_tree(tokens, [{:tag_self_close, meta.tag_name, attrs} | buffer], stack, source)
   end
 
-  @void_tags ~w(area base br col hr img input link meta param command keygen source)
-  defp to_tree([{type, name, attrs, meta} | tokens], buffer, stack, source)
-       when is_tag_open(type) and name in @void_tags do
-    # TODO: fix me
-    tag_name = meta[:tag_name] || name
-    to_tree(tokens, [{:tag_self_close, tag_name, attrs} | buffer], stack, source)
-  end
-
-  defp to_tree([{type, name, attrs, meta} | tokens], buffer, stack, source)
+  defp to_tree([{type, _name, attrs, meta} | tokens], buffer, stack, source)
        when is_tag_open(type) do
-    # TODO: fix me
-    tag_name = meta[:tag_name] || name
-    to_tree(tokens, [], [{tag_name, attrs, meta, buffer} | stack], source)
+    to_tree(tokens, [], [{meta.tag_name, attrs, meta, buffer} | stack], source)
   end
 
   defp to_tree(
          [{:close, _type, _name, close_meta} | tokens],
          buffer,
-         [{name, attrs, open_meta, upper_buffer} | stack],
+         [{tag_name, attrs, open_meta, upper_buffer} | stack],
          source
        ) do
-    tag_name = open_meta[:tag_name] || name
-
     {mode, block} =
-      if (tag_name in ["pre", "textarea"] or contains_special_attrs?(attrs)) and buffer != [] do
+      if tag_name in ["pre", "textarea"] or contains_special_attrs?(attrs) do
         content = content_from_source(source, open_meta.inner_location, close_meta.inner_location)
         {:preserve, [{:text, content, %{newlines: 0}}]}
       else
@@ -521,48 +497,52 @@ defmodule Phoenix.LiveView.HTMLFormatter do
 
   # handle eex
 
-  defp to_tree([{:eex, :start_expr, expr, _meta} | tokens], buffer, stack, source) do
-    to_tree(tokens, [], [{:eex_block, expr, buffer} | stack], source)
+  defp to_tree([{:eex_comment, text, _meta} | tokens], buffer, stack, source) do
+    to_tree(tokens, [{:eex_comment, text} | buffer], stack, source)
+  end
+
+  defp to_tree([{:eex, :start_expr, expr, meta} | tokens], buffer, stack, source) do
+    to_tree(tokens, [], [{:eex_block, expr, meta, buffer} | stack], source)
   end
 
   defp to_tree(
          [{:eex, :middle_expr, middle_expr, _meta} | tokens],
          buffer,
-         [{:eex_block, expr, upper_buffer, middle_buffer} | stack],
+         [{:eex_block, expr, meta, upper_buffer, middle_buffer} | stack],
          source
        ) do
     middle_buffer = [{Enum.reverse(buffer), middle_expr} | middle_buffer]
-    to_tree(tokens, [], [{:eex_block, expr, upper_buffer, middle_buffer} | stack], source)
+    to_tree(tokens, [], [{:eex_block, expr, meta, upper_buffer, middle_buffer} | stack], source)
   end
 
   defp to_tree(
          [{:eex, :middle_expr, middle_expr, _meta} | tokens],
          buffer,
-         [{:eex_block, expr, upper_buffer} | stack],
+         [{:eex_block, expr, meta, upper_buffer} | stack],
          source
        ) do
     middle_buffer = [{Enum.reverse(buffer), middle_expr}]
-    to_tree(tokens, [], [{:eex_block, expr, upper_buffer, middle_buffer} | stack], source)
+    to_tree(tokens, [], [{:eex_block, expr, meta, upper_buffer, middle_buffer} | stack], source)
   end
 
   defp to_tree(
          [{:eex, :end_expr, end_expr, _meta} | tokens],
          buffer,
-         [{:eex_block, expr, upper_buffer, middle_buffer} | stack],
+         [{:eex_block, expr, meta, upper_buffer, middle_buffer} | stack],
          source
        ) do
     block = Enum.reverse([{Enum.reverse(buffer), end_expr} | middle_buffer])
-    to_tree(tokens, [{:eex_block, expr, block} | upper_buffer], stack, source)
+    to_tree(tokens, [{:eex_block, expr, block, meta} | upper_buffer], stack, source)
   end
 
   defp to_tree(
          [{:eex, :end_expr, end_expr, _meta} | tokens],
          buffer,
-         [{:eex_block, expr, upper_buffer} | stack],
+         [{:eex_block, expr, meta, upper_buffer} | stack],
          source
        ) do
     block = [{Enum.reverse(buffer), end_expr}]
-    to_tree(tokens, [{:eex_block, expr, block} | upper_buffer], stack, source)
+    to_tree(tokens, [{:eex_block, expr, block, meta} | upper_buffer], stack, source)
   end
 
   defp to_tree([{:eex, _type, expr, meta} | tokens], buffer, stack, source) do
@@ -571,7 +551,7 @@ defmodule Phoenix.LiveView.HTMLFormatter do
 
   # -- HELPERS
 
-  defp count_newlines_until_text(<<char, rest::binary>>, counter) when char in '\s\t\r',
+  defp count_newlines_until_text(<<char, rest::binary>>, counter) when char in ~c"\s\t\r",
     do: count_newlines_until_text(rest, counter)
 
   defp count_newlines_until_text(<<?\n, rest::binary>>, counter),
@@ -601,17 +581,17 @@ defmodule Phoenix.LiveView.HTMLFormatter do
   end
 
   defp head_may_not_have_whitespace?([{:text, text, _meta} | _]),
-    do: String.trim_leading(text) != "" and :binary.last(text) not in '\s\t'
+    do: String.trim_leading(text) != "" and :binary.last(text) not in ~c"\s\t"
 
   defp head_may_not_have_whitespace?([{:eex, _, _} | _]), do: true
   defp head_may_not_have_whitespace?(_), do: false
 
-  # In case the given tag is inline and the there is no white spaces in the next
+  # In case the given tag is inline and there is no white spaces in the next
   # text, we want to set mode as preserve. So this tag will not be formatted.
   defp may_set_preserve_on_block([{:tag_block, name, attrs, block, meta} | list], text)
        when name in @inline_elements do
     mode =
-      if String.trim_leading(text) != "" and :binary.first(text) not in '\s\t\n\r' do
+      if String.trim_leading(text) != "" and :binary.first(text) not in ~c"\s\t\n\r" do
         :preserve
       else
         meta.mode
@@ -643,10 +623,11 @@ defmodule Phoenix.LiveView.HTMLFormatter do
 
   defp may_set_preserve_on_text(buffer, _mode, _tag_name), do: buffer
 
-  defp whitespace_around?(text), do: :binary.first(text) in '\s\t' or :binary.last(text) in '\s\t'
+  defp whitespace_around?(text),
+    do: :binary.first(text) in ~c"\s\t" or :binary.last(text) in ~c"\s\t"
 
   defp cleanup_extra_spaces_leading(text) do
-    if :binary.first(text) in '\s\t' do
+    if :binary.first(text) in ~c"\s\t" do
       " " <> String.trim_leading(text)
     else
       text
@@ -654,7 +635,7 @@ defmodule Phoenix.LiveView.HTMLFormatter do
   end
 
   defp cleanup_extra_spaces_trailing(text) do
-    if :binary.last(text) in '\s\t' do
+    if :binary.last(text) in ~c"\s\t" do
       String.trim_trailing(text) <> " "
     else
       text

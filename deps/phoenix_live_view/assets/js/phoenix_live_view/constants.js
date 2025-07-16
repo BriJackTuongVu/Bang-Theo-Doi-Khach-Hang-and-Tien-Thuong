@@ -5,7 +5,8 @@ export const RELOAD_JITTER_MAX = 10000
 export const FAILSAFE_JITTER = 30000
 export const PHX_EVENT_CLASSES = [
   "phx-click-loading", "phx-change-loading", "phx-submit-loading",
-  "phx-keydown-loading", "phx-keyup-loading", "phx-blur-loading", "phx-focus-loading"
+  "phx-keydown-loading", "phx-keyup-loading", "phx-blur-loading", "phx-focus-loading",
+  "phx-hook-loading"
 ]
 export const PHX_COMPONENT = "data-phx-component"
 export const PHX_LIVE_LINK = "data-phx-link"
@@ -21,17 +22,23 @@ export const PHX_DROP_TARGET = "drop-target"
 export const PHX_ACTIVE_ENTRY_REFS = "data-phx-active-refs"
 export const PHX_LIVE_FILE_UPDATED = "phx:live-file:updated"
 export const PHX_SKIP = "data-phx-skip"
+export const PHX_MAGIC_ID = "data-phx-id"
 export const PHX_PRUNE = "data-phx-prune"
 export const PHX_PAGE_LOADING = "page-loading"
 export const PHX_CONNECTED_CLASS = "phx-connected"
-export const PHX_DISCONNECTED_CLASS = "phx-loading"
+export const PHX_LOADING_CLASS = "phx-loading"
 export const PHX_NO_FEEDBACK_CLASS = "phx-no-feedback"
 export const PHX_ERROR_CLASS = "phx-error"
+export const PHX_CLIENT_ERROR_CLASS = "phx-client-error"
+export const PHX_SERVER_ERROR_CLASS = "phx-server-error"
 export const PHX_PARENT_ID = "data-phx-parent-id"
 export const PHX_MAIN = "data-phx-main"
 export const PHX_ROOT_ID = "data-phx-root-id"
+export const PHX_VIEWPORT_TOP = "viewport-top"
+export const PHX_VIEWPORT_BOTTOM = "viewport-bottom"
 export const PHX_TRIGGER_ACTION = "trigger-action"
 export const PHX_FEEDBACK_FOR = "feedback-for"
+export const PHX_FEEDBACK_GROUP = "feedback-group"
 export const PHX_HAS_FOCUSED = "phx-has-focused"
 export const FOCUSABLE_INPUTS = ["text", "textarea", "number", "email", "password", "search", "tel", "url", "date", "time", "datetime-local", "color", "range"]
 export const CHECKABLE_INPUTS = ["checkbox", "radio"]
@@ -49,6 +56,7 @@ export const PHX_DEBOUNCE = "debounce"
 export const PHX_THROTTLE = "throttle"
 export const PHX_UPDATE = "update"
 export const PHX_STREAM = "stream"
+export const PHX_STREAM_REF = "data-phx-stream"
 export const PHX_KEY = "key"
 export const PHX_PRIVATE = "phxPrivate"
 export const PHX_AUTO_RECOVER = "auto-recover"
@@ -74,6 +82,7 @@ export const DEFAULTS = {
 // Rendered
 export const DYNAMICS = "d"
 export const STATIC = "s"
+export const ROOT = "r"
 export const COMPONENTS = "c"
 export const EVENTS = "e"
 export const REPLY = "r"

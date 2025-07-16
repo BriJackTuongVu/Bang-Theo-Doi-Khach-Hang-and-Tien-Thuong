@@ -3,9 +3,6 @@ defmodule Phoenix.LiveView.HTMLAlgebra do
 
   import Inspect.Algebra, except: [format: 2]
 
-  # TODO: Remove it after versions before Elixir 1.13 are no longer supported.
-  @compile {:no_warn_undefined, Code}
-
   @languages ~w(style script)
 
   # The formatter has two modes:
@@ -144,7 +141,7 @@ defmodule Phoenix.LiveView.HTMLAlgebra do
   defp text?({:text, _text, _meta}), do: true
   defp text?(_node), do: false
 
-  @codepoints '\s\n\r\t'
+  @codepoints ~c"\s\n\r\t"
 
   defp text_starts_with_space?({:text, text, _meta}) when text != "",
     do: :binary.first(text) in @codepoints
@@ -157,7 +154,7 @@ defmodule Phoenix.LiveView.HTMLAlgebra do
   defp text_ends_with_space?(_node), do: false
 
   defp text_ends_with_line_break?({:text, text, _meta}) when text != "",
-    do: :binary.last(text) in '\n\r'
+    do: :binary.last(text) in ~c"\n\r"
 
   defp text_ends_with_line_break?(_node), do: false
 
@@ -170,7 +167,7 @@ defmodule Phoenix.LiveView.HTMLAlgebra do
     {:block, group(nest(children, :reset))}
   end
 
-  defp to_algebra({:tag_block, name, attrs, block, _meta}, context) when name in @languages do
+  defp to_algebra({:tag_block, name, attrs, block, meta}, context) when name in @languages do
     children = block_to_algebra(block, %{context | mode: :preserve})
 
     # Convert the whole block to text as there are no
@@ -194,7 +191,7 @@ defmodule Phoenix.LiveView.HTMLAlgebra do
     doc =
       case lines do
         [] ->
-          empty()
+          line()
 
         _ ->
           text =
@@ -202,7 +199,10 @@ defmodule Phoenix.LiveView.HTMLAlgebra do
             |> Enum.map(&remove_indentation(&1, indentation))
             |> text_to_algebra(0, [])
 
-          nest(concat(line(), text), 2)
+          case meta do
+            %{mode: :preserve} -> text
+            _ -> concat(nest(concat(line(), text), 2), line())
+          end
       end
 
     group =
@@ -211,7 +211,6 @@ defmodule Phoenix.LiveView.HTMLAlgebra do
         build_attrs(attrs, "", context.opts),
         ">",
         doc,
-        line(),
         "</#{name}>"
       ])
       |> group()
@@ -268,7 +267,7 @@ defmodule Phoenix.LiveView.HTMLAlgebra do
   end
 
   # Handle EEX blocks within preserve tags
-  defp to_algebra({:eex_block, expr, block}, %{mode: :preserve} = context) do
+  defp to_algebra({:eex_block, expr, block, meta}, %{mode: :preserve} = context) do
     doc =
       Enum.reduce(block, empty(), fn {block, expr}, doc ->
         children = block_to_algebra(block, context)
@@ -276,11 +275,11 @@ defmodule Phoenix.LiveView.HTMLAlgebra do
         concat([doc, children, expr])
       end)
 
-    {:block, group(concat("<%= #{expr} %>", doc))}
+    {:block, group(concat("<%#{meta.opt} #{expr} %>", doc))}
   end
 
   # Handle EEX blocks
-  defp to_algebra({:eex_block, expr, block}, context) do
+  defp to_algebra({:eex_block, expr, block, meta}, context) do
     {doc, _stab} =
       Enum.reduce(block, {empty(), false}, fn {block, expr}, {doc, stab?} ->
         {block, _force_newline?} = trim_block_newlines(block)
@@ -288,7 +287,7 @@ defmodule Phoenix.LiveView.HTMLAlgebra do
         {concat(doc, force_unfit(next_doc)), stab?}
       end)
 
-    {:block, group(concat("<%= #{expr} %>", doc))}
+    {:block, group(concat("<%#{meta.opt} #{expr} %>", doc))}
   end
 
   defp to_algebra({:eex_comment, text}, _context) do
@@ -391,9 +390,7 @@ defmodule Phoenix.LiveView.HTMLAlgebra do
     |> group()
   end
 
-  # TODO: Remove let from this list
   @attrs_order %{
-    "let" => 1,
     ":let" => 1,
     ":for" => 2,
     ":if" => 3
@@ -428,13 +425,6 @@ defmodule Phoenix.LiveView.HTMLAlgebra do
   defp render_attribute({attr, {:string, value, _meta}, _}, _opts), do: ~s(#{attr}="#{value}")
 
   defp render_attribute({attr, {:expr, value, meta}, _}, opts) do
-    # TODO: remove me when "let" is not supported anymore.
-    attr =
-      case attr do
-        "let" -> ":let"
-        attr -> attr
-      end
-
     case expr_to_quoted(value, meta) do
       {{:__block__, meta, [string]} = block, []} when is_binary(string) ->
         case Keyword.get(meta, :delimiter) do

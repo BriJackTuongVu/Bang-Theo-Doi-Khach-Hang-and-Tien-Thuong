@@ -8,11 +8,26 @@ defmodule Phoenix.LiveDashboard.AppInfoComponent do
     ~H"""
     <div class="app-info">
       <%= if @alive do %>
-        <svg width={@width} height={@height} id="tree" class="tree" >
+        <svg width={@width} height={@height} id="tree" class="tree">
           <%= for node <- @nodes do %>
-            <rect x={node.x} y={node.y} rx="10" ry="10" width={node.width} height={node.height}
-            class="node" phx-click="show_info" phx-value-info={node_encoded_pid(node.value)} phx-page-loading />
-            <text class="tree-node-text" x={node.x + 10} y={node.y + div(node.height, 2)} dominant-baseline="central">
+            <rect
+              x={node.x}
+              y={node.y}
+              rx="10"
+              ry="10"
+              width={node.width}
+              height={node.height}
+              class="node"
+              phx-click="show_info"
+              phx-value-info={node_encoded_pid(node.value)}
+              phx-page-loading
+            />
+            <text
+              class="tree-node-text"
+              x={node.x + 10}
+              y={node.y + div(node.height, 2)}
+              dominant-baseline="central"
+            >
               <%= node.label %>
             </text>
           <% end %>
@@ -33,9 +48,9 @@ defmodule Phoenix.LiveDashboard.AppInfoComponent do
   end
 
   @impl true
-  def update(%{id: "App<" <> app, path: path, node: node}, socket) do
+  def update(%{id: "App<" <> app, page: page}, socket) do
     app = app |> String.replace_suffix(">", "") |> String.to_existing_atom()
-    {:ok, socket |> assign(app: app, path: path, node: node) |> assign_tree()}
+    {:ok, socket |> assign(app: app, node: page.node) |> assign_tree()}
   end
 
   defp assign_tree(%{assigns: assigns} = socket) do

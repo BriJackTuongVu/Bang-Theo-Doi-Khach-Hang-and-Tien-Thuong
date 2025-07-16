@@ -7,16 +7,9 @@ defmodule Phoenix.LiveDashboard.Router do
   Defines a LiveDashboard route.
 
   It expects the `path` the dashboard will be mounted at
-  and a set of options.
+  and a set of options. You can then link to the route directly:
 
-  This will also generate a named helper called `live_dashboard_path/2`
-  which you can use to link directly to the dashboard, such as:
-
-      <%= link "Dashboard", to: live_dashboard_path(conn, :home) %>
-
-  Note you should only use `link/2` to link to the dashboard (and not
-  `live_redirect/live_link`, as it has to set its own session on first
-  render.
+      <a href={~p"/dashboard"}>Dashboard</a>
 
   ## Options
 
@@ -28,10 +21,10 @@ defmodule Phoenix.LiveDashboard.Router do
       type `%{optional(:img) => atom(), optional(:script) => atom(), optional(:style) => atom()}`
 
     * `:ecto_repos` - the repositories to show database information.
-      Currently only PSQL databases are supported. If you don't specify
-      but your app is running Ecto, we will try to auto-discover the
-      available repositories. You can disable this behavior by setting
-      `[]` to this option.
+      Currently only PostgreSQL, MySQL, and SQLite databases are supported.
+      If you don't specify but your app is running Ecto, we will try to
+      auto-discover the available repositories. You can disable this behavior
+      by setting `[]` to this option.
 
     * `:env_keys` - Configures environment variables to display.
       It is defined as a list of string keys. If not set, the environment
@@ -50,6 +43,10 @@ defmodule Phoenix.LiveDashboard.Router do
         metrics_history: {MyStorage, :metrics_history, []}
       If not set, metrics will start out empty/blank and only display
       data that occurs while the browser page is open.
+
+    * `:on_mount` - Declares a custom list of `Phoenix.LiveView.on_mount/1`
+      callbacks to add to the dashboard's `Phoenix.LiveView.Router.live_session/3`.
+      A single value may also be declared.
 
     * `:request_logger` - By default the Request Logger page is enabled. Passing
        `false` will disable this page.
@@ -103,9 +100,14 @@ defmodule Phoenix.LiveDashboard.Router do
           {session_name, session_opts, route_opts} =
             Phoenix.LiveDashboard.Router.__options__(opts)
 
+          import Phoenix.Router, only: [get: 4]
           import Phoenix.LiveView.Router, only: [live: 4, live_session: 3]
 
           live_session session_name, session_opts do
+            # LiveDashboard assets
+            get "/css-:md5", Phoenix.LiveDashboard.Assets, :css, as: :live_dashboard_asset
+            get "/js-:md5", Phoenix.LiveDashboard.Assets, :js, as: :live_dashboard_asset
+
             # All helpers are public contracts and cannot be changed
             live "/", Phoenix.LiveDashboard.PageLive, :home, route_opts
             live "/:page", Phoenix.LiveDashboard.PageLive, :page, route_opts
@@ -121,6 +123,7 @@ defmodule Phoenix.LiveDashboard.Router do
 
         unless Module.get_attribute(__MODULE__, :live_dashboard_prefix) do
           @live_dashboard_prefix Phoenix.Router.scoped_path(__MODULE__, path)
+                                 |> String.replace_suffix("/", "")
           def __live_dashboard_prefix__, do: @live_dashboard_prefix
         end
       end
@@ -278,10 +281,26 @@ defmodule Phoenix.LiveDashboard.Router do
           args
       end
 
+    ecto_sqlite3_extras_options =
+      case options[:ecto_sqlite3_extras_options] do
+        nil ->
+          []
+
+        args ->
+          unless Keyword.keyword?(args) and
+                   args |> Keyword.values() |> Enum.all?(&Keyword.keyword?/1) do
+            raise ArgumentError,
+                  ":ecto_sqlite3_extras_options must be a keyword where each value is a keyword, got: " <>
+                    inspect(args)
+          end
+
+          args
+      end
+
     csp_nonce_assign_key =
       case options[:csp_nonce_assign_key] do
         nil -> nil
-        key when is_atom(key) -> %{img: key, style: key, script: key}
+        key when is_atom(key) -> %{style: key, script: key}
         %{} = keys -> Map.take(keys, [:img, :style, :script])
       end
 
@@ -298,6 +317,7 @@ defmodule Phoenix.LiveDashboard.Router do
       ecto_repos,
       ecto_psql_extras_options,
       ecto_mysql_extras_options,
+      ecto_sqlite3_extras_options,
       csp_nonce_assign_key
     ]
 
@@ -305,7 +325,8 @@ defmodule Phoenix.LiveDashboard.Router do
       options[:live_session_name] || :live_dashboard,
       [
         session: {__MODULE__, :__session__, session_args},
-        root_layout: {Phoenix.LiveDashboard.LayoutView, :dash}
+        root_layout: {Phoenix.LiveDashboard.LayoutView, :dash},
+        on_mount: options[:on_mount] || nil
       ],
       [
         private: %{live_socket_path: live_socket_path, csp_nonce_assign_key: csp_nonce_assign_key},
@@ -345,18 +366,21 @@ defmodule Phoenix.LiveDashboard.Router do
         ecto_repos,
         ecto_psql_extras_options,
         ecto_mysql_extras_options,
+        ecto_sqlite3_extras_options,
         csp_nonce_assign_key
       ) do
     ecto_session = %{
       repos: ecto_repos(ecto_repos),
       ecto_psql_extras_options: ecto_psql_extras_options,
-      ecto_mysql_extras_options: ecto_mysql_extras_options
+      ecto_mysql_extras_options: ecto_mysql_extras_options,
+      ecto_sqlite3_extras_options: ecto_sqlite3_extras_options
     }
 
     {pages, requirements} =
       [
         home: {Phoenix.LiveDashboard.HomePage, %{env_keys: env_keys, home_app: home_app}},
-        os_mon: {Phoenix.LiveDashboard.OSMonPage, %{}}
+        os_mon: {Phoenix.LiveDashboard.OSMonPage, %{}},
+        memory_allocators: {Phoenix.LiveDashboard.MemoryAllocatorsPage, %{}}
       ]
       |> Enum.concat(metrics_page(metrics, metrics_history))
       |> Enum.concat(request_logger_page(conn, request_logger))
@@ -380,7 +404,6 @@ defmodule Phoenix.LiveDashboard.Router do
       "allow_destructive_actions" => allow_destructive_actions,
       "requirements" => requirements |> Enum.concat() |> Enum.uniq(),
       "csp_nonces" => %{
-        img: conn.assigns[csp_nonce_assign_key[:img]],
         style: conn.assigns[csp_nonce_assign_key[:style]],
         script: conn.assigns[csp_nonce_assign_key[:script]]
       }

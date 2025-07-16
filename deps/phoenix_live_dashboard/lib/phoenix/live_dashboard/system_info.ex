@@ -111,6 +111,10 @@ defmodule Phoenix.LiveDashboard.SystemInfo do
     :rpc.call(node, __MODULE__, :app_tree_callback, [application])
   end
 
+  def fetch_memory_allocators(node, max_carrier_sizes) do
+    :rpc.call(node, __MODULE__, :memory_allocators_callback, [max_carrier_sizes])
+  end
+
   ## System callbacks
 
   @doc false
@@ -195,6 +199,76 @@ defmodule Phoenix.LiveDashboard.SystemInfo do
     }
   end
 
+  def memory_allocators_callback(old_max_carrier_sizes) do
+    allocs = :erlang.system_info(:alloc_util_allocators)
+
+    :erlang.system_info({:allocator_sizes, allocs})
+    |> Enum.map(fn {type, allocator_sizes} ->
+      {type, calc_allocator_sizes(allocator_sizes)}
+    end)
+    |> prepend_total()
+    |> Enum.map(fn {type, {block, current_cs, max_cs}} ->
+      %{
+        name: type,
+        block_size: block,
+        carrier_size: current_cs,
+        max_carrier_size: max_cs
+      }
+    end)
+    |> calc_max_carrier_sizes(old_max_carrier_sizes)
+  end
+
+  defp calc_allocator_sizes(allocator_sizes) do
+    Enum.reduce(allocator_sizes, {0, 0, 0}, fn instance_sizes, {block_size, current_cs, max_cs} ->
+      {ins_block_size, ins_current_cs, ins_max_cs} = calc_instance_sizes(instance_sizes)
+      {block_size + ins_block_size, current_cs + ins_current_cs, max_cs + ins_max_cs}
+    end)
+  end
+
+  defp calc_instance_sizes({:instance, _, sizes}) do
+    {block_size_1, current_cs_1, max_cs_1} = calc_block_and_carrier_sizes(sizes[:mbcs])
+    {block_size_2, current_cs_2, max_cs_2} = calc_block_and_carrier_sizes(sizes[:sbcs])
+    {block_size_1 + block_size_2, current_cs_1 + current_cs_2, max_cs_1 + max_cs_2}
+  end
+
+  defp calc_instance_sizes(_), do: {0, 0, 0}
+
+  defp calc_block_and_carrier_sizes(sizes) when is_list(sizes) do
+    block_size = List.keyfind(sizes, :blocks, 0) |> calc_block_size()
+    {current, max} = List.keyfind(sizes, :carriers_size, 0) |> calc_carrier_size()
+    {block_size, current, max}
+  end
+
+  defp calc_block_and_carrier_sizes(_), do: {0, 0, 0}
+
+  defp calc_block_size({:blocks, [{_, [{:size, current, _, _}]}]}), do: current
+  defp calc_block_size({:blocks, [{_, [{:size, current}]}]}), do: current
+  defp calc_block_size(_), do: 0
+
+  defp calc_carrier_size({:carriers_size, current, _local, max}), do: {current, max}
+  defp calc_carrier_size({:carriers_size, int}) when is_integer(int), do: {int, 0}
+  defp calc_carrier_size(_), do: {0, 0}
+
+  defp prepend_total(allocator_sizes) do
+    total =
+      {:total,
+       Enum.reduce(allocator_sizes, {0, 0, 0}, fn {_type, sizes}, acc ->
+         {block_cs, current_cs, max_cs} = sizes
+         {acc_block_cs, acc_current_cs, acc_max_cs} = acc
+         {acc_block_cs + block_cs, acc_current_cs + current_cs, acc_max_cs + max_cs}
+       end)}
+
+    [total | allocator_sizes]
+  end
+
+  defp calc_max_carrier_sizes(allocators, old_max_carrier_sizes) do
+    Enum.map_reduce(allocators, old_max_carrier_sizes || %{}, fn allocator, max_carrier_sizes ->
+      %{name: name, carrier_size: current} = allocator
+      max = Enum.max([old_max_carrier_sizes[name] || 0, current])
+      {Map.put(allocator, :max_carrier_size, max), Map.put(max_carrier_sizes, name, max)}
+    end)
+  end
+
   ## Process Callbacks
 
   @processes_keys [
@@ -206,7 +280,7 @@ defmodule Phoenix.LiveDashboard.SystemInfo do
 
   @doc false
   def processes_callback(search, sort_by, sort_dir, limit, prev_reductions) do
-    multiplier = sort_dir_multipler(sort_dir)
+    multiplier = sort_dir_multiplier(sort_dir)
 
     processes =
       for pid <- Process.list(),
@@ -244,7 +318,7 @@ defmodule Phoenix.LiveDashboard.SystemInfo do
 
   defp show_process?(info, search) do
     pid = info[:pid] |> :erlang.pid_to_list() |> List.to_string()
-    name_or_call = info[:name_or_initial_call]
+    name_or_call = info[:name_or_initial_call] || ""
     pid =~ search or String.downcase(name_or_call) =~ search
   end
 
@@ -359,11 +433,11 @@ defmodule Phoenix.LiveDashboard.SystemInfo do
 
         case get_ancestor(child) do
           nil ->
-            {{:master, master, []}, [to_node(:supervisor, child, children)]}
+            {{:master, master, []}, to_wrapped_node(:supervisor, child, children)}
 
           ancestor ->
             {{:master, master, []},
-             [{{:ancestor, ancestor, []}, [to_node(:supervisor, child, children)]}]}
+             [{{:ancestor, ancestor, []}, to_wrapped_node(:supervisor, child, children)}]}
         end
     end
   end
@@ -398,12 +472,12 @@ defmodule Phoenix.LiveDashboard.SystemInfo do
   end
 
   defp links_tree(nodes, master, seen) do
-    Enum.map_reduce(nodes, seen, fn {type, pid, children}, seen ->
+    Enum.flat_map_reduce(nodes, seen, fn {type, pid, children}, seen ->
       {children, seen} =
         if children == [], do: links_children(type, pid, master, seen), else: {children, seen}
 
       {children, seen} = links_tree(children, master, seen)
-      {to_node(type, pid, children), seen}
+      {to_wrapped_node(type, pid, children), seen}
     end)
   end
 
@@ -430,9 +504,14 @@ defmodule Phoenix.LiveDashboard.SystemInfo do
     end
   end
 
-  defp to_node(type, pid, children) do
-    {:registered_name, registered_name} = Process.info(pid, :registered_name)
-    {{type, pid, registered_name}, children}
+  defp to_wrapped_node(type, pid, children) do
+    case Process.info(pid, :registered_name) do
+      {:registered_name, registered_name} ->
+        [{{type, pid, registered_name}, children}]
+
+      _ ->
+        []
+    end
   end
 
   defp has_child?(seen, child), do: Map.has_key?(seen, child)
@@ -443,11 +522,11 @@ defmodule Phoenix.LiveDashboard.SystemInfo do
 
   ## Ports callbacks
 
-  @inet_ports ['tcp_inet', 'udp_inet', 'sctp_inet']
+  @inet_ports [~c"tcp_inet", ~c"udp_inet", ~c"sctp_inet"]
 
   @doc false
   def ports_callback(search, sort_by, sort_dir, limit) do
-    multiplier = sort_dir_multipler(sort_dir)
+    multiplier = sort_dir_multiplier(sort_dir)
 
     ports =
       for port <- Port.list(), port_info = port_info(port), show_port?(port_info, search) do
@@ -495,7 +574,7 @@ defmodule Phoenix.LiveDashboard.SystemInfo do
   ## ETS callbacks
 
   def ets_callback(search, sort_by, sort_dir, limit) do
-    multiplier = sort_dir_multipler(sort_dir)
+    multiplier = sort_dir_multiplier(sort_dir)
 
     tables =
       for ref <- :ets.all(), info = ets_info(ref), show_ets?(info, search) do
@@ -651,7 +730,7 @@ defmodule Phoenix.LiveDashboard.SystemInfo do
 
     disk =
       case :disksup.get_disk_data() do
-        [{'none', 0, 0}] -> []
+        [{~c"none", 0, 0}] -> []
         other -> other
       end
 
@@ -709,8 +788,8 @@ defmodule Phoenix.LiveDashboard.SystemInfo do
     end
   end
 
-  defp sort_dir_multipler(:asc), do: 1
-  defp sort_dir_multipler(:desc), do: -1
+  defp sort_dir_multiplier(:asc), do: 1
+  defp sort_dir_multiplier(:desc), do: -1
 
   defp pid_or_port_details(pid) when is_pid(pid), do: to_process_details(pid)
   defp pid_or_port_details(name) when is_atom(name), do: to_process_details(name)
@@ -722,7 +801,12 @@ defmodule Phoenix.LiveDashboard.SystemInfo do
       case Process.info(pid, [:initial_call, :dictionary, :registered_name]) do
         [{:initial_call, initial_call}, {:dictionary, dictionary}, {:registered_name, name}] ->
           initial_call = Keyword.get(dictionary, :"$initial_call", initial_call)
-          name = if is_atom(name), do: inspect(name), else: format_initial_call(initial_call)
+
+          name =
+            format_registered_name(name) ||
+              format_process_label(Keyword.get(dictionary, :"$process_label")) ||
+              format_initial_call(initial_call)
+
           {name, initial_call}
 
         _ ->
@@ -740,6 +824,13 @@ defmodule Phoenix.LiveDashboard.SystemInfo do
     Process.whereis(name)
     |> to_process_details()
   end
+
+  defp format_process_label(nil), do: nil
+  defp format_process_label(label) when is_binary(label), do: label
+  defp format_process_label(label), do: inspect(label)
+
+  defp format_registered_name([]), do: nil
+  defp format_registered_name(name), do: inspect(name)
 
   defp format_initial_call({:supervisor, mod, arity}), do: Exception.format_mfa(mod, :init, arity)
   defp format_initial_call({m, f, a}), do: Exception.format_mfa(m, f, a)

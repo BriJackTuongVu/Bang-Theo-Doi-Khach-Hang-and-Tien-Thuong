@@ -1,5 +1,49 @@
 # CHANGELOG
 
+## v0.8.7 (2025-04-28)
+
+* Fix warnings on Erlang/OTP 28
+* Fix metrics history not rendering on LiveView 1.0.2+
+
+## v0.8.6 (2024-12-30)
+
+* Update Erlang docs url
+* Fix rendering of durations in Elixir v1.18+
+* Fix warnings on Elixir v1.18+
+* Remove img nonce which had no effect whatsoever
+
+## v0.8.5 (2024-11-14)
+
+* Provide a mechanism for user extensible LiveView hooks
+* Add Erlang/OTP 27 Process label support
+
+## v0.8.4 (2024-06-21)
+
+* Add immutable directive to cache-control header
+* Wrap log lines in request logger page
+* Fix deprecation warnings on LiveView release candidate
+
+## v0.8.3 (2023-10-28)
+
+* Address deprecation warnings from Phoenix.LiveView and Phoenix.HTML
+
+## v0.8.2 (2023-09-23)
+
+* Support Phoenix.LiveView 0.20.0
+
+## v0.8.1 (2023-08-12)
+
+* Fix warnings on more recent Elixir versions
+* Fix OS Mon bug on Windows
+* Support custom `on_mount` callback
+
+## v0.8.0 (2023-05-30)
+
+* Support and require Phoenix.LiveView 0.19.0
+* Memory Allocators page
+* Serve static assets from the router
+* Use the new Phoenix.Component
+
 ## v0.7.2 (2022-10-26)
 
 * Support Phoenix.LiveView 0.18.3

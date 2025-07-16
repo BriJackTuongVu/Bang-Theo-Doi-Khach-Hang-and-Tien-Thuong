@@ -90,9 +90,14 @@ defmodule Phoenix.LiveViewTest.Upload do
       Map.get(entry, :content) ||
         raise ArgumentError, "the :content of the binary entry file data is required."
 
+    relative_path = Map.get(entry, :relative_path)
+    last_modified = Map.get(entry, :last_modified)
+
     %{
       "name" => name,
       "content" => content,
+      "last_modified" => last_modified,
+      "relative_path" => relative_path,
       "ref" => to_string(System.unique_integer([:positive])),
       "size" => entry[:size] || byte_size(content),
       "type" => entry[:type] || MIME.from_path(name)
